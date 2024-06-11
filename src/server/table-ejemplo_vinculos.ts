@@ -4,26 +4,28 @@ import {TableDefinition, TableContext} from "./types-principal";
 
 import { getPolicies } from "./table-bienes";
 
-export function ejemplo_vinculos(context:TableContext):TableDefinition{
+export function areas(context:TableContext):TableDefinition{
     var admin = context.user.rol==='admin';
     var redactor = context.user.rol==='redactor';
     var pol = getPolicies(context.be);
     return {
-        name:'ejemplo_vinculos',
-        elementName:'vínculo', 
-        title:'vínculos', // solo si es distinto al "name", si es igual se puede omitir
+        name:'areas',
+        elementName:'área', 
+        title:'áreas', // solo si es distinto al "name", si es igual se puede omitir
         editable:admin || redactor,
         fields:[
-            {name:'url'              , typeName:'text'    }, 
-            {name:'orden'            , typeName:'bigint'  , nullable:false, specialDefaultValue:'next_number'},
-            {name:'vinculo'          , typeName:'text'    , nullable:false},
+            {name:'area'             , typeName:'text'    , nullable:false}, 
+            {name:'sigla'              , typeName:'text'    }, 
+            {name:'descripcion'        , typeName:'text'    }, 
+            {name:'parent'             , typeName:'text'    }, 
+            {name:'responsable'        , typeName:'text'    },
         ],
-        primaryKey:['url','vinculo'],
+        primaryKey:['area'],
         foreignKeys:[
-            {references:'ejemplo_noticias', fields:['url']}
+            {references:'bienes', fields:['area']}
         ],
         constraints:[
-            {constraintType:'unique', fields:['url','vinculo']}
+            {constraintType:'unique', fields:['area']}
         ],
         sql:{
             /* 
@@ -42,6 +44,6 @@ export function ejemplo_vinculos(context:TableContext):TableDefinition{
                 select:{using:`(SELECT ${pol.select.using} FROM bienes WHERE url = ejemplo_vinculos.url)`}
             }
         },
-        sortColumns:[{column:'url', order:1},{column:'orden', order:1}]
+        sortColumns:[{column:'area', order:1}]
     };
 }
