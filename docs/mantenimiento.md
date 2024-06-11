@@ -12,7 +12,7 @@ Clonar, actualizar e instalar
 ```sh
 git clone https://github.com/codenautas/inventario
 cd inventario
-ncu -u         # hay que tener instalado en npm-update-check
+ncu -u         # hay que tener instalado en npm-update-check : npm install -g npm-check-updates
 npm install
 ```
 

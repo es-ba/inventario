@@ -1,4 +1,4 @@
-import { AppPuntapieEjemplo } from "./app-principal";
+import { AppInventario } from "./app-principal";
 
 // exposes APIs from this package
 export * from "backend-plus";
@@ -10,7 +10,7 @@ declare module "backend-plus"{
         es:{admin:boolean, oficina:boolean, puedePares:boolean}
     }
     interface ProcedureContext {
-        be:AppPuntapieEjemplo
+        be:AppInventario
     }
     interface ClientSetup {
         tableData:Record<string, Record<string, Record<string, any>>> // tableName -> json(pk) -> fieldName -> value

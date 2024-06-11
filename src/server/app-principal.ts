@@ -5,11 +5,11 @@ import { AppBackend, ExpressPlus, Context, Request,
 } from "./types-principal";
 
 import * as MiniTools from 'mini-tools';
-import {json} from 'pg-promise-strict';
+//import {json} from 'pg-promise-strict';
 
 import {ProceduresInventario} from "./procedures-principal";
 
-import { ejemplo_noticias } from './table-bienes';
+import { bienes } from './table-bienes';
 import { ejemplo_vinculos } from './table-ejemplo_vinculos';
 import { usuarios   } from './table-usuarios';
 
@@ -121,7 +121,7 @@ export class AppInventario extends AppBackend{
         this.getTableDefinition={
             ... this.getTableDefinition,
             usuarios  ,    
-            ejemplo_noticias,    
+            bienes,
             ejemplo_vinculos,    
         }
     }       
