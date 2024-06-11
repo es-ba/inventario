@@ -2,7 +2,7 @@
 
 import {TableDefinition, TableContext} from "./types-principal";
 
-import { getPolicies } from "./table-ejemplo_noticias";
+import { getPolicies } from "./table-bienes";
 
 export function ejemplo_vinculos(context:TableContext):TableDefinition{
     var admin = context.user.rol==='admin';
@@ -38,8 +38,8 @@ export function ejemplo_vinculos(context:TableContext):TableDefinition{
                Acá las "policies" se heredan de la tabla padre, lo cual lo hace más complejo aún.
             */
             policies:{
-                all:{using:`(SELECT ${pol.all.using} FROM ejemplo_noticias WHERE url = ejemplo_vinculos.url)`},
-                select:{using:`(SELECT ${pol.select.using} FROM ejemplo_noticias WHERE url = ejemplo_vinculos.url)`}
+                all:{using:`(SELECT ${pol.all.using} FROM bienes WHERE url = ejemplo_vinculos.url)`},
+                select:{using:`(SELECT ${pol.select.using} FROM bienes WHERE url = ejemplo_vinculos.url)`}
             }
         },
         sortColumns:[{column:'url', order:1},{column:'orden', order:1}]

@@ -9,7 +9,7 @@ import {json} from 'pg-promise-strict';
 
 import {ProceduresInventario} from "./procedures-principal";
 
-import { ejemplo_noticias } from './table-ejemplo_noticias';
+import { ejemplo_noticias } from './table-bienes';
 import { ejemplo_vinculos } from './table-ejemplo_vinculos';
 import { usuarios   } from './table-usuarios';
 
@@ -39,31 +39,31 @@ export class AppInventario extends AppBackend{
         });
         super.addSchrödingerServices(mainApp, baseUrl);
     }
-    override addUnloggedServices(mainApp:ExpressPlus, baseUrl:string){
-        var be=this;
-        if(baseUrl=='/'){
-            baseUrl='';
-        }   
-        mainApp.get(baseUrl+'/ejemplo_publicaciones.js',async function(req,res,_next){
-            var publicaciones = await be.inDbClient(req as Request, async function(client){
-                var result = await client.query(`
-                    SELECT url, titulo, texto, formato, fecha, autor, 
-                            ${json(`SELECT vinculo, orden FROM ejemplo_vinculos v WHERE v.url=n.url `,'orden')} as vinculos
-                        FROM ejemplo_noticias n
-                        WHERE publicar
-                            AND fecha <= current_date
-                        ORDER BY fecha DESC
-                `).fetchAll();
-                console.log(result);
-                return result.rows;
-            });
-            console.log(publicaciones);
-            var publicaciones_js = 'var ejemplo_publicaciones = '+JSON.stringify(publicaciones);
-            console.log(publicaciones_js);
-            MiniTools.serveText(publicaciones_js,'text/javascript')(req, res);
-        });
-        super.addUnloggedServices(mainApp, baseUrl);
-    }
+    // override addUnloggedServices(mainApp:ExpressPlus, baseUrl:string){
+    //     var be=this;
+    //     if(baseUrl=='/'){
+    //         baseUrl='';
+    //     }   
+    //     mainApp.get(baseUrl+'/ejemplo_publicaciones.js',async function(req,res,_next){
+    //         var publicaciones = await be.inDbClient(req as Request, async function(client){
+    //             var result = await client.query(`
+    //                 SELECT url, titulo, texto, formato, fecha, autor, 
+    //                         ${json(`SELECT vinculo, orden FROM ejemplo_vinculos v WHERE v.url=n.url `,'orden')} as vinculos
+    //                     FROM ejemplo_noticias n
+    //                     WHERE publicar
+    //                         AND fecha <= current_date
+    //                     ORDER BY fecha DESC
+    //             `).fetchAll();
+    //             console.log(result);
+    //             return result.rows;
+    //         });
+    //         console.log(publicaciones);
+    //         var publicaciones_js = 'var ejemplo_publicaciones = '+JSON.stringify(publicaciones);
+    //         console.log(publicaciones_js);
+    //         MiniTools.serveText(publicaciones_js,'text/javascript')(req, res);
+    //     });
+    //     super.addUnloggedServices(mainApp, baseUrl);
+    // }
     override async getProcedures(){
         var be = this;
         return [
@@ -73,9 +73,9 @@ export class AppInventario extends AppBackend{
     }
     override getMenu(context:Context):MenuDefinition{
         var menuContent:MenuInfoBase[]=[
-            {menuType:'menu', name:'redaccion', label:'redacción',  menuContent:[
-                {menuType:'table', name:'ejemplo_noticias', label:'noticias', selectedByDefault:true},
-                {menuType:'proc' , name:'ejemplo_publicar_propios', label:'publicar'},
+            {menuType:'menu', name:'inventario', label:'inventario',  menuContent:[
+                {menuType:'table', name:'bienes', label:'bienes', selectedByDefault:true},
+                // {menuType:'proc' , name:'ejemplo_publicar_propios', label:'publicar'},
             ]},
         ];
         if(context.user && context.user.rol=="admin"){
