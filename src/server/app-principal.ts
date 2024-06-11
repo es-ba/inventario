@@ -10,7 +10,7 @@ import * as MiniTools from 'mini-tools';
 import {ProceduresInventario} from "./procedures-principal";
 
 import { bienes } from './table-bienes';
-import { ejemplo_vinculos } from './table-ejemplo_vinculos';
+import { areas } from './table-ejemplo_vinculos';
 import { usuarios   } from './table-usuarios';
 
 import {staticConfigYaml} from './def-config';
@@ -122,7 +122,7 @@ export class AppInventario extends AppBackend{
             ... this.getTableDefinition,
             usuarios  ,    
             bienes,
-            ejemplo_vinculos,    
+            areas,    
         }
     }       
 }
