@@ -4,8 +4,8 @@ import {TableDefinition, TableContext, AppBackend} from "./types-principal";
 
 export function getPolicies(be:AppBackend){
     return {
-        select:{ using: `${be.dbUserRolExpr} = 'admin' or responsable = ${be.dbUserNameExpr} or publicar`},
-        all:{ using: `${be.dbUserRolExpr} = 'admin' or responsable = ${be.dbUserNameExpr} and publicar is not true` }
+        select:{ using: `${be.dbUserRolExpr} = 'admin' or responsable = ${be.dbUserNameExpr}`},// or publicar`},
+        all:{ using: `${be.dbUserRolExpr} = 'admin' or responsable = ${be.dbUserNameExpr}`}// and publicar is not true` }
     }
 }
 
@@ -37,20 +37,24 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'ordencompra'                 , typeName:'text'    },
             {name:'enusode'                     , typeName:'text'    },
             {name:'clasificacion'               , typeName:'text'    },
+            {name:'area'                        , typeName:'text'    },
+            {name:'sede'                        , typeName:'text'    },
+            {name:'estado'                      , typeName:'text'    },
             // {name:'publicar'         , typeName:'boolean' , editable:admin },
             // {name:'formato'          , typeName:'text'    , options:['plano', 'md', 'html', 'jade']},
-            {name:'responsable'      , typeName:'text'    , editable:false, specialValueWhenInsert:'currentUsername'},
+            {name:'responsable'      , typeName:'text'    },
             {name:'fecha'            , typeName:'date'    , nullable:false, specialDefaultValue:'current_date'},
         ],
-        primaryKey:['url'],
+        primaryKey:['ficha', 'integrado'],
         foreignKeys:[
-            {references:'usuarios', fields:[{source:'responsable', target:'usuario'}]}
+            {references:'usuarios', fields:[{source:'responsable', target:'usuario'}]},
+            {references:'areas', fields:['area']},
         ],
         constraints:[
-            {constraintType:'unique', fields:['titulo']}
+            {constraintType:'unique', fields:['ficha', 'integrado']}
         ],
         detailTables:[
-            {table:'ejemplo_vinculos', fields:['url'], abr:'V'}
+            {table:'areas', fields:['area'], abr:'V'}
         ],
         sql:{
             /* 

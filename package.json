@@ -32,7 +32,7 @@
     "@types/react-redux": "^7.1.33",
     "source-map-loader": "^5.0.0",
     "ts-loader": "^9.5.1",
-    "webpack": "^5.91.0",
+    "webpack": "^5.92.0",
     "webpack-cli": "^5.1.4",
     "types.d.ts": "^0.6.21",
     "mixin-patch": "^0.4.1"

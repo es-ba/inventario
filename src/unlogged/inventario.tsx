@@ -4,7 +4,7 @@ import {useState} from "react";
 
 import {
     AppBar, Button, IconButton,
-    Link,
+    // Link,
     List, ListItem, ListItemText, 
     SwipeableDrawer,
     Toolbar, Typography
@@ -14,25 +14,17 @@ import {
 // @ts-ignore 
 var my=myOwn;
 
-type Vinculo = {
-    orden:number
-    vinculo:string
-}
-
-type Publicacion = {
-    titulo:string
-    texto:string
-    formato:string
+type Bien = {
+    ficha:string
+    observacion:string
+    integrado:string
     fecha:Date
-    autor:string
-    url:string
-    vinculos:Vinculo[]
 }
 
 // @ts-ignore ejemplo_publicaciones viene sin tipo y es una global
-var publicaciones:Publicacion[]=ejemplo_publicaciones.map(publicacion=>({...publicacion, fecha:new Date(publicacion.fecha)}))
+var bieness:Bien[]=bienes.map(bien=>({...bien, fecha:new Date(bien.fecha)}))
 
-function AppPrincipalOk(props:{publicaciones:Publicacion[]}){
+function AppPrincipalOk(props:{bieness:Bien[]}){
     var [menuOpened, setMenuOpened] = useState(false);
     return <>
         <AppBar position="static">
@@ -41,22 +33,22 @@ function AppPrincipalOk(props:{publicaciones:Publicacion[]}){
                     ≡
                 </IconButton>
             <Typography>
-                Puntapié inicial
+                Inventario
             </Typography>
             <Button color="inherit"></Button>
             </Toolbar>
         </AppBar>
         <div className="pantalla">
-        {props.publicaciones.map(publicacion=>
-            <div key={publicacion.url}>
+        {props.bieness.map(bien=>
+            <div key={bien.ficha}>
                 <Typography variant="h2">
-                    {publicacion.titulo}
+                    {bien.integrado}
                 </Typography>
-                <Typography variant="body2" className="publicacion-fecha">
-                    {publicacion.fecha.toLocaleDateString()}
+                <Typography variant="body2" className="bien-fecha">
+                    {bien.fecha.toLocaleDateString()}
                 </Typography>
-                <Typography variant="body2" className="publicacion-autor">
-                    {publicacion.autor}
+                {/* <Typography variant="body2" className="bien-autor">
+                    {bien.autor}
                 </Typography>
                 {publicacion.vinculos.map(v=>(
                     <div key={v.orden} className="publicacion-vinculo">
@@ -64,9 +56,9 @@ function AppPrincipalOk(props:{publicaciones:Publicacion[]}){
                             {v.vinculo}
                         </Link>
                     </div>
-                ))}
-                <Typography variant="body1" className={"publicacion-texto publiacion-tipo-"+publicacion.formato}>
-                    {publicacion.texto}
+                ))} */}
+                <Typography variant="body1">
+                    {bien.observacion}
                 </Typography>
             </div>
         )}
@@ -127,7 +119,7 @@ class DmCaptureError extends React.Component<
 
 function AppPrincipal(){
     return <DmCaptureError>
-        <AppPrincipalOk publicaciones={publicaciones}/>
+        <AppPrincipalOk bieness={bieness}/>
     </DmCaptureError>
 }
 

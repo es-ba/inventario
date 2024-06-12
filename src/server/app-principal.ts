@@ -10,7 +10,7 @@ import * as MiniTools from 'mini-tools';
 import {ProceduresInventario} from "./procedures-principal";
 
 import { bienes } from './table-bienes';
-import { areas } from './table-ejemplo_vinculos';
+import { areas } from './table-areas';
 import { usuarios   } from './table-usuarios';
 
 import {staticConfigYaml} from './def-config';
@@ -31,7 +31,7 @@ export class AppInventario extends AppBackend{
         if(baseUrl=='/'){
             baseUrl='';
         }   
-        mainApp.get(baseUrl+'/pub',async function(req,res,_next){
+        mainApp.get(baseUrl+'/inv',async function(req,res,_next){
             // @ts-ignore useragent existe
             var {useragent} = req;
             var htmlMain=be.mainPage({useragent}, false, {skipMenu:true}).toHtmlDoc();
@@ -39,31 +39,28 @@ export class AppInventario extends AppBackend{
         });
         super.addSchrödingerServices(mainApp, baseUrl);
     }
-    // override addUnloggedServices(mainApp:ExpressPlus, baseUrl:string){
-    //     var be=this;
-    //     if(baseUrl=='/'){
-    //         baseUrl='';
-    //     }   
-    //     mainApp.get(baseUrl+'/ejemplo_publicaciones.js',async function(req,res,_next){
-    //         var publicaciones = await be.inDbClient(req as Request, async function(client){
-    //             var result = await client.query(`
-    //                 SELECT url, titulo, texto, formato, fecha, autor, 
-    //                         ${json(`SELECT vinculo, orden FROM ejemplo_vinculos v WHERE v.url=n.url `,'orden')} as vinculos
-    //                     FROM ejemplo_noticias n
-    //                     WHERE publicar
-    //                         AND fecha <= current_date
-    //                     ORDER BY fecha DESC
-    //             `).fetchAll();
-    //             console.log(result);
-    //             return result.rows;
-    //         });
-    //         console.log(publicaciones);
-    //         var publicaciones_js = 'var ejemplo_publicaciones = '+JSON.stringify(publicaciones);
-    //         console.log(publicaciones_js);
-    //         MiniTools.serveText(publicaciones_js,'text/javascript')(req, res);
-    //     });
-    //     super.addUnloggedServices(mainApp, baseUrl);
-    // }
+    override addUnloggedServices(mainApp:ExpressPlus, baseUrl:string){
+        var be=this;
+        if(baseUrl=='/'){
+            baseUrl='';
+        }   
+        mainApp.get(baseUrl+'/bienes.js',async function(req,res,_next){
+            var bienes = await be.inDbClient(req as Request, async function(client){
+                var result = await client.query(`
+                    SELECT ficha, integrado, observacion
+                        FROM bienes n
+                        ORDER BY fecha DESC
+                `).fetchAll();
+                console.log(result);
+                return result.rows;
+            });
+            console.log(bienes);
+            var bienes_js = 'var bienes = '+JSON.stringify(bienes);
+            console.log(bienes_js);
+            MiniTools.serveText(bienes_js,'text/javascript')(req, res);
+        });
+        super.addUnloggedServices(mainApp, baseUrl);
+    }
     override async getProcedures(){
         var be = this;
         return [
@@ -75,7 +72,7 @@ export class AppInventario extends AppBackend{
         var menuContent:MenuInfoBase[]=[
             {menuType:'menu', name:'inventario', label:'inventario',  menuContent:[
                 {menuType:'table', name:'bienes', label:'bienes', selectedByDefault:true},
-                // {menuType:'proc' , name:'ejemplo_publicar_propios', label:'publicar'},
+                {menuType:'table', name:'areas', label:'areas'}
             ]},
         ];
         if(context.user && context.user.rol=="admin"){
@@ -108,9 +105,9 @@ export class AppInventario extends AppBackend{
                 { type: 'js', module: 'redux-typed-reducer', modPath:'../dist', file:'redux-typed-reducer.js' },
                 { type: 'js', src: 'adapt.js' },
             ]:[])  satisfies ClientModuleDefinition[],
-            { type: 'js', src: 'ejemplo_publicaciones.js' },
-            { type: 'js', src: 'ejemplo-pub-inventario.js' },
-            { type: 'css', file: 'ejemplo-pub-inventario.css' },
+            { type: 'js', src: 'bienes.js' },
+            { type: 'js', src: 'inventario.js' },
+            { type: 'css', file: 'inventario.css' },
             { type: 'css', file: 'menu.css' },
             ... menuedResources
         ] satisfies ClientModuleDefinition[];
