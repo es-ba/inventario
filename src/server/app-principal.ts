@@ -31,7 +31,7 @@ export class AppInventario extends AppBackend{
         if(baseUrl=='/'){
             baseUrl='';
         }   
-        mainApp.get(baseUrl+'/inv',async function(req,res,_next){
+        mainApp.get(baseUrl+'/inventario',async function(req,res,_next){
             // @ts-ignore useragent existe
             var {useragent} = req;
             var htmlMain=be.mainPage({useragent}, false, {skipMenu:true}).toHtmlDoc();
@@ -72,7 +72,8 @@ export class AppInventario extends AppBackend{
         var menuContent:MenuInfoBase[]=[
             {menuType:'menu', name:'inventario', label:'inventario',  menuContent:[
                 {menuType:'table', name:'bienes', label:'bienes', selectedByDefault:true},
-                {menuType:'table', name:'areas', label:'areas'}
+                {menuType:'table', name:'areas', label:'areas'},
+                {menuType:'prueba', name:'prueba', label:'prueba'}
             ]},
         ];
         if(context.user && context.user.rol=="admin"){
@@ -105,8 +106,8 @@ export class AppInventario extends AppBackend{
                 { type: 'js', module: 'redux-typed-reducer', modPath:'../dist', file:'redux-typed-reducer.js' },
                 { type: 'js', src: 'adapt.js' },
             ]:[])  satisfies ClientModuleDefinition[],
-            { type: 'js', src: 'bienes.js' },
             { type: 'js', src: 'inventario.js' },
+            { type: 'js', file: 'client.js' },
             { type: 'css', file: 'inventario.css' },
             { type: 'css', file: 'menu.css' },
             ... menuedResources

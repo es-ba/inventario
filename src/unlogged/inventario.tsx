@@ -124,6 +124,7 @@ function AppPrincipal(){
 }
 
 export function mostrarPrincipal(){
+    console.log('mostrarprincipal')
     document.documentElement.setAttribute('letra','chica');
     ReactDOM.render(
         <AppPrincipal/>, 
