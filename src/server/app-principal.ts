@@ -88,7 +88,7 @@ export class AppInventario extends AppBackend{
     override clientIncludes(req:Request|null, opts:OptsClientPage):ClientModuleDefinition[]{
         var UsandoREact = true;
         var menuedResources:ClientModuleDefinition[]=req && opts && !opts.skipMenu ? [
-            { type:'js' , src:'client.js' },
+            { type:'js' , src:'client/client.js' },
         ]:[
             {type:'js' , src:'unlogged.js' },
         ];
@@ -96,10 +96,10 @@ export class AppInventario extends AppBackend{
             ...(UsandoREact?[
                 { type: 'js', module: 'react', modPath: 'umd', fileDevelopment:'react.development.js', file:'react.production.min.js' },
                 { type: 'js', module: 'react-dom', modPath: 'umd', fileDevelopment:'react-dom.development.js', file:'react-dom.production.min.js' },
-                { type: 'js', module: '@mui/material', modPath: 'umd', fileDevelopment:'material-ui.development.js', file:'material-ui.production.min.js' },
+                { type: 'js', module: '@mui/material', modPath: '../umd', fileDevelopment:'material-ui.development.js', file:'material-ui.production.min.js'},
                 { type: 'js', module: 'clsx', file:'clsx.min.js' },
-                { type: 'js', module: 'redux', modPath:'../dist', fileDevelopment:'redux.js', file:'redux.min.js' },
-                { type: 'js', module: 'react-redux', modPath:'../dist', fileDevelopment:'react-redux.js', file:'react-redux.min.js' },
+                //{ type: 'js', module: 'redux', modPath:'../dist', fileDevelopment:'redux.mjs', file:'redux.min.mjs' },
+                //{ type: 'js', module: 'react-redux', modPath:'../dist', fileDevelopment:'react-redux.mjs', file:'react-redux.min.mjs' },
             ]:[]) satisfies ClientModuleDefinition[],
             ...super.clientIncludes(req, opts),
             ...(UsandoREact?[
@@ -107,7 +107,6 @@ export class AppInventario extends AppBackend{
                 { type: 'js', src: 'adapt.js' },
             ]:[])  satisfies ClientModuleDefinition[],
             { type: 'js', src: 'inventario.js' },
-            { type: 'js', file: 'client.js' },
             { type: 'css', file: 'inventario.css' },
             { type: 'css', file: 'menu.css' },
             ... menuedResources

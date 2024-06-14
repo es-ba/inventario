@@ -22,7 +22,21 @@ type Bien = {
 }
 
 // @ts-ignore ejemplo_publicaciones viene sin tipo y es una global
-var bieness:Bien[]=bienes.map(bien=>({...bien, fecha:new Date(bien.fecha)}))
+var bieness:Bien[]=[
+    {
+        ficha:'1',
+        observacion: 'observciones del bien 1',
+        integrado: 'no sé qué es esto',
+        fecha:'2024-06-14'
+    },
+    {
+        ficha:'2',
+        observacion: 'observciones del bien 3',
+        integrado: 'no sé qué es esto otro',
+        fecha:'2024-06-13'
+    },
+
+].map(bien=>({...bien, fecha:new Date(bien.fecha)}))
 
 function AppPrincipalOk(props:{bieness:Bien[]}){
     var [menuOpened, setMenuOpened] = useState(false);
