@@ -31,7 +31,7 @@ export class AppInventario extends AppBackend{
         if(baseUrl=='/'){
             baseUrl='';
         }   
-        mainApp.get(baseUrl+'/inventario',async function(req,res,_next){
+        mainApp.get(baseUrl+'/main',async function(req,res,_next){
             // @ts-ignore useragent existe
             var {useragent} = req;
             var htmlMain=be.mainPage({useragent}, false, {skipMenu:true}).toHtmlDoc();
@@ -48,7 +48,7 @@ export class AppInventario extends AppBackend{
             var bienes = await be.inDbClient(req as Request, async function(client){
                 var result = await client.query(`
                     SELECT ficha, integrado, observacion
-                        FROM bienes n
+                        FROM bienes
                         ORDER BY fecha DESC
                 `).fetchAll();
                 console.log(result);
@@ -107,6 +107,7 @@ export class AppInventario extends AppBackend{
                 { type: 'js', src: 'adapt.js' },
             ]:[])  satisfies ClientModuleDefinition[],
             { type: 'js', src: 'inventario.js' },
+            { type: 'js', src: 'bienes.js' },
             { type: 'css', file: 'inventario.css' },
             { type: 'css', file: 'menu.css' },
             ... menuedResources
