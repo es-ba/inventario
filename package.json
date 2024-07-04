@@ -11,16 +11,14 @@
     "install"
   ],
   "dependencies": {
-    "backend-plus": "^2.0.0-rc.16",
+    "backend-plus": "^2.0.0-rc.20",
     "@mui/material": "^5.15.19",
     "@mui/icons-material": "^5.15.19",    
     "@mui/lab": "^5.0.0-alpha.170",
-    "backend-plus": "^2.0.0-rc.17",
-    "pg-triggers": "^0.3.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-redux": "^9.1.2",
-    "redux": "^5.0.1",
+    "@reduxjs/toolkit": "^2.2.6",
     "redux-typed-reducer": "^0.1.1",
     "pg-triggers": "^0.3.3"
   },

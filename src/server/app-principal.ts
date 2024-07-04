@@ -98,8 +98,8 @@ export class AppInventario extends AppBackend{
                 { type: 'js', module: 'react-dom', modPath: 'umd', fileDevelopment:'react-dom.development.js', file:'react-dom.production.min.js' },
                 { type: 'js', module: '@mui/material', modPath: '../umd', fileDevelopment:'material-ui.development.js', file:'material-ui.production.min.js'},
                 { type: 'js', module: 'clsx', file:'clsx.min.js' },
-                //{ type: 'js', module: 'redux', modPath:'../dist', fileDevelopment:'redux.mjs', file:'redux.min.mjs' },
-                //{ type: 'js', module: 'react-redux', modPath:'../dist', fileDevelopment:'react-redux.mjs', file:'react-redux.min.mjs' },
+                { type: 'mjs', module: '@reduxjs/toolkit', modPath:'../', file:'redux-toolkit.browser.mjs'},
+                { type: 'mjs', module: 'react-redux', modPath:'../', file:'react-redux.browser.mjs'},
             ]:[]) satisfies ClientModuleDefinition[],
             ...super.clientIncludes(req, opts),
             ...(UsandoREact?[
