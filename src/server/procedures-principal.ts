@@ -24,4 +24,15 @@ export const ProceduresInventario:ProcedureDef[] = [
             );
         }
     },
+    {
+        action:'traer_bienes',
+        parameters:[],
+        proceedLabel:'bienes',
+        coreFunction:async function(context:ProcedureContext){
+            const {client} = context;
+            var result = await client.query(`
+                SELECT * FROM bienes`,[]).fetchAll();
+            return result.rows;
+        }
+    },
 ];

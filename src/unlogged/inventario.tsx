@@ -1,12 +1,19 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import {useState} from "react";
+import { useEffect, useState } from "react";
 
 import {
     AppBar, Button, IconButton,
     // Link,
     List, ListItem, ListItemText, 
+    Paper, 
     SwipeableDrawer,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
     Toolbar, Typography
 } from "@mui/material";
 
@@ -20,6 +27,16 @@ type Bien = {
     integrado:string
     fecha:Date
 }
+
+async function fetchBienes() {
+    const response = await my.ajax.traer_bienes();
+    if (Array.isArray(response)) {
+        return response;
+    } else {
+        return [response];
+    }
+}
+
 
 // @ts-ignore ejemplo_publicaciones viene sin tipo y es una global
 var bieness:Bien[]=[
@@ -38,8 +55,19 @@ var bieness:Bien[]=[
 
 ].map(bien=>({...bien, fecha:new Date(bien.fecha)}))
 
-function AppPrincipalOk(props:{bieness:Bien[]}){
+function AppPrincipalOk(){
     var [menuOpened, setMenuOpened] = useState(false);
+    const [bieness, setBieness] = useState<Bien[]>([]);
+
+    useEffect(() => {
+        async function loadBienes() {
+            const bienes = await fetchBienes();
+            console.log(bienes)
+            setBieness(bienes.map((bien: Bien) => ({ ...bien})));
+        }
+        loadBienes();
+    }, []);
+
     return <>
         <AppBar position="static">
             <Toolbar>
@@ -53,29 +81,28 @@ function AppPrincipalOk(props:{bieness:Bien[]}){
             </Toolbar>
         </AppBar>
         <div className="pantalla">
-        {props.bieness.map(bien=>
-            <div key={bien.ficha}>
-                <Typography variant="h2">
-                    {bien.integrado}
-                </Typography>
-                <Typography variant="body2" className="bien-fecha">
-                    {bien.fecha.toLocaleDateString()}
-                </Typography>
-                {/* <Typography variant="body2" className="bien-autor">
-                    {bien.autor}
-                </Typography>
-                {publicacion.vinculos.map(v=>(
-                    <div key={v.orden} className="publicacion-vinculo">
-                        <Link href={v.vinculo}>
-                            {v.vinculo}
-                        </Link>
-                    </div>
-                ))} */}
-                <Typography variant="body1">
-                    {bien.observacion}
-                </Typography>
-            </div>
-        )}
+        <TableContainer component={Paper}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Ficha</TableCell>
+                            <TableCell>Integrado</TableCell>
+                            {/* <TableCell>Fecha</TableCell> */}
+                            <TableCell>Observación</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {bieness.map(bien => (
+                            <TableRow key={bien.ficha}>
+                                <TableCell>{bien.ficha}</TableCell>
+                                <TableCell>{bien.integrado}</TableCell>
+                                {/* <TableCell>{bien.fecha.toLocaleDateString()}</TableCell> */}
+                                <TableCell>{bien.observacion}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
         </div>
         <div className="seccion-final"></div>
         <SwipeableDrawer  
@@ -133,7 +160,7 @@ class DmCaptureError extends React.Component<
 
 function AppPrincipal(){
     return <DmCaptureError>
-        <AppPrincipalOk bieness={bieness}/>
+        <AppPrincipalOk />
     </DmCaptureError>
 }
 
