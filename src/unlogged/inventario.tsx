@@ -3,9 +3,10 @@ import * as ReactDOM from "react-dom";
 import { useEffect, useState } from "react";
 
 import {
-    AppBar, Button, IconButton,
+    AppBar, Box, Fab, IconButton,
     // Link,
     List, ListItem, ListItemText, 
+    Modal, 
     Paper, 
     SwipeableDrawer,
     Table,
@@ -16,6 +17,7 @@ import {
     TableRow,
     Toolbar, Typography
 } from "@mui/material";
+import AgregarBien from "./formulario-bien";
 
 
 // @ts-ignore 
@@ -25,16 +27,12 @@ type Bien = {
     ficha:string
     observacion:string
     integrado:string
-    fecha:Date
+    fecha:string
 }
 
 async function fetchBienes() {
     const response = await my.ajax.traer_bienes();
-    if (Array.isArray(response)) {
-        return response;
-    } else {
-        return [response];
-    }
+    return response;
 }
 
 
@@ -57,16 +55,23 @@ var bieness:Bien[]=[
 
 function AppPrincipalOk(){
     var [menuOpened, setMenuOpened] = useState(false);
-    const [bieness, setBieness] = useState<Bien[]>([]);
+    const [bienes, setBienes] = useState<Bien[]>([]);
+    const [modalOpen, setModalOpen] = useState(false);
 
     useEffect(() => {
-        async function loadBienes() {
+        async function traerBienes() {
             const bienes = await fetchBienes();
-            console.log(bienes)
-            setBieness(bienes.map((bien: Bien) => ({ ...bien})));
+            setBienes(bienes.map((bien: Bien) => ({ ...bien})));
         }
-        loadBienes();
+        traerBienes();
     }, []);
+
+    const handleInsert = (nuevoBien: Bien) => {
+        setBienes([...bienes, { ...nuevoBien }]);
+    };
+
+    const handleOpen = () => setModalOpen(true);
+    const handleClose = () => setModalOpen(false);
 
     return <>
         <AppBar position="static">
@@ -74,10 +79,9 @@ function AppPrincipalOk(){
                 <IconButton edge="start" color="inherit" aria-label="menu"  onClick={()=>setMenuOpened(true)}>
                     ≡
                 </IconButton>
-            <Typography>
-                Inventario
-            </Typography>
-            <Button color="inherit"></Button>
+                <Typography>
+                    Inventario
+                </Typography>
             </Toolbar>
         </AppBar>
         <div className="pantalla">
@@ -92,7 +96,7 @@ function AppPrincipalOk(){
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {bieness.map(bien => (
+                        {bienes.map(bien => (
                             <TableRow key={bien.ficha}>
                                 <TableCell>{bien.ficha}</TableCell>
                                 <TableCell>{bien.integrado}</TableCell>
@@ -105,6 +109,9 @@ function AppPrincipalOk(){
             </TableContainer>
         </div>
         <div className="seccion-final"></div>
+        <Fab color="primary" aria-label="add" onClick={handleOpen}>
+
+        </Fab>
         <SwipeableDrawer  
             open={menuOpened}
             onClose={()=>setMenuOpened(false)}
@@ -130,6 +137,11 @@ function AppPrincipalOk(){
                </List>
             </div>
         </SwipeableDrawer>
+        <Modal open={modalOpen} onClose={handleClose}>
+            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90%', bgcolor: 'background.paper', border: '2px solid #000', boxShadow: 24, p: 4 }}>
+                <AgregarBien onInsert={handleInsert} />
+            </Box>
+        </Modal>
     </>;
 }
 

@@ -106,6 +106,7 @@ export class AppInventario extends AppBackend{
                 { type: 'js', module: 'redux-typed-reducer', modPath:'../dist', file:'redux-typed-reducer.js' },
                 { type: 'js', src: 'adapt.js' },
             ]:[])  satisfies ClientModuleDefinition[],
+            { type: 'js', src: 'formulario-bien.js' },
             { type: 'js', src: 'inventario.js' },
             { type: 'js', src: 'bienes.js' },
             { type: 'css', file: 'inventario.css' },

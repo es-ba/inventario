@@ -22,7 +22,7 @@ login:
     loginForm:
       formTitle: entrada
       formImg: unlogged/tables-lock.png
-    noLoggedUrlPath: /main
+    noLoggedUrlPath: /login
 client-setup:
   menu: true
   lang: es

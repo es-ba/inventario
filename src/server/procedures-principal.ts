@@ -35,4 +35,23 @@ export const ProceduresInventario:ProcedureDef[] = [
             return result.rows;
         }
     },
+    {
+        action: 'insertar_bien',
+        parameters: [
+            { name: 'ficha', typeName: 'text' },
+            { name: 'observacion', typeName: 'text' },
+            { name: 'integrado', typeName: 'text' },
+            { name: 'fecha', typeName: 'date' }
+        ],
+        proceedLabel: 'insertar bien',
+        coreFunction: async function (context: ProcedureContext, parameters: any) {
+            const { client } = context;
+            var result = await client.query(`
+                INSERT INTO bienes (ficha, observacion, integrado, fecha)
+                VALUES ($1, $2, $3, $4)
+                RETURNING *
+            `, [parameters.ficha, parameters.observacion, parameters.integrado, parameters.fecha]).fetchAll();
+            return result.rows.length ? result.rows[0] : 'Error al insertar el bien';
+        }
+    },
 ];
