@@ -1,0 +1,5 @@
+    //     
+    //   ,[rubro]
+    //   ,[clase]
+    //   ,[cuenta]
+    //   ,[descripcion]

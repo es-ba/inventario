@@ -35,6 +35,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'serie'                       , typeName:'text'    },
             {name:'imei'                        , typeName:'text'    },
             {name:'modelo'                      , typeName:'text'    },
+            {name:'anio'                      , typeName:'text'    },
             {name:'prd'                         , typeName:'text'    },
             {name:'caracteridentificador'       , typeName:'text'    },//?
             

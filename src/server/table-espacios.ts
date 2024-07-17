@@ -1,0 +1,8 @@
+//        [espacio]
+//       ,[numero]
+//       ,[tipo]
+//       ,[ubicacion]
+//       ,[denominacion]
+//       ,[area]
+//       ,[responsable]
+//       ,[sede]

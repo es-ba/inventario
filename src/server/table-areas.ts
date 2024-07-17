@@ -15,7 +15,7 @@ export function areas(context:TableContext):TableDefinition{
         editable:admin || responsable,
         fields:[
             {name:'area'             , typeName:'text'    , nullable:false}, 
-            {name:'sigla'              , typeName:'text'    }, 
+            {name:'sigla'              , typeName:'text'    },  
             {name:'descripcion'        , typeName:'text'    }, 
             {name:'parent'             , typeName:'text'   , nullable:true, defaultValue:null }, 
             {name:'responsable'        , typeName:'text'    },

@@ -1,0 +1,6 @@
+//        [responsable]
+//       ,[nombre]
+//       ,[apellido]
+//       ,[mail]
+//       ,[externo]
+//       ,[usuario]
