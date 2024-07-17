@@ -1,6 +1,5 @@
 "use strict";
 
-import { FenceSharp } from "@mui/icons-material";
 import {TableDefinition, TableContext, AppBackend} from "./types-principal";
 
 export function getPolicies(be:AppBackend){
@@ -26,39 +25,43 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'observacion'                 , typeName:'text'    },
             {name:'detalle'                     , typeName:'text'    },
             {name:'importe'                     , typeName:'text'    },
-            {name:'importetotal'                , typeName:'text'    },
+            {name:'importetotal'                , typeName:'text'    },//solo importe
             {name:'tipo'                        , typeName:'text'    },//fk
+            {name:'estado'                      , typeName:'text'    , options:['alta', 'baja']},//fk //transferencia pasaria a baja, consultar
+            // trabajo remoto, prestamo
             {name:'rubro'                       , typeName:'text'    },//fk
             {name:'grupo'                       , typeName:'text'    },//fk
             {name:'marca'                       , typeName:'text'    },
             {name:'serie'                       , typeName:'text'    },
+            {name:'imei'                        , typeName:'text'    },
             {name:'modelo'                      , typeName:'text'    },
-            {name:'caracteridentificador'       , typeName:'text'    },
-            {name:'aclaracion'                  , typeName:'text'    },
-            {name:'ordencompra'                 , typeName:'text'    },//fk
+            {name:'prd'                         , typeName:'text'    },
+            {name:'caracteridentificador'       , typeName:'text'    },//?
+            
             {name:'enusode'                     , typeName:'text'    },
             {name:'clasificacion'               , typeName:'text'    },
-            {name:'area'                        , typeName:'text'    },//fk
-            {name:'sede'                        , typeName:'text'    },//fk
-            {name:'estado'                      , typeName:'text'    },//fk
+            // {name:'area'                        , typeName:'text'    },//fk 
+            // {name:'sede'                        , typeName:'text'    },//fk
             {name:'espacio'                     , typeName:'text'    },//fk
-            {name:'movimiento'                  , typeName:'text'    },//fk
-            {name:'log'                         , typeName:'text'    },//fk
+            {name:'responsable'                 , typeName:'text'    },//fk
+            // {name:'movimiento'                  , typeName:'text'    },//fk, alreves
+            // {name:'log'                         , typeName:'text'    },//fk, alreves
             // {name:'publicar'         , typeName:'boolean' , editable:admin },
             // {name:'formato'          , typeName:'text'    , options:['plano', 'md', 'html', 'jade']},
-            {name:'responsable'      , typeName:'text'    },//fk
-            {name:'fecha'            , typeName:'date'    , nullable:false, specialDefaultValue:'current_date'},
+            {name:'fecha'            , typeName:'date'    , nullable:false, specialDefaultValue:'current_date'},//de mas, se puede usar log
+            {name:'ordencompra'                 , typeName:'text'    },//fk //viejomantenimiento
+            // {name:'aclaracion'                  , typeName:'text'    },//?
         ],
         primaryKey:['ficha', 'integrado'],
         foreignKeys:[
             {references:'usuarios', fields:[{source:'responsable', target:'usuario'}]},
-            {references:'areas', fields:['area']},
+            // {references:'areas', fields:['area']},
         ],
         constraints:[
             {constraintType:'unique', fields:['ficha', 'integrado']}
         ],
         detailTables:[
-            {table:'areas', fields:['area'], abr:'V'}
+            // {table:'areas', fields:['area'], abr:'V'}
         ],
         sql:{
             /* 
