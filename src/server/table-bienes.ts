@@ -38,7 +38,6 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'anio'                      , typeName:'text'    },
             {name:'prd'                         , typeName:'text'    },
             {name:'caracteridentificador'       , typeName:'text'    },//?
-            
             {name:'enusode'                     , typeName:'text'    },
             {name:'clasificacion'               , typeName:'text'    },
             // {name:'area'                        , typeName:'text'    },//fk 

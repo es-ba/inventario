@@ -123,7 +123,7 @@ function AppPrincipalOk(){
                 onKeyDown={()=>setMenuOpened(false)}
             >
                 <List>
-                    <ListItem button 
+                    <ListItem 
                         onClick={()=>{
                             setMenuOpened(false);
                         }}
@@ -182,7 +182,7 @@ export function mostrarPrincipal(){
     ReactDOM.render(
         <AppPrincipal/>, 
         document.getElementById('main_layout')
-    )
+    )   
 }
 
 // @ts-ignore addrParams tiene un tipo que acá no importa

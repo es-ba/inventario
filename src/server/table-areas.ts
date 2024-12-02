@@ -2,12 +2,9 @@
 
 import {TableDefinition, TableContext} from "./types-principal";
 
-// import { getPolicies } from "./table-bienes";
-
 export function areas(context:TableContext):TableDefinition{
     var admin = context.user.rol==='admin';
     var responsable = context.user.rol==='responsable';
-    // var pol = getPolicies(context.be);
     return {
         name:'areas',
         elementName:'área', 
@@ -22,7 +19,7 @@ export function areas(context:TableContext):TableDefinition{
         ],
         primaryKey:['area'],
         foreignKeys:[
-            {references:'areas', fields:[{source:'parent', target:'area'}], alias: 'areas_parent'}
+            {references:'areas', fields:[{source:'parent', target:'area'}], alias: 'pertenece_a'}
         ],
         constraints:[
             {constraintType:'unique', fields:['area']}

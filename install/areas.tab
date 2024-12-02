@@ -1,4 +1,4 @@
 area|sigla|descripcion|parent|responsable
-SINFOR|SINFOR|SINFOR|null|algo
-ARIP|ARIP|ARIP|null|algo
+SINFOR|SINFOR|SINFOR||algo
+ARIP|ARIP|ARIP||algo
 PROYESP|PROYESP|PROYESP|SINFOR|algo
