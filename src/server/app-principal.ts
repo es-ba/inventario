@@ -99,6 +99,7 @@ export class AppInventario extends AppBackend{
                 { type: 'js', module: 'react', modPath: 'umd', fileDevelopment:'react.development.js', file:'react.production.min.js' },
                 { type: 'js', module: 'react-dom', modPath: 'umd', fileDevelopment:'react-dom.development.js', file:'react-dom.production.min.js' },
                 { type: 'js', module: '@mui/material', modPath: '../umd', fileDevelopment:'material-ui.development.js', file:'material-ui.production.min.js'},
+                { type: 'js', module: '@mui/x-data-grid',modPath: '../node', file:'index.js' },
                 { type: 'js', module: 'clsx', file:'clsx.min.js' },
                 { type: 'mjs', module: '@reduxjs/toolkit', modPath:'../', file:'redux-toolkit.browser.mjs'},
                 { type: 'mjs', module: 'react-redux', modPath:'../', file:'react-redux.browser.mjs'},
@@ -123,7 +124,8 @@ export class AppInventario extends AppBackend{
             ... this.getTableDefinition,
             usuarios  ,    
             bienes,
-            areas,    
+            areas,
+            grupos,
         }
     }       
 }

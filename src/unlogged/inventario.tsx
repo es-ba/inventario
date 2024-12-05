@@ -7,16 +7,17 @@ import {
     // Link,
     List, ListItem, ListItemText, 
     Modal, 
-    Paper, 
+    // Paper, 
     SwipeableDrawer,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
+    // Table,
+    // TableBody,
+    // TableCell,
+    // TableContainer,
+    // TableHead,
+    // TableRow,
     Toolbar, Typography
 } from "@mui/material";
+
 import AgregarBien from "./formulario-bien";
 
 
@@ -55,10 +56,12 @@ var bieness:Bien[]=[
 
 function AppPrincipalOk(){
     var [menuOpened, setMenuOpened] = useState(false);
+    var [subtitle, setSubtitle]= useState("");
     const [bienes, setBienes] = useState<Bien[]>([]);
     const [modalOpen, setModalOpen] = useState(false);
 
     useEffect(() => {
+        setSubtitle('Listado de bienes')
         async function traerBienes() {
             const bienes = await fetchBienes();
             setBienes(bienes.map((bien: Bien) => ({ ...bien})));
@@ -73,6 +76,7 @@ function AppPrincipalOk(){
     const handleOpen = () => setModalOpen(true);
     const handleClose = () => setModalOpen(false);
 
+
     return <>
         <AppBar position="static">
             <Toolbar>
@@ -80,33 +84,13 @@ function AppPrincipalOk(){
                     ≡
                 </IconButton>
                 <Typography>
-                    Inventario
+                    {subtitle}
                 </Typography>
             </Toolbar>
         </AppBar>
         <div className="pantalla">
-        <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Ficha</TableCell>
-                            <TableCell>Integrado</TableCell>
-                            {/* <TableCell>Fecha</TableCell> */}
-                            <TableCell>Observación</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {bienes.map(bien => (
-                            <TableRow key={bien.ficha}>
-                                <TableCell>{bien.ficha}</TableCell>
-                                <TableCell>{bien.integrado}</TableCell>
-                                {/* <TableCell>{bien.fecha.toLocaleDateString()}</TableCell> */}
-                                <TableCell>{bien.observacion}</TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+        {/* aca va el contenido de la pantalla */}
+       
         </div>
         <div className="seccion-final"></div>
         <Fab color="primary" aria-label="add" onClick={handleOpen}>

@@ -11,29 +11,30 @@
     "install"
   ],
   "dependencies": {
+    "@mui/icons-material": "^5.15.19",
+    "@mui/lab": "^5.0.0-alpha.170",
+    "@mui/material": "^5.15.19",
+    "@mui/x-data-grid": "^7.23.1",
+    "@reduxjs/toolkit": "^2.4.0",
     "backend-plus": "^2.0.9",
-    "@mui/material": "^6.1.9",
-    "@mui/icons-material": "^6.1.9",    
-    "@mui/lab": "^6.0.0-beta.17",
+    "pg-triggers": "^0.3.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-redux": "^9.1.2",
-    "@reduxjs/toolkit": "^2.4.0",
-    "redux-typed-reducer": "^0.1.1",
-    "pg-triggers": "^0.3.3"
+    "redux-typed-reducer": "^0.1.1"
   },
   "devDependencies": {
-    "typescript": "^5.7.2",
     "@types/node": "^22.10.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@types/react-redux": "^7.1.34",
+    "mixin-patch": "^0.4.1",
     "source-map-loader": "^5.0.0",
     "ts-loader": "^9.5.1",
-    "webpack": "^5.96.1",
-    "webpack-cli": "^5.1.4",
     "types.d.ts": "^0.6.22",
-    "mixin-patch": "^0.4.1"
+    "typescript": "^5.7.2",
+    "webpack": "^5.96.1",
+    "webpack-cli": "^5.1.4"
   },
   "mixin-patch": {},
   "scripts": {
