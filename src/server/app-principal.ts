@@ -12,6 +12,7 @@ import {ProceduresInventario} from "./procedures-principal";
 import { bienes } from './table-bienes';
 import { areas } from './table-areas';
 import { usuarios   } from './table-usuarios';
+import { grupos } from './table-grupos';
 
 import {staticConfigYaml} from './def-config';
 
@@ -73,6 +74,7 @@ export class AppInventario extends AppBackend{
             {menuType:'menu', name:'inventario', label:'inventario',  menuContent:[
                 {menuType:'table', name:'bienes', label:'bienes', selectedByDefault:true},
                 {menuType:'table', name:'areas', label:'areas'},
+                {menuType:'table', name:'grupos', label:'grupos'},
                 {menuType:'prueba', name:'prueba', label:'prueba'}
             ]},
         ];
