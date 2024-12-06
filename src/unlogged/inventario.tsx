@@ -102,6 +102,7 @@ function AppPrincipalOk(){
     
     const [bienTab, setBienesTab] = React.useState(0);
 
+    
     // @ts-ignore
     const handleBienesTab = (event: React.SyntheticEvent, newValue: number) => {
         setBienesTab(newValue);
@@ -124,6 +125,7 @@ function AppPrincipalOk(){
     const handleOpen = () => setModalOpen(true);
     const handleClose = () => setModalOpen(false);
 
+    // metodo para mostrar en 'pantalla' en base al valor de pantallaActual
     const renderPantallaActual = () => {
         switch (pantallaActual) {
             case "listado":
@@ -200,6 +202,7 @@ function AppPrincipalOk(){
         <Fab color="primary" aria-label="add" onClick={handleOpen}>
 
         </Fab>
+        
         <SwipeableDrawer  
             open={menuOpened}
             onClose={()=>setMenuOpened(false)}
@@ -211,6 +214,7 @@ function AppPrincipalOk(){
                 onKeyDown={()=>setMenuOpened(false)}
             >
                 <List>
+                    {/* items del menu */}
                     <ListItem 
                         onClick={()=>{
                             setMenuOpened(false);
@@ -218,7 +222,6 @@ function AppPrincipalOk(){
                     >
                         <ListItemText primary="Listado" 
                             onClick={()=>{
-
                                 setPantallaActual("listado");
                             }}
                         />
