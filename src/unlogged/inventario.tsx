@@ -7,15 +7,18 @@ import {
     // Link,
     List, ListItem, ListItemText, 
     Modal, 
-    // Paper, 
+    Paper, 
     SwipeableDrawer,
-    // Table,
-    // TableBody,
-    // TableCell,
-    // TableContainer,
-    // TableHead,
-    // TableRow,
-    Toolbar, Typography
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Toolbar, Typography,
+    Tabs,
+    Tab,
+    TextField
 } from "@mui/material";
 
 import AgregarBien from "./formulario-bien";
@@ -27,8 +30,8 @@ var my=myOwn;
 type Bien = {
     ficha:string
     observacion:string
-    integrado:string
-    fecha:string
+    integrado?:string
+    fecha?:string
 }
 
 async function fetchBienes() {
@@ -36,14 +39,14 @@ async function fetchBienes() {
     return response;
 }
 
-
 // @ts-ignore ejemplo_publicaciones viene sin tipo y es una global
 var bieness:Bien[]=[
     {
         ficha:'1',
         observacion: 'observciones del bien 1',
         integrado: 'no sé qué es esto',
-        fecha:'2024-06-14'
+        fecha:'2024-06-14',
+
     },
     {
         ficha:'2',
@@ -54,11 +57,55 @@ var bieness:Bien[]=[
 
 ].map(bien=>({...bien, fecha:new Date(bien.fecha)}))
 
+var bienMockup:Bien = {
+    ficha: '9874359875489',
+    observacion: 'observacion'
+ }
+
+interface TabPanelProps {
+    children?: React.ReactNode;
+    index: number;
+    value: number;
+  }
+
+function CustomTabPanel(props: TabPanelProps) {
+    const { children, value, index, ...other } = props;
+  
+    return (
+      <div
+        role="tabpanel"
+        hidden={value !== index}
+        id={`simple-tabpanel-${index}`}
+        aria-labelledby={`simple-tab-${index}`}
+        {...other}
+      >
+        {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      </div>
+    );
+  }
+
+  function a11yProps(index: number) {
+    return {
+      id: `simple-tab-${index}`,
+      'aria-controls': `simple-tabpanel-${index}`,
+    };
+  }
+
 function AppPrincipalOk(){
     var [menuOpened, setMenuOpened] = useState(false);
     var [subtitle, setSubtitle]= useState("");
     const [bienes, setBienes] = useState<Bien[]>([]);
+    // @ts-ignore
+    const [bien, setBien] = useState<Bien>(bienMockup);
     const [modalOpen, setModalOpen] = useState(false);
+    const [pantallaActual, setPantallaActual] = useState("listado");
+    
+    const [bienTab, setBienesTab] = React.useState(0);
+
+    // @ts-ignore
+    const handleBienesTab = (event: React.SyntheticEvent, newValue: number) => {
+        setBienesTab(newValue);
+    };
 
     useEffect(() => {
         setSubtitle('Listado de bienes')
@@ -67,6 +114,7 @@ function AppPrincipalOk(){
             setBienes(bienes.map((bien: Bien) => ({ ...bien})));
         }
         traerBienes();
+        setBien(bienMockup);
     }, []);
 
     const handleInsert = (nuevoBien: Bien) => {
@@ -76,6 +124,62 @@ function AppPrincipalOk(){
     const handleOpen = () => setModalOpen(true);
     const handleClose = () => setModalOpen(false);
 
+    const renderPantallaActual = () => {
+        switch (pantallaActual) {
+            case "listado":
+                return (
+                    <div>
+                        <TableContainer component={Paper}>
+                                <Table>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell>Ficha</TableCell>
+                                            <TableCell>Integrado</TableCell>
+                                            {/* <TableCell>Fecha</TableCell> */}
+                                            <TableCell>Observación</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {bienes.map(bien => (
+                                            <TableRow key={bien.ficha}>
+                                                <TableCell>{bien.ficha}</TableCell>
+                                                <TableCell>{bien.integrado}</TableCell>
+                                                {/* <TableCell>{bien.fecha.toLocaleDateString()}</TableCell> */}
+                                                <TableCell>{bien.observacion}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                    </div>
+                );
+            case "bien":
+                return <div>
+                    <Box sx={{ width: '100%' }}>
+                        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                            <Tabs value={bienTab} onChange={handleBienesTab} aria-label="basic tabs example">
+                            <Tab label="Item One" {...a11yProps(0)} />
+                            <Tab label="Item Two" {...a11yProps(1)} />
+                            <Tab label="Item Three" {...a11yProps(2)} />
+                            </Tabs>
+                        </Box>
+                        <CustomTabPanel value={bienTab} index={0}>
+                            
+                            <TextField id="ficha" value={bien.ficha} label="ficha" variant="standard" />
+                        </CustomTabPanel>
+                        <CustomTabPanel value={bienTab} index={1}>
+                            Item Two
+                        </CustomTabPanel>
+                        <CustomTabPanel value={bienTab} index={2}>
+                            Item Three
+                        </CustomTabPanel>
+                        </Box>
+
+                </div>;
+            default:
+                return <div>no se encontro la pantalla</div>;
+        }
+    };
 
     return <>
         <AppBar position="static">
@@ -90,7 +194,7 @@ function AppPrincipalOk(){
         </AppBar>
         <div className="pantalla">
         {/* aca va el contenido de la pantalla */}
-       
+        {renderPantallaActual()}
         </div>
         <div className="seccion-final"></div>
         <Fab color="primary" aria-label="add" onClick={handleOpen}>
@@ -107,6 +211,30 @@ function AppPrincipalOk(){
                 onKeyDown={()=>setMenuOpened(false)}
             >
                 <List>
+                    <ListItem 
+                        onClick={()=>{
+                            setMenuOpened(false);
+                        }}
+                    >
+                        <ListItemText primary="Listado" 
+                            onClick={()=>{
+
+                                setPantallaActual("listado");
+                            }}
+                        />
+                    </ListItem>
+                    <ListItem 
+                        onClick={()=>{
+                            setMenuOpened(false);
+                        }}
+                    >
+                        <ListItemText primary="Bien" 
+                            onClick={()=>{
+                                
+                                setPantallaActual("bien");
+                            }}
+                        />
+                    </ListItem>
                     <ListItem 
                         onClick={()=>{
                             setMenuOpened(false);

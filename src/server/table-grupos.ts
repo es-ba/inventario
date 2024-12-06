@@ -20,9 +20,9 @@ export function grupos(context:TableContext):TableDefinition{
             {name:'descripcion'       , typeName:'text'    }, 
         ],
         primaryKey:['grupo'],
-        foreignKeys:[
-            {references:'grupos', fields:[{source:'parent', target:'area'}], alias: 'pertenece_a'}
-        ],
+        // foreignKeys:[
+        //     {references:'grupos', fields:[{source:'parent', target:'area'}], alias: 'pertenece_a'}
+        // ],
         constraints:[
             {constraintType:'unique', fields:['grupo']}
         ],

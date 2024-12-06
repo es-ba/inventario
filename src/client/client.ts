@@ -1,6 +1,5 @@
 import { mostrarPrincipal } from '../unlogged/inventario'
 
-console.log('afsldfjasldfjasldfjsalkdjflskajfalsdjflskdjflksdj')
 var my = myOwn;
 
 // my.wScreens.prueba={
