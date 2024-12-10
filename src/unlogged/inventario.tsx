@@ -18,7 +18,14 @@ import {
     Toolbar, Typography,
     Tabs,
     Tab,
-    TextField
+    TextField,
+    //MenuItem,
+    //InputLabel,
+    //FormHelperText,
+    //FormControl,
+    //Select,
+    //NativeSelect,
+
 } from "@mui/material";
 
 import AgregarBien from "./formulario-bien";
@@ -215,6 +222,13 @@ function AppPrincipalOk(){
                         </Box>
 
                 </div>;
+                case "Comprobantes":
+                    return <div>
+                        hola
+
+
+
+                    </div>;
             default:
                 return <div>no se encontro la pantalla</div>;
         }
@@ -272,6 +286,54 @@ function AppPrincipalOk(){
                             onClick={()=>{
                                 
                                 setPantallaActual("bien");
+                            }}
+                        />
+                    </ListItem>
+                    <ListItem 
+                        onClick={()=>{
+                            setMenuOpened(false);
+                        }}
+                    >
+                        <ListItemText primary="Comprobantes" 
+                            onClick={()=>{
+                                
+                                setPantallaActual("comprobantes");
+                            }}
+                        />
+                    </ListItem>
+                    <ListItem 
+                        onClick={()=>{
+                            setMenuOpened(false);
+                        }}
+                    >
+                        <ListItemText primary="Declaraciones" 
+                            onClick={()=>{
+                                
+                                setPantallaActual("declaraciones");
+                            }}
+                        />
+                    </ListItem>
+                    <ListItem 
+                        onClick={()=>{
+                            setMenuOpened(false);
+                        }}
+                    >
+                        <ListItemText primary="Supervisión" 
+                            onClick={()=>{
+                                
+                                setPantallaActual("supervision");
+                            }}
+                        />
+                    </ListItem>
+                    <ListItem 
+                        onClick={()=>{
+                            setMenuOpened(false);
+                        }}
+                    >
+                        <ListItemText primary="Papelera recupero" 
+                            onClick={()=>{
+                                
+                                setPantallaActual("papelera");
                             }}
                         />
                     </ListItem>
