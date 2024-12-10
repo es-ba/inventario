@@ -32,6 +32,13 @@ type Bien = {
     observacion:string
     integrado?:string
     fecha?:string
+    serie: string
+    espacio:string
+    area:string
+    responsable:string
+    grupo:string
+    detalle:string
+    opciones:string
 }
 
 async function fetchBienes() {
@@ -46,21 +53,35 @@ var bieness:Bien[]=[
         observacion: 'observciones del bien 1',
         integrado: 'no sé qué es esto',
         fecha:'2024-06-14',
+        serie:'',
+        espacio:''
+
 
     },
     {
         ficha:'2',
         observacion: 'observciones del bien 3',
         integrado: 'no sé qué es esto otro',
-        fecha:'2024-06-13'
+        fecha:'2024-06-13',
+        serie:'',
+        espacio:''
     },
 
 ].map(bien=>({...bien, fecha:new Date(bien.fecha)}))
 
 var bienMockup:Bien = {
     ficha: '9874359875489',
-    observacion: 'observacion'
- }
+    observacion: 'observacion',
+    serie: "B385788",
+    espacio:"302",
+    area:"(1432) DI ADMINISTRACION",
+    responsable:"(244) DANERI, ANA",
+    grupo: "SIM",
+    detalle: "LINEA 1158236954",
+    opciones: ""
+}
+ 
+
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -160,17 +181,33 @@ function AppPrincipalOk(){
                     <Box sx={{ width: '100%' }}>
                         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                             <Tabs value={bienTab} onChange={handleBienesTab} aria-label="basic tabs example">
-                            <Tab label="Item One" {...a11yProps(0)} />
-                            <Tab label="Item Two" {...a11yProps(1)} />
-                            <Tab label="Item Three" {...a11yProps(2)} />
+                            <Tab label="Bienes Activos" {...a11yProps(0)} />
+                            <Tab label="Bienes de Baja" {...a11yProps(1)} />
+                            <Tab label="Total de Bienes" {...a11yProps(2)} />
                             </Tabs>
                         </Box>
                         <CustomTabPanel value={bienTab} index={0}>
                             
-                            <TextField id="ficha" value={bien.ficha} label="ficha" variant="standard" />
+                            <TextField id="ficha" value={bien.ficha} label="Ficha" variant="standard" />
+                            <TextField id="serie" value={bien.serie} label="Serie" variant="standard" />
+                            <TextField id="espacio" value={bien.espacio} label="Espacio" variant="standard" />
+                            <TextField id="area" value={bien.area} label="Área" variant="standard" />
+                            <TextField id="responsable" value={bien.responsable} label="Responsable" variant="standard" />
+                            <TextField id="grupo" value={bien.grupo} label="Grupo" variant="standard" />
+                            <TextField id="detalles" value={bien.detalle} label="Detalles" variant="standard" />
+                            <TextField id="opciones" value={bien.opciones} label="Opciones" variant="standard" />
+                       
                         </CustomTabPanel>
                         <CustomTabPanel value={bienTab} index={1}>
-                            Item Two
+                        <TextField id="ficha" value={bien.ficha} label="Ficha" variant="standard" />
+                            <TextField id="serie" value={bien.serie} label="Serie" variant="standard" />
+                            <TextField id="espacio" value={bien.espacio} label="Espacio" variant="standard" />
+                            <TextField id="area" value={bien.area} label="Área" variant="standard" />
+                            <TextField id="responsable" value={bien.responsable} label="Responsable" variant="standard" />
+                            <TextField id="grupo" value={bien.grupo} label="Grupo" variant="standard" />
+                            <TextField id="detalles" value={bien.detalle} label="Detalles" variant="standard" />
+                            <TextField id="opciones" value={bien.opciones} label="Opciones" variant="standard" />
+                       
                         </CustomTabPanel>
                         <CustomTabPanel value={bienTab} index={2}>
                             Item Three
