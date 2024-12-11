@@ -19,6 +19,8 @@ import {
     Tabs,
     Tab,
     TextField,
+    //Autocomplete,
+    //createFilterOptions,
     //MenuItem,
     //InputLabel,
     //FormHelperText,
@@ -29,6 +31,8 @@ import {
 } from "@mui/material";
 
 import AgregarBien from "./formulario-bien";
+// @ts-ignore
+import AgregarComprobante from "./formulario-comprobante";
 
 
 // @ts-ignore 
@@ -47,6 +51,7 @@ type Bien = {
     detalle:string
     opciones:string
 }
+
 
 async function fetchBienes() {
     const response = await my.ajax.traer_bienes();
@@ -87,6 +92,7 @@ var bienMockup:Bien = {
     detalle: "LINEA 1158236954",
     opciones: ""
 }
+
  
 
 
@@ -152,6 +158,7 @@ function AppPrincipalOk(){
 
     const handleOpen = () => setModalOpen(true);
     const handleClose = () => setModalOpen(false);
+    
 
     // metodo para mostrar en 'pantalla' en base al valor de pantallaActual
     const renderPantallaActual = () => {
@@ -194,6 +201,8 @@ function AppPrincipalOk(){
                             </Tabs>
                         </Box>
                         <CustomTabPanel value={bienTab} index={0}>
+                        
+
                             
                             <TextField id="ficha" value={bien.ficha} label="Ficha" variant="standard" />
                             <TextField id="serie" value={bien.serie} label="Serie" variant="standard" />
@@ -224,7 +233,9 @@ function AppPrincipalOk(){
                 </div>;
                 case "Comprobantes":
                     return <div>
-                        hola
+                     
+                    
+                        
 
 
 
