@@ -10,6 +10,6 @@
     },
     "include":[
         "."
-, "../client/inventario.tsx"    ],
+    ],
     "extends": "../../tsconfig-common.json"
 }
