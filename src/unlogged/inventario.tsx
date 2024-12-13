@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { useEffect, useState } from "react";
+//import './style.styl';
 
 import {
     AppBar, Box, Fab, IconButton,
@@ -201,7 +202,7 @@ function AppPrincipalOk(){
                             </Tabs>
                         </Box>
                         <CustomTabPanel value={bienTab} index={0}>
-                            
+                            <div><h6>Filtros de busqueda</h6></div>
                             <TextField id="ficha" value={bien.ficha} label="Ficha" variant="standard" />
                             <TextField id="serie" value={bien.serie} label="Serie" variant="standard" />
                             <TextField id="espacio" value={bien.espacio} label="Espacio" variant="standard" />
@@ -213,6 +214,7 @@ function AppPrincipalOk(){
                        
                         </CustomTabPanel>
                         <CustomTabPanel value={bienTab} index={1}>
+                        <div><h6>Filtros de busqueda</h6></div>
                         <TextField id="ficha" value={bien.ficha} label="Ficha" variant="standard" />
                             <TextField id="serie" value={bien.serie} label="Serie" variant="standard" />
                             <TextField id="espacio" value={bien.espacio} label="Espacio" variant="standard" />
@@ -266,7 +268,7 @@ function AppPrincipalOk(){
         </div>
         <div className="seccion-final"></div>
         <Fab color="primary" aria-label="add" onClick={handleOpen}>
-
+        <div style={{ fontSize: '24px' }}>+</div>
         </Fab>
         
         <SwipeableDrawer  
