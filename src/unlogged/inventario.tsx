@@ -18,10 +18,21 @@ import {
     Toolbar, Typography,
     Tabs,
     Tab,
-    TextField
+    TextField,
+    //Autocomplete,
+    //createFilterOptions,
+    //MenuItem,
+    //InputLabel,
+    //FormHelperText,
+    //FormControl,
+    //Select,
+    //NativeSelect,
+
 } from "@mui/material";
 
 import AgregarBien from "./formulario-bien";
+// @ts-ignore
+import AgregarComprobante from "./formulario-comprobante";
 
 
 // @ts-ignore 
@@ -32,7 +43,15 @@ type Bien = {
     observacion:string
     integrado?:string
     fecha?:string
+    serie: string
+    espacio:string
+    area:string
+    responsable:string
+    grupo:string
+    detalle:string
+    opciones:string
 }
+
 
 async function fetchBienes() {
     const response = await my.ajax.traer_bienes();
@@ -46,21 +65,36 @@ var bieness:Bien[]=[
         observacion: 'observciones del bien 1',
         integrado: 'no sé qué es esto',
         fecha:'2024-06-14',
+        serie:'',
+        espacio:''
+
 
     },
     {
         ficha:'2',
         observacion: 'observciones del bien 3',
         integrado: 'no sé qué es esto otro',
-        fecha:'2024-06-13'
+        fecha:'2024-06-13',
+        serie:'',
+        espacio:''
     },
 
 ].map(bien=>({...bien, fecha:new Date(bien.fecha)}))
 
 var bienMockup:Bien = {
     ficha: '9874359875489',
-    observacion: 'observacion'
- }
+    observacion: 'observacion',
+    serie: "B385788",
+    espacio:"302",
+    area:"(1432) DI ADMINISTRACION",
+    responsable:"(244) DANERI, ANA",
+    grupo: "SIM",
+    detalle: "LINEA 1158236954",
+    opciones: ""
+}
+
+ 
+
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -124,6 +158,7 @@ function AppPrincipalOk(){
 
     const handleOpen = () => setModalOpen(true);
     const handleClose = () => setModalOpen(false);
+    
 
     // metodo para mostrar en 'pantalla' en base al valor de pantallaActual
     const renderPantallaActual = () => {
@@ -160,27 +195,33 @@ function AppPrincipalOk(){
                     <Box sx={{ width: '100%' }}>
                         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                             <Tabs value={bienTab} onChange={handleBienesTab} aria-label="basic tabs example">
-                            <Tab label="Formulario" {...a11yProps(0)} />
-                            <Tab label="Adjuntos" {...a11yProps(1)} />
-                            <Tab label="Movimientos" {...a11yProps(2)} />
-                            <Tab label="Componentes" {...a11yProps(3)} />
-                            <Tab label="Auditorías" {...a11yProps(4)} />
+                            <Tab label="Bienes Activos" {...a11yProps(0)} />
+                            <Tab label="Bienes de Baja" {...a11yProps(1)} />
+                            <Tab label="Total de Bienes" {...a11yProps(2)} />
                             </Tabs>
                         </Box>
                         <CustomTabPanel value={bienTab} index={0}>
-                              <TextField className="numero-ficha" id="ficha" value={bien.ficha} variant="standard" 
-                              sx={{
-                                backgroundColor: '#f0f0f0', // Fondo gris claro
-                                borderRadius: '20px', // Bordes redondeados
-                                padding: '4px 8px', // Espaciado interno
-                                '& .MuiInputBase-root': {
-                                  borderRadius: '20px', // También redondear el input interno
-                                },
-                              }}
-                              />
+                            
+                            <TextField id="ficha" value={bien.ficha} label="Ficha" variant="standard" />
+                            <TextField id="serie" value={bien.serie} label="Serie" variant="standard" />
+                            <TextField id="espacio" value={bien.espacio} label="Espacio" variant="standard" />
+                            <TextField id="area" value={bien.area} label="Área" variant="standard" />
+                            <TextField id="responsable" value={bien.responsable} label="Responsable" variant="standard" />
+                            <TextField id="grupo" value={bien.grupo} label="Grupo" variant="standard" />
+                            <TextField id="detalles" value={bien.detalle} label="Detalles" variant="standard" />
+                            <TextField id="opciones" value={bien.opciones} label="Opciones" variant="standard" />
+                       
                         </CustomTabPanel>
                         <CustomTabPanel value={bienTab} index={1}>
-                           Adjuntos
+                        <TextField id="ficha" value={bien.ficha} label="Ficha" variant="standard" />
+                            <TextField id="serie" value={bien.serie} label="Serie" variant="standard" />
+                            <TextField id="espacio" value={bien.espacio} label="Espacio" variant="standard" />
+                            <TextField id="area" value={bien.area} label="Área" variant="standard" />
+                            <TextField id="responsable" value={bien.responsable} label="Responsable" variant="standard" />
+                            <TextField id="grupo" value={bien.grupo} label="Grupo" variant="standard" />
+                            <TextField id="detalles" value={bien.detalle} label="Detalles" variant="standard" />
+                            <TextField id="opciones" value={bien.opciones} label="Opciones" variant="standard" />
+                       
                         </CustomTabPanel>
                         <CustomTabPanel value={bienTab} index={2}>
                             Movimientos
@@ -194,6 +235,15 @@ function AppPrincipalOk(){
                         </Box>
 
                 </div>;
+                case "Comprobantes":
+                    return <div>
+                     
+                    
+                        
+
+
+
+                    </div>;
             default:
                 return <div>no se encontro la pantalla</div>;
         }
@@ -251,6 +301,54 @@ function AppPrincipalOk(){
                             onClick={()=>{
                                 
                                 setPantallaActual("bien");
+                            }}
+                        />
+                    </ListItem>
+                    <ListItem 
+                        onClick={()=>{
+                            setMenuOpened(false);
+                        }}
+                    >
+                        <ListItemText primary="Comprobantes" 
+                            onClick={()=>{
+                                
+                                setPantallaActual("comprobantes");
+                            }}
+                        />
+                    </ListItem>
+                    <ListItem 
+                        onClick={()=>{
+                            setMenuOpened(false);
+                        }}
+                    >
+                        <ListItemText primary="Declaraciones" 
+                            onClick={()=>{
+                                
+                                setPantallaActual("declaraciones");
+                            }}
+                        />
+                    </ListItem>
+                    <ListItem 
+                        onClick={()=>{
+                            setMenuOpened(false);
+                        }}
+                    >
+                        <ListItemText primary="Supervisión" 
+                            onClick={()=>{
+                                
+                                setPantallaActual("supervision");
+                            }}
+                        />
+                    </ListItem>
+                    <ListItem 
+                        onClick={()=>{
+                            setMenuOpened(false);
+                        }}
+                    >
+                        <ListItemText primary="Papelera recupero" 
+                            onClick={()=>{
+                                
+                                setPantallaActual("papelera");
                             }}
                         />
                     </ListItem>

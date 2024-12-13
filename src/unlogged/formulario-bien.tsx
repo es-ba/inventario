@@ -14,6 +14,13 @@ type Bien = {
     observacion:string
     integrado:string
     fecha:string
+    serie:string
+    espacio:string
+    area:string
+    responsable:string
+    grupo:string
+    detalle: string
+    opciones:string
 }
 
 type AgregarBienProps = {
@@ -25,7 +32,14 @@ function AgregarBien({ onInsert }: AgregarBienProps) {
         ficha: "",
         observacion: "",
         integrado: "",
-        fecha: ""
+        fecha: "",
+        serie:"",
+        espacio:"",
+        area:"",
+        responsable:"",
+        grupo:"",
+        detalle:"",
+        opciones:"",
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
