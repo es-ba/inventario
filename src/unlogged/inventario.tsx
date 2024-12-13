@@ -160,20 +160,36 @@ function AppPrincipalOk(){
                     <Box sx={{ width: '100%' }}>
                         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                             <Tabs value={bienTab} onChange={handleBienesTab} aria-label="basic tabs example">
-                            <Tab label="Item One" {...a11yProps(0)} />
-                            <Tab label="Item Two" {...a11yProps(1)} />
-                            <Tab label="Item Three" {...a11yProps(2)} />
+                            <Tab label="Formulario" {...a11yProps(0)} />
+                            <Tab label="Adjuntos" {...a11yProps(1)} />
+                            <Tab label="Movimientos" {...a11yProps(2)} />
+                            <Tab label="Componentes" {...a11yProps(3)} />
+                            <Tab label="Auditorías" {...a11yProps(4)} />
                             </Tabs>
                         </Box>
                         <CustomTabPanel value={bienTab} index={0}>
-                            
-                            <TextField id="ficha" value={bien.ficha} label="ficha" variant="standard" />
+                              <TextField className="numero-ficha" id="ficha" value={bien.ficha} variant="standard" 
+                              sx={{
+                                backgroundColor: '#f0f0f0', // Fondo gris claro
+                                borderRadius: '20px', // Bordes redondeados
+                                padding: '4px 8px', // Espaciado interno
+                                '& .MuiInputBase-root': {
+                                  borderRadius: '20px', // También redondear el input interno
+                                },
+                              }}
+                              />
                         </CustomTabPanel>
                         <CustomTabPanel value={bienTab} index={1}>
-                            Item Two
+                           Adjuntos
                         </CustomTabPanel>
                         <CustomTabPanel value={bienTab} index={2}>
-                            Item Three
+                            Movimientos
+                        </CustomTabPanel>
+                        <CustomTabPanel value={bienTab} index={3}>
+                            Componentes
+                        </CustomTabPanel>
+                        <CustomTabPanel value={bienTab} index={4}>
+                            Auditorías
                         </CustomTabPanel>
                         </Box>
 
