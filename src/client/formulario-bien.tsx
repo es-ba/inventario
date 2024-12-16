@@ -66,10 +66,8 @@ function AgregarBien({ onInsert }: AgregarBienProps) {
                     margin="normal"
                 />
                 <TextField
-                    label="Observación"
-                    name="observacion"
-                    value={formValues.observacion}
-                    onChange={handleChange}
+                    label="PRD"
+                    name="prd"
                     fullWidth
                     margin="normal"
                 />
@@ -77,6 +75,20 @@ function AgregarBien({ onInsert }: AgregarBienProps) {
                     label="Integrado"
                     name="integrado"
                     value={formValues.integrado}
+                    onChange={handleChange}
+                    fullWidth
+                    margin="normal"
+                />
+                <TextField
+                    label="Clasificación"
+                    name="clasificacion"
+                    fullWidth
+                    margin="normal"
+                />
+                <TextField
+                    label="Observación"
+                    name="observacion"
+                    value={formValues.observacion}
                     onChange={handleChange}
                     fullWidth
                     margin="normal"
