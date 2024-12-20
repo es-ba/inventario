@@ -32,6 +32,7 @@ import {
 
 import AgregarBien from "./formulario-bien";
 
+
 import _AgregarComprobante from "./formulario-comprobante";
 
 // @ts-ignore 
@@ -195,12 +196,34 @@ function AppPrincipalOk(){
                         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                             <Tabs value={bienTab} onChange={handleBienesTab} aria-label="basic tabs example">
                             <Tab label="Bienes Activos" {...a11yProps(0)} />
-                            <Tab label="Bienes de Baja" {...a11yProps(1)} />
+                            <Tab label="Bienes en Baja" {...a11yProps(1)} />
                             <Tab label="Total de Bienes" {...a11yProps(2)} />
                             </Tabs>
                         </Box>
                         <CustomTabPanel value={bienTab} index={0}>
-                            <div><h6>Filtros de busqueda</h6></div>
+                        {/* AGREGUE ESTOS TEXT FIELD SEGURO HAYA QUE HACERLO MEJOR */}
+                            <div><h6 style={{ marginTop:'auto', marginBottom: '2px', color: '#474747' }}>Filtros de busqueda</h6></div>
+                            <div style={{ marginBottom: '30px' }}>
+                                <TextField label="Seleccionar filtro" name="filtro" margin="normal"/>
+                                <TextField style={{ marginLeft: '20px' }} label="Agregar filtro" name="filtro-busqueda" margin="normal"/>
+                            </div>
+                            <div>
+                            <TextField id="ficha" value={bien.ficha} label="Ficha" variant="standard" />
+                            <TextField id="serie" value={bien.serie} label="Serie" variant="standard" />
+                            <TextField id="espacio" value={bien.espacio} label="Espacio" variant="standard" />
+                            <TextField id="area" value={bien.area} label="Área" variant="standard" />
+                            <TextField id="responsable" value={bien.responsable} label="Responsable" variant="standard" />
+                            <TextField id="grupo" value={bien.grupo} label="Grupo" variant="standard" />
+                            <TextField id="detalles" value={bien.detalle} label="Detalles" variant="standard" />
+                            <TextField id="opciones" value={bien.opciones} label="Opciones" variant="standard" />
+                            </div>
+                        </CustomTabPanel>
+                        <CustomTabPanel value={bienTab} index={1}>
+                            <div><h6 style={{ marginTop:'auto', marginBottom: '2px', color: '#474747' }}>Filtros de busqueda</h6></div>
+                            <div style={{ marginBottom: '30px' }}>
+                                <TextField label="Seleccionar filtro" name="filtro" margin="normal"/>
+                                <TextField style={{ marginLeft: '20px' }} label="Agregar filtro" name="filtro-busqueda" margin="normal"/>
+                            </div>
                             <TextField id="ficha" value={bien.ficha} label="Ficha" variant="standard" />
                             <TextField id="serie" value={bien.serie} label="Serie" variant="standard" />
                             <TextField id="espacio" value={bien.espacio} label="Espacio" variant="standard" />
@@ -211,26 +234,8 @@ function AppPrincipalOk(){
                             <TextField id="opciones" value={bien.opciones} label="Opciones" variant="standard" />
                        
                         </CustomTabPanel>
-                        <CustomTabPanel value={bienTab} index={1}>
-                        <div><h6>Filtros de busqueda</h6></div>
-                        <TextField id="ficha" value={bien.ficha} label="Ficha" variant="standard" />
-                            <TextField id="serie" value={bien.serie} label="Serie" variant="standard" />
-                            <TextField id="espacio" value={bien.espacio} label="Espacio" variant="standard" />
-                            <TextField id="area" value={bien.area} label="Área" variant="standard" />
-                            <TextField id="responsable" value={bien.responsable} label="Responsable" variant="standard" />
-                            <TextField id="grupo" value={bien.grupo} label="Grupo" variant="standard" />
-                            <TextField id="detalles" value={bien.detalle} label="Detalles" variant="standard" />
-                            <TextField id="opciones" value={bien.opciones} label="Opciones" variant="standard" />
-                       
-                        </CustomTabPanel>
                         <CustomTabPanel value={bienTab} index={2}>
-                            Movimientos
-                        </CustomTabPanel>
-                        <CustomTabPanel value={bienTab} index={3}>
-                            Componentes
-                        </CustomTabPanel>
-                        <CustomTabPanel value={bienTab} index={4}>
-                            Auditorías
+                           
                         </CustomTabPanel>
                         </Box>
 
