@@ -5,7 +5,6 @@ import { AppBackend, ExpressPlus, Context, Request,
 } from "./types-principal";
 
 import * as MiniTools from 'mini-tools';
-//import {json} from 'pg-promise-strict';
 
 import {ProceduresInventario} from "./procedures-principal";
 
@@ -15,7 +14,7 @@ import { usuarios   } from './table-usuarios';
 import { grupos } from './table-grupos';
 
 import {staticConfigYaml} from './def-config';
-
+import * as express from "express";
 export class AppInventario extends AppBackend{
     constructor(){
         super();
@@ -32,12 +31,32 @@ export class AppInventario extends AppBackend{
         if(baseUrl=='/'){
             baseUrl='';
         }   
-        mainApp.get(baseUrl+'/main',async function(req,res,_next){
+        const reactBasePath = '/react';
+        const reactRouter = express.Router();
+        reactRouter.get('/',async function(req,res,_next){
             // @ts-ignore useragent existe
-            var {useragent} = req;
-            var htmlMain=be.mainPage({useragent}, false, {skipMenu:true}).toHtmlDoc();
-            MiniTools.serveText(htmlMain,'html')(req,res);
+            const {useragent, user} = req;
+            if(user){
+                var htmlMain=be.mainPage(
+                    {useragent}, 
+                    false, 
+                    {
+                        skipMenu:false, 
+                        extraFiles: [{
+                            type:'js',
+                            src:'client/client-bundle.js'
+                        }],
+                        baseUrlForRelativePaths:true
+                    }
+                );
+                MiniTools.serveText(htmlMain.toHtmlDoc(), 'html')(req,res);
+            }else{
+                res.redirect(baseUrl+`/login#w=path&path=/react`)
+            }
         });
+        mainApp.use(`${baseUrl}${reactBasePath}/*`, reactRouter);
+        mainApp.use(`${baseUrl}${reactBasePath}`, reactRouter);
+
         super.addSchrödingerServices(mainApp, baseUrl);
     }
     override addUnloggedServices(mainApp:ExpressPlus, baseUrl:string){
@@ -89,7 +108,7 @@ export class AppInventario extends AppBackend{
     }
     override clientIncludes(req:Request|null, opts:OptsClientPage):ClientModuleDefinition[]{
         var menuedResources:ClientModuleDefinition[]=req && opts && !opts.skipMenu ? [
-            { type:'js' , src:'client/client-bundle.js' },
+            {type:'js' , src:'client/client.js' },
         ]:[
             {type:'js' , src:'unlogged.js' },
         ];

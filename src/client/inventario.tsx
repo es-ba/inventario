@@ -1,6 +1,7 @@
 import * as React from "react";
 import { createRoot } from 'react-dom/client';
 import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, Link} from 'react-router-dom';
 import {
     AppBar, Box, Fab, IconButton,
     // Link,
@@ -30,9 +31,8 @@ import {
 } from "@mui/material";
 
 import AgregarBien from "./formulario-bien";
-// @ts-ignore
-import AgregarComprobante from "./formulario-comprobante";
 
+import _AgregarComprobante from "./formulario-comprobante";
 
 // @ts-ignore 
 var my=myOwn;
@@ -400,9 +400,19 @@ class DmCaptureError extends React.Component<
 }
 
 function AppPrincipal(){
+    //@ts-ignore
+    const baseUrl = "/inventario";
     return <DmCaptureError>
-        <AppPrincipalOk />
-        <DataGrid rows={rows} columns={columns} />
+        <BrowserRouter>
+            <nav>
+                <Link to={`${baseUrl}/react`}>Home</Link>
+                <Link to={`${baseUrl}/react/grid`}>grid</Link>
+            </nav>
+            <Routes>
+                <Route path={`${baseUrl}/react`} element={<AppPrincipalOk />} />
+                <Route path={`${baseUrl}/react/grid`} element={<DataGrid rows={rows} columns={columns}/>} />
+            </Routes>
+        </BrowserRouter>
     </DmCaptureError>
 }
 
@@ -423,7 +433,7 @@ const columns: GridColDef[] = [
 
 export function mostrarPrincipal(){
     document.documentElement.setAttribute('letra','chica');
-    const domNode = document.getElementById('main_layout')!;
+    const domNode = document.getElementById('total-layout')!;
     const root = createRoot(domNode);
     root.render(<AppPrincipal />);
 }

@@ -1,9 +1,10 @@
 const path = require('path');
 
 module.exports = {
+    devtool:'source-map',
     mode: 'development',
     entry: {
-        client: './dist/client/client.js',
+        client: './dist/client/index.js',
         //unlogged:'./dist/unlogged/unlogged.js',
     },
     output: {
