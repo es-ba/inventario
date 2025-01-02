@@ -175,12 +175,18 @@ function ListadoBienes(){
         //declaracion de las columnas, nombrres de campos y tipos
       const columns: GridColDef[] = [
         { field: 'ficha', headerName: 'Ficha' },
-        { field: 'col2', headerName: 'Column 2' },
+        { field: 'serie', headerName: 'Serie' },
+        { field: 'espacio', headerName: 'Espacio' },
+        { field: 'area', headerName: 'Área' },
+        { field: 'responsable', headerName: 'Responsable' },
+        { field: 'grupo', headerName: 'Grupo' },
+        { field: 'detalle', headerName: 'Detalle' },
+        { field: 'opciones', headerName: 'Opciones' },
       ];
       
       // valores de los bienes
       const rows: GridRowsProp = [
-        { id: 1, col1: 'Hello', col2: 'World' },
+        {id :1 , ficha: '9874359875489', serie: 'B385788', espacio: '302', area:"(1432) DI ADMINISTRACION", responsable: "(244) DANERI, ANA", grupo: "SIM", detalle:"LINEA 1158236954", opciones:"", },
       ];
       
 
@@ -569,7 +575,7 @@ function AppPrincipal(){
                     </nav> */}
                 <Routes>
                     <Route path={`${baseUrl}/react`} element={<ListadoBienes />} />
-                    <Route path={`${baseUrl}/react/grid`} element={<DataGrid rows={rows} columns={columns}/>} />
+                    {/* {<Route path={`${baseUrl}/react/grid`} element={<DataGrid rows={rows} columns={columns}/>} /> } */}
                 </Routes>
                 </BrowserRouter>       
         </DmCaptureError>
