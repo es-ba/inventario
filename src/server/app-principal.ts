@@ -114,7 +114,7 @@ export class AppInventario extends AppBackend{
         ];
         var list: ClientModuleDefinition[] = [
             ...super.clientIncludes(req, opts),
-            { type: 'css', file: 'inventario.css' },
+            //{ type: 'css', file: 'inventario.css' },
             { type: 'css', file: 'menu.css' },
             ... menuedResources
         ] satisfies ClientModuleDefinition[];
