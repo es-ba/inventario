@@ -43,9 +43,6 @@ export function areas(context:TableContext):TableDefinition{
             {name:'fecha_recibido'                      , typeName:'text'    },
         ],
         primaryKey:['orden_compra'],
-        foreignKeys:[
-            {references:'ordenes_compra', fields:[{source:'parent', target:'orden_compra'}]}
-        ],
         constraints:[
             {constraintType:'unique', fields:['orden_compra']}
         ],

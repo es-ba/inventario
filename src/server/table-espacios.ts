@@ -29,9 +29,6 @@ export function areas(context:TableContext):TableDefinition{
             {name:'sede'                , typeName:'text'    },
         ],
         primaryKey:['espacio'],
-        foreignKeys:[
-            {references:'espacios', fields:[{source:'parent', target:'espacio'}]}
-        ],
         constraints:[
             {constraintType:'unique', fields:['espacio']}
         ],

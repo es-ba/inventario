@@ -25,9 +25,6 @@ export function grupos(context:TableContext):TableDefinition{
             {name:'usuario'                 , typeName:'text'    },
         ],
         primaryKey:['responsable'],
-        // foreignKeys:[
-        //     {references:'grupos', fields:[{source:'parent', target:'area'}], alias: 'pertenece_a'}
-        // ],
         constraints:[
             {constraintType:'unique', fields:['responsable']}
         ],
