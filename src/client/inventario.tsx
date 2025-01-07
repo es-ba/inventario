@@ -147,6 +147,7 @@ function CustomTabPanel(props: TabPanelProps) {
 // @ts-ignore
 function ListadoBienes(){
     const [bienes, setBienes] = useState<Bien[]>([]);
+    // @ts-ignore
     const [bien, setBien] = useState<Bien>(bienMockup);
     const [modalOpen, setModalOpen] = useState(false);
     const [bienTab, setBienesTab] = React.useState(0);
@@ -187,6 +188,8 @@ function ListadoBienes(){
       // valores de los bienes
       const rows: GridRowsProp = [
         {id :1 , ficha: '9874359875489', serie: 'B385788', espacio: '302', area:"(1432) DI ADMINISTRACION", responsable: "(244) DANERI, ANA", grupo: "SIM", detalle:"LINEA 1158236954", opciones:"", },
+        {id :2 , ficha: '9874359875489', serie: 'B385788', espacio: '302', area:"(1432) DI ADMINISTRACION", responsable: "(244) DANERI, ANA", grupo: "SIM", detalle:"LINEA 1158236954", opciones:"", },
+        {id :3 , ficha: '9874359875489', serie: 'B385788', espacio: '302', area:"(1432) DI ADMINISTRACION", responsable: "(244) DANERI, ANA", grupo: "SIM", detalle:"LINEA 1158236954", opciones:"", },
       ];
       
 
@@ -217,14 +220,10 @@ function ListadoBienes(){
                     <TextField label="Seleccionar filtro" name="filtro" margin="normal"/>
                     <TextField style={{ marginLeft: '20px' }} label="Agregar filtro" name="filtro-busqueda" margin="normal"/>
                 </div>
-                <TextField id="ficha" value={bien.ficha} label="Ficha" variant="standard" />
-                <TextField id="serie" value={bien.serie} label="Serie" variant="standard" />
-                <TextField id="espacio" value={bien.espacio} label="Espacio" variant="standard" />
-                <TextField id="area" value={bien.area} label="Área" variant="standard" />
-                <TextField id="responsable" value={bien.responsable} label="Responsable" variant="standard" />
-                <TextField id="grupo" value={bien.grupo} label="Grupo" variant="standard" />
-                <TextField id="detalles" value={bien.detalle} label="Detalles" variant="standard" />
-                <TextField id="opciones" value={bien.opciones} label="Opciones" variant="standard" />
+                <div>
+                <DataGrid rows={rows} columns={columns}/>
+                </div>
+              
             
             </CustomTabPanel>
             <CustomTabPanel value={bienTab} index={2}>
