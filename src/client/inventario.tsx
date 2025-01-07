@@ -147,6 +147,7 @@ function CustomTabPanel(props: TabPanelProps) {
 // @ts-ignore
 function ListadoBienes(){
     const [bienes, setBienes] = useState<Bien[]>([]);
+    // @ts-ignore
     const [bien, setBien] = useState<Bien>(bienMockup);
     const [modalOpen, setModalOpen] = useState(false);
     const [bienTab, setBienesTab] = React.useState(0);
@@ -187,6 +188,8 @@ function ListadoBienes(){
       // valores de los bienes
       const rows: GridRowsProp = [
         {id :1 , ficha: '9874359875489', serie: 'B385788', espacio: '302', area:"(1432) DI ADMINISTRACION", responsable: "(244) DANERI, ANA", grupo: "SIM", detalle:"LINEA 1158236954", opciones:"", },
+        {id :2 , ficha: '9874359875489', serie: 'B385788', espacio: '302', area:"(1432) DI ADMINISTRACION", responsable: "(244) DANERI, ANA", grupo: "SIM", detalle:"LINEA 1158236954", opciones:"", },
+        {id :3 , ficha: '9874359875489', serie: 'B385788', espacio: '302', area:"(1432) DI ADMINISTRACION", responsable: "(244) DANERI, ANA", grupo: "SIM", detalle:"LINEA 1158236954", opciones:"", },
       ];
       
 
@@ -253,6 +256,11 @@ function ListadoBienes(){
         <span className="mdi mdi-eye"></span>
         </IconButton>
     </div>
+                <div>
+                <DataGrid rows={rows} columns={columns}/>
+                </div>
+              
+            
             </CustomTabPanel>
             <CustomTabPanel value={bienTab} index={2}>
 
