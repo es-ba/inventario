@@ -34,12 +34,12 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
 // aca se importan y asigna la paleta de colores para los temas, es un array con el hue y el shade en el indice
-import { purple } from '@mui/material/colors';
+import { indigo } from '@mui/material/colors';
 
 const theme = createTheme({
   palette: {
     primary: {
-        main: purple[500]
+        main: indigo [400]
     },
     secondary: {
         //o directamente
@@ -215,7 +215,20 @@ function ListadoBienes(){
                 <div><h6 style={{ marginTop:'auto', marginBottom: '2px', color: '#474747' }}>Filtros de busqueda</h6></div>
                 <div style={{ marginBottom: '30px' }}>
                     <TextField label="Seleccionar filtro" name="filtro" margin="normal"/>
-                    <TextField style={{ marginLeft: '20px' }} label="Agregar filtro" name="filtro-busqueda" margin="normal"/>
+                    {/* <TextField style={{ marginLeft: '20px' }} label="Agregar filtro" name="filtro-busqueda" margin="normal"/> */}
+                    <TextField
+                    style={{ marginLeft: '20px' }}
+                    label="Agregar filtro de busqueda"
+                    name="filtro-busqueda"
+                    margin="normal"
+                    InputProps={{
+                    startAdornment: (
+            <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginRight: '8px' }}>
+                <span className="mdi mdi-magnify" style={{ fontSize: '24px'}}></span>
+            </div>
+        ),
+    }}
+/>
                 </div>
                 <TextField id="ficha" value={bien.ficha} label="Ficha" variant="standard" />
                 <TextField id="serie" value={bien.serie} label="Serie" variant="standard" />
@@ -224,11 +237,25 @@ function ListadoBienes(){
                 <TextField id="responsable" value={bien.responsable} label="Responsable" variant="standard" />
                 <TextField id="grupo" value={bien.grupo} label="Grupo" variant="standard" />
                 <TextField id="detalles" value={bien.detalle} label="Detalles" variant="standard" />
-                <TextField id="opciones" value={bien.opciones} label="Opciones" variant="standard" />
-            
+                {/* <TextField id="opciones" value={bien.opciones} label="Opciones" variant="standard" /> */}
+                <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px' }}>
+        <TextField 
+            id="opciones" 
+            value={bien.opciones} 
+            label="Opciones" 
+            variant="standard" 
+            style={{ flexGrow: 1 }}
+        />
+        <IconButton>
+        <span className="mdi mdi-pencil"></span>
+        </IconButton>
+        <IconButton>
+        <span className="mdi mdi-eye"></span>
+        </IconButton>
+    </div>
             </CustomTabPanel>
             <CustomTabPanel value={bienTab} index={2}>
-                
+
             </CustomTabPanel>
             </Box>
             </div>
