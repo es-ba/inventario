@@ -17,7 +17,7 @@
 
 import {TableDefinition, TableContext} from "./types-principal";
 
-export function areas(context:TableContext):TableDefinition{
+export function ordenescompra(context:TableContext):TableDefinition{
     var admin = context.user.rol==='admin';
     var responsable = context.user.rol==='responsable';
     return {

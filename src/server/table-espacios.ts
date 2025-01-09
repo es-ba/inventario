@@ -10,14 +10,13 @@
 
 import {TableDefinition, TableContext} from "./types-principal";
 
-export function areas(context:TableContext):TableDefinition{
+export function espacios(context:TableContext):TableDefinition{
     var admin = context.user.rol==='admin';
-    var responsable = context.user.rol==='responsable';
     return {
         name:'espacios',
         elementName:'espacio', 
         title:'espacio', // solo si es distinto al "name", si es igual se puede omitir
-        editable:admin || responsable,
+        editable:admin,
         fields:[
             {name:'espacio'             , typeName:'text'    }, 
             {name:'numero'              , typeName:'text'    },  
@@ -29,6 +28,11 @@ export function areas(context:TableContext):TableDefinition{
             {name:'sede'                , typeName:'text'    },
         ],
         primaryKey:['espacio'],
+        foreignKeys:[
+            {references:'responsables', fields:['responsable']},
+            {references:'areas', fields:['area']},
+            {references:'sedes', fields:['sede']}
+        ],
         constraints:[
             {constraintType:'unique', fields:['espacio']}
         ],

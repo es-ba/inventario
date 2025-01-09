@@ -48,45 +48,44 @@ export function auditorias(context:TableContext):TableDefinition{
         title:'auditorias', // solo si es distinto al "name", si es igual se puede omitir
         editable:admin || responsable,
         fields:[
-            {name:'bien'                          , typeName:'text'    }, 
-            {name:'responsable'                   , typeName:'text'    }, 
-            {name:'orden_compra'                  , typeName:'text'    },
-            {name:'ubicacion'                     , typeName:'text'    },
-            {name:'observaciones'                 , typeName:'text'    },
-            {name:'detalle'                       , typeName:'text'    },
-            {name:'prd'                           , typeName:'text'    },
-            {name:'anio'                          , typeName:'text'    },
-            {name:'importe'                       , typeName:'text'    },
-            {name:'clasificacion'                 , typeName:'text'    },
-            {name:'tipo'                          , typeName:'text'    },
-            {name:'ficha'                         , typeName:'text'    },
-            {name:'estado'                        , typeName:'text'    },
-            {name:'rubro'                         , typeName:'text'    },
-            {name:'grupo'                         , typeName:'text'    },
-            {name:'marca'                         , typeName:'text'    },
-            {name:'serie'                         , typeName:'text'    },
-            {name:'imei'                          , typeName:'text'    },
-            {name:'modelo'                        , typeName:'text'    },
-            {name:'auditoria_usuario'             , typeName:'text'    },
-            {name:'auditoria_usuario_nombre'      , typeName:'text'    },
-            {name:'auditoria_fecha'               , typeName:'text'    },
-            {name:'auditoria_accion'              , typeName:'text'    },
-            {name:'auditoria_observaciones'       , typeName:'text'    },
-            {name:'caracter_identificador'        , typeName:'text'    },
-            {name:'numero_integrado'              , typeName:'text'    },
-            {name:'espacio'                       , typeName:'text'    },
-
+            {name:'ficha'                       , typeName:'text'    }, 
+            {name:'integrado'                   , typeName:'text'    }, 
+            {name:'ubicacion'                   , typeName:'text'    },
+            {name:'observacion'                 , typeName:'text'    },
+            {name:'detalle'                     , typeName:'text'    },
+            {name:'importe'                     , typeName:'text'    , nullable:true},
+            {name:'importetotal'                , typeName:'text'    , nullable:true},//solo importe
+            {name:'tipo_bien'                   , typeName:'text'    },//fk
+            {name:'estado'                      , typeName:'text'    , options:['alta', 'baja']},//fk //transferencia pasaria a baja, consultar
+            {name:'modalidaduso'                , typeName:'text'    , options:['trabajoremoto', 'prestamo']},//fk //transferencia pasaria a baja, consultar
+            {name:'rubro'                       , typeName:'text'    , nullable:true},//fk
+            {name:'clase'                       , typeName:'text'    , nullable:true},//fk
+            {name:'cuenta'                      , typeName:'text'    , nullable:true},//fk
+            {name:'grupo'                       , typeName:'text'    , nullable:true},//fk
+            {name:'marca'                       , typeName:'text'    },
+            {name:'serie'                       , typeName:'text'    },
+            {name:'imei'                        , typeName:'text'    },
+            {name:'modelo'                      , typeName:'text'    },
+            {name:'anio'                        , typeName:'text'    },
+            {name:'prd'                         , typeName:'text'    },
+            {name:'caracteridentificador'       , typeName:'text'    },//?
+            {name:'enusode'                     , typeName:'text'    },
+            {name:'clasificacion'               , typeName:'text'    },
+            {name:'area'                        , typeName:'text'    , nullable:true },//fk 
+            {name:'sede'                        , typeName:'text'    , nullable:true},//fk
+            {name:'espacio'                     , typeName:'text'    , nullable:true},//fk
+            {name:'responsable'                 , typeName:'text'    , nullable:true},//fk
+            {name:'ordencompra'                 , typeName:'text'    , nullable:true},//fk //viejomantenimiento
+            {name:'auditoria_usuario'           , typeName:'text'    },
+            {name:'auditoria_usuario_nombre'    , typeName:'text'    },
+            {name:'auditoria_fecha'             , typeName:'text'    },
+            {name:'auditoria_accion'            , typeName:'text'    },
+            {name:'auditoria_observaciones'     , typeName:'text'    }
         ],
-        primaryKey:['auditorias'],
+        primaryKey:['ficha'],
         foreignKeys:[
-            {references:'usuarios', fields:[{source:'responsable', target:'usuario'}]},
-            // {references:'areas', fields:['area']},
-        ],
-        constraints:[
-            {constraintType:'unique', fields:['ficha', 'integrado']}
-        ],
-        detailTables:[
-            // {table:'areas', fields:['area'], abr:'V'}
+            {references:'bienes', fields:['ficha']},
+            {references:'responsables', fields:['responsable']}
         ],
         sql:{
             /* 
