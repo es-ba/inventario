@@ -1,25 +1,34 @@
 "use strict";
 
+import { FieldDefinition } from "backend-plus";
 import {TableDefinition, TableContext} from "./types-principal";
+
+export const area: FieldDefinition = {name: 'area', typeName: 'text', title: 'area'}
 
 export function areas(context:TableContext):TableDefinition{
     var admin = context.user.rol==='admin';
-    var responsable = context.user.rol==='responsable';
     return {
         name:'areas',
         elementName:'área', 
         title:'áreas', // solo si es distinto al "name", si es igual se puede omitir
-        editable:admin || responsable,
+        editable:admin,
         fields:[
-            {name:'area'             , typeName:'text'    , nullable:false}, 
-            {name:'sigla'              , typeName:'text'    },  
-            {name:'descripcion'        , typeName:'text'    }, 
-            {name:'parent'             , typeName:'text'   , nullable:true, defaultValue:null }, 
-            {name:'responsable'        , typeName:'text'    },
+            area,
+            {name:'nombre_area'        , typeName:'text'        , isName:true}, 
+            {name:'sigla'              , typeName:'text'        },  
+            {name:'descripcion'        , typeName:'text'        }, 
+            {name:'pertenece_a'        , typeName:area.typeName , nullable:true, defaultValue:null }, 
+            {name:'responsable'        , typeName:'text'        , nullable:true},
+            {name:'tipo_area'          , typeName:'text'        },
+            {name:'activo'             , typeName:'boolean'     , defaultValue:true},
+            {name:'fecha_creacion'     , typeName:'date'        , defaultValue:null},
+            {name:'fecha_modificacion' , typeName:'date'        , nullable:true, defaultValue:null},
         ],
-        primaryKey:['area'],
+        primaryKey:[area.name],
         foreignKeys:[
-            {references:'areas', fields:[{source:'parent', target:'area'}], alias: 'pertenece_a'}
+            {references:'areas', fields:[{source:'pertenece_a', target:'area'}], alias: 'pertenece_a'},
+            {references:'tipo_area', fields:['tipo_area']},
+            {references:'responsables', fields:['responsable']},
         ],
         constraints:[
             {constraintType:'unique', fields:['area']}

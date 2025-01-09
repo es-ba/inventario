@@ -6,27 +6,36 @@
 //       ,[usuario]
 "use strict";
 
+import { FieldDefinition } from "backend-plus";
 import {TableDefinition, TableContext} from "./types-principal";
 
-export function grupos(context:TableContext):TableDefinition{
+export const responsable: FieldDefinition = {name: 'responsable', typeName: 'text', title: 'responsable'}
+
+export function responsables(context:TableContext):TableDefinition{
     var admin = context.user.rol==='admin';
-    var responsable = context.user.rol==='responsable';
     return {
         name:'responsables',
         elementName:'responsable', 
         title:'Responsables', // solo si es distinto al "name", si es igual se puede omitir
-        editable:admin || responsable,
+        editable:admin,
         fields:[
-            {name:'responsable'             , typeName:'text'    }, 
-            {name:'nombre'                  , typeName:'text'    },  
-            {name:'apellido'                , typeName:'text'    }, 
-            {name:'mail'                    , typeName:'text'    },
-            {name:'externo'                 , typeName:'text'    },
-            {name:'usuario'                 , typeName:'text'    },
+            responsable,
+            {name:'nombre'                  , typeName:'text'       },  
+            {name:'apellido'                , typeName:'text'       }, 
+            {name:'mail'                    , typeName:'text'       },
+            {name:'externo'                 , typeName:'boolean'    },
+            {name:'usuario'                 , typeName:'text'       , nullable:true},
+            {name:'activo'                  , typeName:'boolean'    },
+            {name:'fecha_creacion'          , typeName:'date'    , defaultValue:null},
+            {name:'fecha_modificacion'      , typeName:'date'    , nullable:true, defaultValue:null},
+
         ],
-        primaryKey:['responsable'],
+        primaryKey:[responsable.name],
         constraints:[
             {constraintType:'unique', fields:['responsable']}
+        ],
+        foreignKeys:[
+            {references:'usuarios', fields:['usuario']},
         ],
         // sql:{
         //     /* 

@@ -15,11 +15,11 @@ export function rubros(context:TableContext):TableDefinition{
         title: 'Rubro',
         editable: admin,
         fields:[
-            {name:'rubros'      , typeName:'text'},
+            {name:'rubro'      , typeName:'text'},
             {name:'clase'       , typeName:'text'},
             {name:'cuenta'      , typeName:'text'},
             {name:'descripcion' , typeName:'text'},
         ],
-        primaryKey:['rubros']
+        primaryKey:['rubro', 'clase', 'cuenta']
     };
 }
