@@ -194,21 +194,65 @@ function ListadoBienes(){
       
 
     return <>
-    <div className="pantalla">
+    <div className="componente-pantalla">
         <Box sx={{ width: '100%' }}>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            {/* <Box className="tabs" sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <Tabs value={bienTab} onChange={handleBienesTab} aria-label="basic tabs example">
                 <Tab label="Bienes Activos" {...a11yProps(0)} />
                 <Tab label="Bienes en Baja" {...a11yProps(1)} />
                 <Tab label="Total de Bienes" {...a11yProps(2)} />
                 </Tabs>
-            </Box>
+            </Box> */}
+            <Box className="tabs" sx={{ borderBottom: 1, borderColor: 'divider' }}>
+    <Tabs className="MuiTab-root" value={bienTab} onChange={handleBienesTab} aria-label="basic tabs example">
+        <Tab
+            label={
+                <div className="Mui-selected">
+                    <div style={{ fontSize: '20px', fontWeight: 'bold' }}>3.200</div>
+                    Bienes activos
+                </div>
+            }
+            {...a11yProps(0)}
+        />
+        <Tab
+            label={
+                <div className="Mui-selected">
+                    <div style={{ fontSize: '20px', fontWeight: 'bold' }}>500</div>
+                    Bienes en baja
+                </div>
+            }
+            {...a11yProps(1)}
+        />
+        <Tab
+            label={
+                <div className="Mui-selected">
+                    <div style={{ fontSize: '20px', fontWeight: 'bold' }}>3.700</div>
+                    Total de bienes
+                </div>
+            }
+            {...a11yProps(2)}
+        />
+    </Tabs>
+</Box>
             <CustomTabPanel value={bienTab} index={0}>
             {/* AGREGUE ESTOS TEXT FIELD SEGURO HAYA QUE HACERLO MEJOR */}
                 <div><h6 style={{ marginTop:'auto', marginBottom: '2px', color: '#474747' }}>Filtros de busqueda</h6></div>
                 <div style={{ marginBottom: '30px' }}>
                     <TextField label="Seleccionar filtro" name="filtro" margin="normal"/>
-                    <TextField style={{ marginLeft: '20px' }} label="Agregar filtro" name="filtro-busqueda" margin="normal"/>
+                    {/* <TextField style={{ marginLeft: '20px' }} label="Agregar filtro" name="filtro-busqueda" margin="normal"/> */}
+                    <TextField
+                    style={{ marginLeft: '20px' }}
+                    label="Agregar filtro de busqueda"
+                    name="filtro-busqueda"
+                    margin="normal"
+                    InputProps={{
+                    startAdornment: (
+            <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginRight: '8px' }}>
+                <span className="mdi mdi-magnify" style={{ fontSize: '24px'}}></span>
+            </div>
+        ),
+    }}
+/>
                 </div>
                 <div>
                     <DataGrid rows={rows} columns={columns}/>
@@ -233,44 +277,30 @@ function ListadoBienes(){
     }}
 />
                 </div>
-                <TextField id="ficha" value={bien.ficha} label="Ficha" variant="standard" />
-                <TextField id="serie" value={bien.serie} label="Serie" variant="standard" />
-                <TextField id="espacio" value={bien.espacio} label="Espacio" variant="standard" />
-                <TextField id="area" value={bien.area} label="Área" variant="standard" />
-                <TextField id="responsable" value={bien.responsable} label="Responsable" variant="standard" />
-                <TextField id="grupo" value={bien.grupo} label="Grupo" variant="standard" />
-                <TextField id="detalles" value={bien.detalle} label="Detalles" variant="standard" />
-                {/* <TextField id="opciones" value={bien.opciones} label="Opciones" variant="standard" /> */}
                 <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px' }}>
-        <TextField 
-            id="opciones" 
-            value={bien.opciones} 
-            label="Opciones" 
-            variant="standard" 
-            style={{ flexGrow: 1 }}
-        />
+                    <div>Boton opciones</div>
         <IconButton>
         <span className="mdi mdi-pencil"></span>
         </IconButton>
         <IconButton>
         <span className="mdi mdi-eye"></span>
         </IconButton>
-    </div>
-                <div>
-                <DataGrid rows={rows} columns={columns}/>
                 </div>
-              
-            
+    <div>
+    <DataGrid rows={rows} columns={columns}/>
+    </div>
             </CustomTabPanel>
             <CustomTabPanel value={bienTab} index={2}>
 
             </CustomTabPanel>
             </Box>
             </div>
-            <div className="seccion-final"></div>
+            {/* <div className="seccion-final"></div> */}
+            <div className="boton-add">
         <Fab color="primary" aria-label="add" onClick={handleOpen}>
         <div style={{ fontSize: '24px' }}>+</div>
         </Fab>
+        </div>
         <Modal open={modalOpen} onClose={handleClose}>
             <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90%', bgcolor: 'background.paper', border: '2px solid #000', boxShadow: 24, p: 4 }}>
                 <AgregarBien onInsert={handleInsert} />
