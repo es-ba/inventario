@@ -73,8 +73,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
 export default Layout;
 
-function MenuAppBar(props: {baseUrl: string, subtitle: string} = {baseUrl: "/", subtitle: "Subtitulo"}){
-    const {baseUrl, subtitle} = props; 
+function MenuAppBar(props: {baseUrl: string, subtitle: string, setSubtitle?: (subtitle: string) => void} = {baseUrl: "/", subtitle: "Subtitulo"}){
+    const {baseUrl, subtitle, setSubtitle} = props; 
     var [menuOpened, setMenuOpened] = useState(false);
 
     return <>        
@@ -104,6 +104,11 @@ function MenuAppBar(props: {baseUrl: string, subtitle: string} = {baseUrl: "/", 
             <ListItemButton
               component={Link}
               to={`${baseUrl}/react`}
+              onClick={() => {
+                if (setSubtitle) {
+                  setSubtitle('Bienes');
+                }
+              }}
             >
               <ListItemText primary="Listado" />
             </ListItemButton>
@@ -159,12 +164,12 @@ function MenuAppBar(props: {baseUrl: string, subtitle: string} = {baseUrl: "/", 
 function AppPrincipal(){
     //@ts-ignore
     const baseUrl = "/inventario";
-    //consultar por la declaracion de la app, el themeprovider deberia englobarla pero funciona igual aca
+    const [subtitle, setSubtitle] = useState('Inicio');
     return <ThemeProvider theme={theme}>
         <CssBaseline />
         <DmCaptureError>
             <BrowserRouter>                
-                <MenuAppBar baseUrl={baseUrl} subtitle="" />
+                <MenuAppBar baseUrl={baseUrl} subtitle={subtitle} setSubtitle={setSubtitle}  />
                 <Layout>
                     <Typography>layout container</Typography>
                 </Layout>
