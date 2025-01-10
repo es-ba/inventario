@@ -4,7 +4,7 @@ import { useState } from "react";
 import { BrowserRouter, Link} from 'react-router-dom';
 import {
     AppBar, IconButton,
-    List, ListItem, ListItemText, 
+    List, ListItem, ListItemButton, ListItemText, 
     SwipeableDrawer,
     Toolbar, Typography,
 
@@ -79,119 +79,81 @@ function MenuAppBar(props: {baseUrl: string, subtitle: string} = {baseUrl: "/", 
 
     return <>        
     <AppBar position="static">
-    <Toolbar>
-        <IconButton edge="start" color="inherit" aria-label="menu"  onClick={()=>setMenuOpened(true)}>
-            ≡
-        </IconButton>
-        <Typography>
-            {subtitle}
-        </Typography>
-    </Toolbar>
-</AppBar> 
-        <nav>
-        <SwipeableDrawer  
-            open={menuOpened}
-            onClose={()=>setMenuOpened(false)}
-            onOpen={()=>setMenuOpened(true)}
-        >
-            <div
-                role="presentation"
-                onClick={()=>setMenuOpened(false)}
-                onKeyDown={()=>setMenuOpened(false)}
+        <Toolbar>
+            <IconButton edge="start" color="inherit" aria-label="menu"  onClick={()=>setMenuOpened(true)}>
+                ≡
+            </IconButton>
+            <Typography>
+                {subtitle}
+            </Typography>
+        </Toolbar>
+    </AppBar> 
+    <SwipeableDrawer
+      open={menuOpened}
+      onClose={() => setMenuOpened(false)}
+      onOpen={() => setMenuOpened(true)}
+    >
+      <div
+        role="presentation"
+        onClick={() => setMenuOpened(false)}
+        onKeyDown={() => setMenuOpened(false)}
+        style={{ width: 250 }}
+      >
+        <List>
+          <ListItem disablePadding>
+            <ListItemButton
+              component={Link}
+              to={`${baseUrl}/react`}
             >
-                <List>
-                    {/* items del menu */}
-                    <ListItem 
-                        onClick={()=>{
-                            setMenuOpened(false);
-                        }}
-                    >
-                        <ListItemText
-                    
-                        />
-                        <Link to={`${baseUrl}/react`}>Listado</Link>
-                    </ListItem>
-                    <ListItem 
-                        onClick={()=>{
-                            setMenuOpened(false);
-                        }}
-                    >
-
-                        <ListItemText
-                        />
-                        <Link to={`${baseUrl}/react/grid`}>Grid</Link>
-                    </ListItem>
-                    <ListItem 
-                        onClick={()=>{
-                            setMenuOpened(false);
-                        }}
-                    >
-                        <ListItemText primary="Bien" 
-                            onClick={()=>{
-                                
-                            }}
-                        />
-                    </ListItem>
-                    <ListItem 
-                        onClick={()=>{
-                            setMenuOpened(false);
-                        }}
-                    >
-                        <ListItemText primary="Comprobantes" 
-                            onClick={()=>{
-                                
-                            }}
-                        />
-                    </ListItem>
-                    <ListItem 
-                        onClick={()=>{
-                            setMenuOpened(false);
-                        }}
-                    >
-                        <ListItemText primary="Declaraciones" 
-                            onClick={()=>{
-                                
-                            }}
-                        />
-                    </ListItem>
-                    <ListItem 
-                        onClick={()=>{
-                            setMenuOpened(false);
-                        }}
-                    >
-                        <ListItemText primary="Supervisión" 
-                            onClick={()=>{
-                                
-                            }}
-                        />
-                    </ListItem>
-                    <ListItem 
-                        onClick={()=>{
-                            setMenuOpened(false);
-                        }}
-                    >
-                        <ListItemText primary="Papelera recupero" 
-                            onClick={()=>{
-
-                            }}
-                        />
-                    </ListItem>
-                    <ListItem 
-                        onClick={()=>{
-                            setMenuOpened(false);
-                        }}
-                    >
-                        <ListItemText primary="administrar" 
-                            onClick={()=>{
-                                window.location.href="./login"
-                            }}
-                        />
-                    </ListItem>
-               </List>
-            </div>
-        </SwipeableDrawer>
-        </nav>
-        </>
+              <ListItemText primary="Listado" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton
+              component={Link}
+              to={`${baseUrl}/react/grid`}
+            >
+              <ListItemText primary="Grid" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton>
+              <ListItemText primary="Bien" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton>
+              <ListItemText primary="Comprobantes" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton>
+              <ListItemText primary="Declaraciones" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton>
+              <ListItemText primary="Supervisión" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton>
+              <ListItemText primary="Papelera recupero" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton
+              onClick={() => {
+                window.location.href = './login';
+              }}
+            >
+              <ListItemText primary="Administrar" />
+            </ListItemButton>
+          </ListItem>
+        </List>
+      </div>
+    </SwipeableDrawer>
+    </>
 }
 
 function AppPrincipal(){
