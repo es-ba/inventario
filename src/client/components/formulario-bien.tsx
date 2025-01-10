@@ -2,25 +2,9 @@ import * as React from "react";
 import { useState } from "react";
 import { Button, Paper, TextField, Typography } from "@mui/material";
 
-
 async function agregarBien(bien: any) {
     const response = await my.ajax.insertar_bien(bien);
     return response;
-}
-
-//repetido, ver donde meter
-type Bien = {
-    ficha:string
-    observacion:string
-    integrado:string
-    fecha:string
-    serie:string
-    espacio:string
-    area:string
-    responsable:string
-    grupo:string
-    detalle: string
-    opciones:string
 }
 
 type AgregarBienProps = {

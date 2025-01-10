@@ -1,8 +1,9 @@
 import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
 import { useState } from 'react';
-import { Box, Tabs, Tab, TextField, IconButton } from '@mui/material';
+import { Box, Tabs, Tab, TextField, IconButton, Button } from '@mui/material';
 import * as React from "react";
 import TabPanel from './common/tabpanel';
+import { Link } from 'react-router-dom';
 
 // @ts-ignore ejemplo_publicaciones viene sin tipo y es una global
 var bieness:Bien[]=[
@@ -70,6 +71,23 @@ export function ListadoBienes({ bienes }: ListadoBienesProps) {
     { field: 'grupo', headerName: 'Grupo' },
     { field: 'detalle', headerName: 'Detalle' },
     { field: 'opciones', headerName: 'Opciones' },
+    {
+        field: "acciones",
+        headerName: "Acciones",
+        width: 150,
+        renderCell: (params) => {
+          const ficha = params.row.ficha;
+          return (
+            <Button
+              variant="contained"
+              component={Link}
+              to={`${baseUrl}/react/bien/${ficha}`}
+            >
+              Editar
+            </Button>
+          );
+        },
+      },
     ];
     
     // valores de los bienes
