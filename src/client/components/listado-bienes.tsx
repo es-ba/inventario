@@ -13,8 +13,6 @@ var bieness:Bien[]=[
         fecha:'2024-06-14',
         serie:'',
         espacio:''
-
-
     },
     {
         ficha:'2',
@@ -93,7 +91,7 @@ export function ListadoBienes({ bienes }: ListadoBienesProps) {
                 </Tabs>
             </Box>
             <TabPanel value={bienTab} index={0}>
-            {/* AGREGUE ESTOS TEXT FIELD SEGURO HAYA QUE HACERLO MEJOR */}
+                {/* AGREGUE ESTOS TEXT FIELD SEGURO HAYA QUE HACERLO MEJOR */}
                 <div><h6 style={{ marginTop:'auto', marginBottom: '2px', color: '#474747' }}>Filtros de busqueda</h6></div>
                 <div style={{ marginBottom: '30px' }}>
                     <TextField label="Seleccionar filtro" name="filtro" margin="normal"/>
