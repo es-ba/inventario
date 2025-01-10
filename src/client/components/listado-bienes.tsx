@@ -81,15 +81,46 @@ export function ListadoBienes({ bienes }: ListadoBienesProps) {
     
 
     return <>
-    <div className="pantalla">
-        <Box sx={{ width: '100%' }}>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                <Tabs value={bienTab} onChange={handleBienesTab} aria-label="basic tabs example">
-                <Tab label="Bienes Activos" {...a11yProps(0)} />
-                <Tab label="Bienes en Baja" {...a11yProps(1)} />
-                <Tab label="Total de Bienes" {...a11yProps(2)} />
-                </Tabs>
-            </Box>
+        <div className="componente-pantalla">
+                <Box sx={{ width: '100%' }}>
+                    {/* <Box className="tabs" sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                        <Tabs value={bienTab} onChange={handleBienesTab} aria-label="basic tabs example">
+                        <Tab label="Bienes Activos" {...a11yProps(0)} />
+                        <Tab label="Bienes en Baja" {...a11yProps(1)} />
+                        <Tab label="Total de Bienes" {...a11yProps(2)} />
+                        </Tabs>
+                    </Box> */}
+                    <Box className="tabs" sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs className="MuiTab-root" value={bienTab} onChange={handleBienesTab} aria-label="basic tabs example">
+                <Tab
+                    label={
+                        <div className="Mui-selected">
+                            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>3.200</div>
+                            Bienes activos
+                        </div>
+                    }
+                    {...a11yProps(0)}
+                />
+                <Tab
+                    label={
+                        <div className="Mui-selected">
+                            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>500</div>
+                            Bienes en baja
+                        </div>
+                    }
+                    {...a11yProps(1)}
+                />
+                <Tab
+                    label={
+                        <div className="Mui-selected">
+                            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>3.700</div>
+                            Total de bienes
+                        </div>
+                    }
+                    {...a11yProps(2)}
+                />
+            </Tabs>
+        </Box>
             <TabPanel value={bienTab} index={0}>
                 {/* AGREGUE ESTOS TEXT FIELD SEGURO HAYA QUE HACERLO MEJOR */}
                 <div><h6 style={{ marginTop:'auto', marginBottom: '2px', color: '#474747' }}>Filtros de busqueda</h6></div>
