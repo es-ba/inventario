@@ -92,7 +92,7 @@ export function ListadoBienes({ bienes }: ListadoBienesProps) {
     
     // valores de los bienes
     const rows: GridRowsProp = [
-    {id :1 , ficha: '9874359875489', serie: 'B385788', espacio: '302', area:"(1432) DI ADMINISTRACION", responsable: "(244) DANERI, ANA", grupo: "SIM", detalle:"LINEA 1158236954", opciones:"", },
+    {id :1 , ficha: bien.ficha, serie: 'B385788', espacio: '302', area:"(1432) DI ADMINISTRACION", responsable: "(244) DANERI, ANA", grupo: "SIM", detalle:"LINEA 1158236954", opciones:"", },
     {id :2 , ficha: '9874359875489', serie: 'B385788', espacio: '302', area:"(1432) DI ADMINISTRACION", responsable: "(244) DANERI, ANA", grupo: "SIM", detalle:"LINEA 1158236954", opciones:"", },
     {id :3 , ficha: '9874359875489', serie: 'B385788', espacio: '302', area:"(1432) DI ADMINISTRACION", responsable: "(244) DANERI, ANA", grupo: "SIM", detalle:"LINEA 1158236954", opciones:"", },
     ];
