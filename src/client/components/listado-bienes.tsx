@@ -1,6 +1,6 @@
 import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
 import { useState } from 'react';
-import { Box, Tabs, Tab, TextField, IconButton, Button } from '@mui/material';
+import { Box, Tabs, Tab, TextField, IconButton } from '@mui/material';
 import * as React from "react";
 import TabPanel from './common/tabpanel';
 import { Link } from 'react-router-dom';
@@ -70,21 +70,27 @@ export function ListadoBienes({ bienes }: ListadoBienesProps) {
     { field: 'responsable', headerName: 'Responsable' },
     { field: 'grupo', headerName: 'Grupo' },
     { field: 'detalle', headerName: 'Detalle' },
-    { field: 'opciones', headerName: 'Opciones' },
     {
-        field: "acciones",
-        headerName: "Acciones",
+        field: "opciones",
+        headerName: "Opciones",
         width: 150,
         renderCell: (params) => {
           const ficha = params.row.ficha;
           return (
-            <Button
-              variant="contained"
+            <>
+            <IconButton
               component={Link}
               to={`${baseUrl}/react/bien/${ficha}`}
             >
-              Editar
-            </Button>
+        <span className="mdi mdi-pencil"></span>
+            </IconButton>
+                        <IconButton
+                        component={Link}
+                        to={`${baseUrl}/react/bien/${ficha}`}
+                      >
+                  <span className="mdi mdi-eye"></span>
+                      </IconButton>
+                      </>
           );
         },
       },
@@ -108,31 +114,31 @@ export function ListadoBienes({ bienes }: ListadoBienesProps) {
                         <Tab label="Total de Bienes" {...a11yProps(2)} />
                         </Tabs>
                     </Box> */}
-                    <Box className="tabs" sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs className="MuiTab-root" value={bienTab} onChange={handleBienesTab} aria-label="basic tabs example">
-                <Tab
+                    <Box className="tabs-container" sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs className="tabs" value={bienTab} onChange={handleBienesTab} aria-label="basic tabs example">
+                <Tab 
                     label={
-                        <div className="Mui-selected">
-                            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>3.200</div>
-                            Bienes activos
+                        <div className="tab-label">
+                            <div className="tab-number" style={{ fontSize: '20px', fontWeight: 'bold' }}>3.200</div>
+                            <div className="tab-text">Bienes activos</div>
                         </div>
                     }
                     {...a11yProps(0)}
                 />
                 <Tab
                     label={
-                        <div className="Mui-selected">
-                            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>500</div>
-                            Bienes en baja
+                        <div className="tab-label">
+                            <div className="tab-number" style={{ fontSize: '20px', fontWeight: 'bold' }}>500</div>
+                            <div className="tab-text">Bienes en baja</div>
                         </div>
                     }
                     {...a11yProps(1)}
                 />
                 <Tab
                     label={
-                        <div className="Mui-selected">
-                            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>3.700</div>
-                            Total de bienes
+                        <div className="tab-label">
+                            <div className="tab-number" style={{ fontSize: '20px', fontWeight: 'bold' }}>3.700</div>
+                            <div className="tab-text">Total de bienes</div>
                         </div>
                     }
                     {...a11yProps(2)}
@@ -144,17 +150,6 @@ export function ListadoBienes({ bienes }: ListadoBienesProps) {
                 <div><h6 style={{ marginTop:'auto', marginBottom: '2px', color: '#474747' }}>Filtros de busqueda</h6></div>
                 <div style={{ marginBottom: '30px' }}>
                     <TextField label="Seleccionar filtro" name="filtro" margin="normal"/>
-                    <TextField style={{ marginLeft: '20px' }} label="Agregar filtro" name="filtro-busqueda" margin="normal"/>
-                </div>
-                <div>
-                    <DataGrid rows={rows} columns={columns}/>
-                </div>
-            </TabPanel>
-            <TabPanel value={bienTab} index={1}>
-                <div><h6 style={{ marginTop:'auto', marginBottom: '2px', color: '#474747' }}>Filtros de busqueda</h6></div>
-                <div style={{ marginBottom: '30px' }}>
-                    <TextField label="Seleccionar filtro" name="filtro" margin="normal"/>
-                    {/* <TextField style={{ marginLeft: '20px' }} label="Agregar filtro" name="filtro-busqueda" margin="normal"/> */}
                     <TextField
                     style={{ marginLeft: '20px' }}
                     label="Agregar filtro de busqueda"
@@ -169,29 +164,28 @@ export function ListadoBienes({ bienes }: ListadoBienesProps) {
     }}
 />
                 </div>
-                <TextField id="ficha" value={bien.ficha} label="Ficha" variant="standard" />
-                <TextField id="serie" value={bien.serie} label="Serie" variant="standard" />
-                <TextField id="espacio" value={bien.espacio} label="Espacio" variant="standard" />
-                <TextField id="area" value={bien.area} label="Área" variant="standard" />
-                <TextField id="responsable" value={bien.responsable} label="Responsable" variant="standard" />
-                <TextField id="grupo" value={bien.grupo} label="Grupo" variant="standard" />
-                <TextField id="detalles" value={bien.detalle} label="Detalles" variant="standard" />
-                {/* <TextField id="opciones" value={bien.opciones} label="Opciones" variant="standard" /> */}
-                <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px' }}>
-        <TextField 
-            id="opciones" 
-            value={bien.opciones} 
-            label="Opciones" 
-            variant="standard" 
-            style={{ flexGrow: 1 }}
-        />
-        <IconButton>
-        <span className="mdi mdi-pencil"></span>
-        </IconButton>
-        <IconButton>
-        <span className="mdi mdi-eye"></span>
-        </IconButton>
-    </div>
+                <div>
+                    <DataGrid rows={rows} columns={columns}/>
+                </div>
+            </TabPanel>
+            <TabPanel value={bienTab} index={1}>
+                <div><h6 style={{ marginTop:'auto', marginBottom: '2px', color: '#474747' }}>Filtros de busqueda</h6></div>
+                <div style={{ marginBottom: '30px' }}>
+                    <TextField label="Seleccionar filtro" name="filtro" margin="normal"/>
+                    <TextField
+                    style={{ marginLeft: '20px' }}
+                    label="Agregar filtro de busqueda"
+                    name="filtro-busqueda"
+                    margin="normal"
+                    InputProps={{
+                    startAdornment: (
+            <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginRight: '8px' }}>
+                <span className="mdi mdi-magnify" style={{ fontSize: '24px'}}></span>
+            </div>
+        ),
+    }}
+/>
+                </div>
                 <div>
                 <DataGrid rows={rows} columns={columns}/>
                 </div>

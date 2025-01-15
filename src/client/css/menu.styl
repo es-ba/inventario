@@ -32,17 +32,69 @@
   justify-content: flex-end
 
 .tabs
+    background-color #8498fb
+    align-items: start
+    justify-content: flex-start
+    text-align: left
+
+.tabs .MuiTab-root {
+    min-width: 280px;
+    height: 80px;
+    background-color: #6fa8dc;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    border-radius: 10px;
+    text-transform: none;
+    transition: all 0.3s ease;
+}
+
+.tabs-container {
+    border-bottom: 1px solid #e0e0e0;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    background-color: #B1C9E4;
+    padding-top: 20px;
+}
+
+.tabs .MuiTabs-flexContainer {
+    justify-content: flex-start;
+    gap: 10px;
+    background-color #B1C9E4;
+}
 
 
-.MuiTab-root
-    display flex
-    flex-direction column // Para apilar número y texto
-    align-items start
-    justify-content center
-    min-height 60px// Altura de cada tab
-    font-size 14px
-    font-weight bold
+.tab-label {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding-left: 16px;
+    text-align: left;
+    color: black;
+    font-size: 12px;
+}
 
-.Mui-selected
-    background-color #fffff // Color de tab seleccionado
-    border-radius 8px
+
+.tab-number {
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.tab-text {
+    font-size: 14px;
+    font-weight: normal;
+    margin-top: 2px;
+}
+
+.tabs .Mui-selected {
+    background-color: white;
+    border-radius: 8px;
+    color: black;
+}
+
+.tabs .MuiTab-root:hover {
+    background-color: #5d9bd3;
+    transform: scale(1.05); /* Ligero efecto al pasar el mouse */
+}
