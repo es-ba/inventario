@@ -1,1 +1,3 @@
 orden_compra|estado|tipo|descripcion|proveedor|archivo_adjunto|expediente|numero_procedimiento|unidad_ejecutora|auditoria_creadopor|auditoria_creadoen|auditoria_modificadopor|auditoria_modificadoen|fecha_pedido|fecha_recibido
+A1234|activa|A|alalalal|proveedor|jpg|ex-1234|555555|adm|mer|SINFOR|ger|aud|12/5|15/5
+B1234|activa|B|blbalbal|proveedor|pdf|ex-5678|666666|adm|mer|SINFOR|ger|aud|10/5|14/5
