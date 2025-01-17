@@ -1,8 +1,8 @@
 import * as React from "react";
 import { useState, useEffect } from 'react';
-import { Fab } from '@mui/material';
+import { Box, Fab, Modal } from '@mui/material';
 import { ListadoBienes } from "../components/listado-bienes";
-// import AgregarBien from "../components/formulario-bien";
+import AgregarBien from "../components/detalle-bien";
 import { Link } from "react-router-dom";
 
 async function fetchBienes() {
@@ -13,15 +13,15 @@ async function fetchBienes() {
 function BienesPage() {
     //   const { bienes, loading, error, setBienes } = useFetchBienes();
     const [bienes, setBienes] = useState<Bien[]>([]);
-    // const [modalOpen, setModalOpen] = useState(false);
+    const [modalOpen, setModalOpen] = useState(false);
 
-    // const handleOpen = () => setModalOpen(true);
-    // const handleClose = () => setModalOpen(false);
+    const handleOpen = () => setModalOpen(true);
+    const handleClose = () => setModalOpen(false);
 
-    // const handleInsert = (nuevoBien: Bien) => {
-    //     setBienes([...bienes, nuevoBien]);
-    //     handleClose();
-    // };
+    const handleInsert = (nuevoBien: Bien) => {
+    setBienes([...bienes, nuevoBien]);
+    handleClose();
+    };
 
     useEffect(() => {
         // setSubtitle('Listado de bienes')
@@ -45,13 +45,14 @@ function BienesPage() {
                     to={`${baseUrl}/react/bien`}>
             <div style={{ fontSize: '24px' }}>+</div>
             </Fab>
-            {/* <Modal open={modalOpen} onClose={handleClose}>
-                <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90%', bgcolor: 'background.paper', border: '2px solid #000', boxShadow: 24, p: 4 }}
-                    component={Link}
-                    to={`/bien`}>
+            <Fab color="primary" aria-label="add" onClick={handleOpen}>
+            <div style={{ fontSize: '24px' }}>*</div>
+            </Fab>
+            <Modal open={modalOpen} onClose={handleClose}>
+                <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90%', bgcolor: 'background.paper', border: '2px solid #000', boxShadow: 24, p: 4 }}>
                     <AgregarBien onInsert={handleInsert} />
                 </Box>
-            </Modal> */}
+            </Modal>
         </div>
     );
 }
