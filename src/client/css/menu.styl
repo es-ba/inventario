@@ -1,5 +1,132 @@
-
+@import url('https://cdn.materialdesignicons.com/7.0.96/css/materialdesignicons.min.css')
+    
 [placeholder]:empty::before 
     content attr(placeholder)
     color #7bF
+
+.componente-pantalla
+  display flex
+  //grid-template-columns repeat(3, 1fr)
+  //gap 2%
+  margin-left auto
+  margin-right auto
+  @media (max-width: 960px)
+      grid-template-columns: repeat(2, 1fr)
+  @media (max-width: 600px)
+      grid-template-columns: repeat(1, 1fr)
+
+.seccion-final
+  margin-left auto
+  margin-right auto
+  padding: 20px
+  @media (max-width: 960px)
+      grid-template-columns: repeat(2, 1fr)
+  @media (max-width: 600px)
+      grid-template-columns: repeat(1, 1fr)
+
+.boton-add
+  margin-left auto
+  margin-right auto
+  padding: 15px
+  display: flex
+  justify-content: flex-end
+
+.tabs
+    background-color #8498fb
+    align-items: start
+    justify-content: flex-start
+    text-align: left
+
+.tabs .MuiTab-root {
+    min-width: 280px;
+    height: 80px;
+    background-color: #6fa8dc;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    border-radius: 10px;
+    text-transform: none;
+    transition: all 0.3s ease;
+}
+
+.tabs-container {
+    border-bottom: 1px solid #e0e0e0;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    background-color: #B1C9E4;
+    padding-top: 20px;
+}
+
+.tabs .MuiTabs-flexContainer {
+    justify-content: flex-start;
+    gap: 10px;
+    background-color #B1C9E4;
+}
+
+
+.tab-label {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding-left: 16px;
+    text-align: left;
+    color: black;
+    font-size: 12px;
+}
+
+
+.tab-number {
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.tab-text {
+    font-size: 14px;
+    font-weight: normal;
+    margin-top: 2px;
+}
+
+.tabs .Mui-selected {
+    background-color: white;
+    border-radius: 8px;
+    color: black;
+}
+
+.tabs .MuiTab-root:hover {
+    background-color: #5d9bd3;
+    transform: scale(1.05); /* Ligero efecto al pasar el mouse */
+}
+
+.form-container {
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+
+.form-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.form-group {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+}
+
+
+.form-field {
+    flex: 1; 
+    min-width: 150px;
+}
+
+
+.submit-button {
+    height: 56px;
+}
 

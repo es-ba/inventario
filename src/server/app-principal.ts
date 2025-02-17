@@ -9,12 +9,22 @@ import * as MiniTools from 'mini-tools';
 import {ProceduresInventario} from "./procedures-principal";
 
 import { bienes } from './table-bienes';
-import { areas } from './table-areas';
 import { usuarios   } from './table-usuarios';
 import { grupos } from './table-grupos';
+import { asignaciones } from "./table-asignaciones";
+import { auditorias } from "./table-auditorias";
+import { espacios } from "./table-espacios";
+import { ordenescompra } from "./table-ordenescompra";
+import { rubros } from "./table-rubros";
+import { responsables } from "./table-responsables";
+import { sedes } from "./table-sedes";
+import { tipo_bien } from "./table-tipo_bien";
+import { tipo_area } from "./table-tipo_area";
+import { areas } from './table-areas';
 
 import {staticConfigYaml} from './def-config';
 import * as express from "express";
+
 export class AppInventario extends AppBackend{
     constructor(){
         super();
@@ -125,9 +135,18 @@ export class AppInventario extends AppBackend{
         this.getTableDefinition={
             ... this.getTableDefinition,
             usuarios    ,    
-            bienes      ,
+            tipo_area   ,
             areas       ,
             grupos      ,
+            espacios    ,
+            ordenescompra,
+            responsables,
+            rubros      ,
+            sedes       ,
+            tipo_bien   ,
+            bienes      ,
+            asignaciones,
+            auditorias  
         }
     }       
 }

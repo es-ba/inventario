@@ -20,45 +20,51 @@ export function bienes(context:TableContext):TableDefinition{
         editable:admin || responsable,
         fields:[
             {name:'ficha'                       , typeName:'text'    }, 
-            {name:'integrado'                   , typeName:'text'    }, 
+            {name:'numero_integrado'            , typeName:'text'    }, 
             {name:'ubicacion'                   , typeName:'text'    },
             {name:'observacion'                 , typeName:'text'    },
             {name:'detalle'                     , typeName:'text'    },
-            {name:'importe'                     , typeName:'text'    },
-            {name:'importetotal'                , typeName:'text'    },//solo importe
-            {name:'tipo'                        , typeName:'text'    },//fk
+            {name:'importe'                     , typeName:'text'    , nullable:true},
+            {name:'importetotal'                , typeName:'text'    , nullable:true},//solo importe
+            {name:'tipo_bien'                   , typeName:'text'    },//fk
             {name:'estado'                      , typeName:'text'    , options:['alta', 'baja']},//fk //transferencia pasaria a baja, consultar
-            // trabajo remoto, prestamo
-            {name:'rubro'                       , typeName:'text'    },//fk
-            {name:'grupo'                       , typeName:'text'    },//fk
+            {name:'categoria'                   , typeName:'text'    , options:['transferencia', 'etc']},
+            {name:'modalidaduso'                , typeName:'text'    , options:['trabajoremoto', 'prestamo']},//fk //transferencia pasaria a baja, consultar
+            {name:'rubro'                       , typeName:'text'    , nullable:true},//fk
+            {name:'clase'                       , typeName:'text'    , nullable:true},//fk
+            {name:'cuenta'                      , typeName:'text'    , nullable:true},//fk
+            {name:'grupo'                       , typeName:'text'    , nullable:true},//fk
             {name:'marca'                       , typeName:'text'    },
             {name:'serie'                       , typeName:'text'    },
             {name:'imei'                        , typeName:'text'    },
             {name:'modelo'                      , typeName:'text'    },
-            {name:'anio'                      , typeName:'text'    },
+            {name:'anio'                        , typeName:'text'    },
             {name:'prd'                         , typeName:'text'    },
             {name:'caracteridentificador'       , typeName:'text'    },//?
             {name:'enusode'                     , typeName:'text'    },
             {name:'clasificacion'               , typeName:'text'    },
-            // {name:'area'                        , typeName:'text'    },//fk 
-            // {name:'sede'                        , typeName:'text'    },//fk
-            {name:'espacio'                     , typeName:'text'    },//fk
-            {name:'responsable'                 , typeName:'text'    },//fk
-            // {name:'movimiento'                  , typeName:'text'    },//fk, alreves
-            // {name:'log'                         , typeName:'text'    },//fk, alreves
+            {name:'area'                        , typeName:'text'    , nullable:true},//fk 
+            {name:'sede'                        , typeName:'text'    , nullable:true},//fk
+            {name:'espacio'                     , typeName:'text'    , nullable:true},//fk
+            {name:'responsable'                 , typeName:'text'    , nullable:true},//fk
             // {name:'publicar'         , typeName:'boolean' , editable:admin },
             // {name:'formato'          , typeName:'text'    , options:['plano', 'md', 'html', 'jade']},
-            {name:'fecha'            , typeName:'date'    , nullable:false, specialDefaultValue:'current_date'},//de mas, se puede usar log
-            {name:'ordencompra'                 , typeName:'text'    },//fk //viejomantenimiento
+            {name:'ordencompra'                 , typeName:'text'    , nullable:true},//fk //viejomantenimiento
+            {name:'fecha'              , typeName:'date'    , nullable:false, specialDefaultValue:'current_date'},//de mas, se puede usar log
             // {name:'aclaracion'                  , typeName:'text'    },//?
         ],
-        primaryKey:['ficha', 'integrado'],
+        primaryKey:['ficha'],
         foreignKeys:[
-            {references:'usuarios', fields:[{source:'responsable', target:'usuario'}]},
-            // {references:'areas', fields:['area']},
+            {references:'responsables', fields:['responsable']},
+            {references:'areas', fields:['area']},
+            {references:'sedes', fields:['sede']},
+            {references:'espacios', fields:['espacio']},
+            {references:'rubros', fields:['rubro', 'clase', 'cuenta'] },
+            {references:'tipo_bien', fields:['tipo_bien']},
+            {references:'grupos', fields:['grupo']},
         ],
         constraints:[
-            {constraintType:'unique', fields:['ficha', 'integrado']}
+            {constraintType:'unique', fields:['ficha']}
         ],
         detailTables:[
             // {table:'areas', fields:['area'], abr:'V'}
