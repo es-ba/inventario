@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client';
 import { useEffect, useState } from "react";
 import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
 import { BrowserRouter, Routes, Route, Link} from 'react-router-dom';
+import { 
+    ICON,
+} from 'frontend-plus';
 import {
     AppBar, Box, Fab, IconButton,
     // Link,
@@ -441,7 +444,7 @@ function MenuAppBar(props: {baseUrl: string, subtitle: string} = {baseUrl: "/", 
     <AppBar position="static">
     <Toolbar>
         <IconButton edge="start" color="inherit" aria-label="menu"  onClick={()=>setMenuOpened(true)}>
-            ≡
+            <ICON.Menu/>
         </IconButton>
         <Typography>
             {subtitle}
