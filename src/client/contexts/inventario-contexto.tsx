@@ -2,56 +2,73 @@ import * as React from 'react';
 import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 
 export interface FilterCriteria {
+  id: string;
   campo: string;
   valor: string;
 }
 
 interface InventarioContextType {
-  filter: FilterCriteria | null;
-  setFilter: (filter: FilterCriteria | null) => void;
-  clearFilter: () => void;
+  filters: FilterCriteria[];
+  addFilter: (filter: Omit<FilterCriteria, "id">) => void;
+  removeFilter: (id: string) => void;
+  clearAllFilters: () => void;
 }
 
 const STORAGE_PREFIX = 'inventario_';
-const FILTER_STORAGE_KEY = `${STORAGE_PREFIX}filter_state`;
+const FILTERS_STORAGE_KEY = `${STORAGE_PREFIX}filters_state`;
 
 const InventarioContexto = createContext<InventarioContextType | undefined>(undefined);
 
 export function InventarioProvider({ children }: { children: ReactNode }) {
-  const [filter, setFilterState] = useState<FilterCriteria | null>(() => {
+  const [filters, setFilters] = useState<FilterCriteria[]>(() => {
     try {
-      const storedFilter = localStorage.getItem(FILTER_STORAGE_KEY);
-      return storedFilter ? JSON.parse(storedFilter) : null;
+      const storedFilters = localStorage.getItem(FILTERS_STORAGE_KEY);
+      return storedFilters ? JSON.parse(storedFilters) : [];
     } catch (error) {
-      console.error('Error reading filter from localStorage:', error);
-      return null;
+      console.error('Error reading filters from localStorage:', error);
+      return [];
     }
   });
   
   useEffect(() => {
     try {
-      if (filter) {
-        localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filter));
-      } else {
-        localStorage.removeItem(FILTER_STORAGE_KEY);
-      }
+      localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters));
     } catch (error) {
-      console.error('Error saving filter to localStorage:', error);
+      console.error('Error saving filters to localStorage:', error);
     }
-  }, [filter]);
+  }, [filters]);
   
-  const setFilter = (newFilter: FilterCriteria | null) => {
-    setFilterState(newFilter);
+  const addFilter = (filter: Omit<FilterCriteria, "id">) => {
+    const existingFilterIndex = filters.findIndex(f => f.campo === filter.campo);
+    
+    if (existingFilterIndex >= 0) {
+      const newFilters = [...filters];
+      newFilters[existingFilterIndex] = {
+        ...filter,
+        id: newFilters[existingFilterIndex].id
+      };
+      setFilters(newFilters);
+    } else {
+      setFilters([...filters, {
+        ...filter,
+        id: Date.now().toString()
+      }]);
+    }
   };
   
-  const clearFilter = () => {
-    setFilterState(null);
+  const removeFilter = (id: string) => {
+    setFilters(filters.filter(filter => filter.id !== id));
+  };
+  
+  const clearAllFilters = () => {
+    setFilters([]);
   };
   
   const contextValue: InventarioContextType = {
-    filter,
-    setFilter,
-    clearFilter,
+    filters,
+    addFilter,
+    removeFilter,
+    clearAllFilters
   };
   
   return (

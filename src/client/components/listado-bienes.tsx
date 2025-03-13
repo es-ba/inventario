@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useMemo, useState, useEffect } from 'react';
 import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
-import { IconButton, CircularProgress, Box, Typography } from '@mui/material';
+import { IconButton, CircularProgress, Box, Typography, Paper } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { FiltroBusqueda } from './filtro-busqueda';
 import { useInventario } from '../contexts/inventario-contexto';
@@ -16,9 +16,8 @@ export function ListadoBienes({ onViewDetails, filterCriteria, onResultsCount }:
     const [bienes, setBienes] = useState<Bien[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<Error | null>(null);
-    const { filter } = useInventario();
+    const { filters } = useInventario();
     
-    // Fetch bienes data
     useEffect(() => {
         async function fetchData() {
             try {
@@ -37,21 +36,24 @@ export function ListadoBienes({ onViewDetails, filterCriteria, onResultsCount }:
     const filteredBienes = useMemo(() => {
         let result = bienes;
         
-        if (filter && filter.campo && filter.valor) {
+        if (filters.length > 0) {
             result = result.filter(bien => {
-                const fieldValue = bien[filter.campo as keyof Bien];
-                return fieldValue && 
-                       typeof fieldValue === 'string' && 
-                       fieldValue.toLowerCase().includes(filter.valor.toLowerCase());
+                return filters.every(filter => {
+                    const fieldValue = bien[filter.campo as keyof Bien];
+                    return fieldValue && 
+                           typeof fieldValue === 'string' && 
+                           fieldValue.toLowerCase().includes(filter.valor.toLowerCase());
+                });
             });
         }
         
+        // Apply prop filter if any
         if (filterCriteria) {
             result = result.filter(filterCriteria);
         }
         
         return result;
-    }, [bienes, filter, filterCriteria]);
+    }, [bienes, filters, filterCriteria]);
 
     useEffect(() => {
         if (onResultsCount && !loading) {
@@ -80,11 +82,13 @@ export function ListadoBienes({ onViewDetails, filterCriteria, onResultsCount }:
                         <IconButton
                             component={Link}
                             to={`${baseUrl}/react/bien/edit/${ficha}`}
+                            size="small"
                         >
                             <span className="mdi mdi-pencil"></span>
                         </IconButton>
                         <IconButton
                             onClick={() => onViewDetails(bien)}
+                            size="small"
                         >
                             <span className="mdi mdi-eye"></span>
                         </IconButton>
@@ -106,20 +110,36 @@ export function ListadoBienes({ onViewDetails, filterCriteria, onResultsCount }:
     if (error) return <div>Error: {error.message}</div>;
 
     return (
-        <Box sx={{ width: '100%' }}>
+        <>
             <FiltroBusqueda />
-            <Typography variant="body2" sx={{ mb: 2 }}>
-                Mostrando {filteredBienes.length} bienes
-            </Typography>
-            <div style={{ height: 400, width: '100%' }}>
-                <DataGrid 
-                    rows={rows} 
-                    columns={columns}
-                    disableRowSelectionOnClick
-                    autoHeight
-                    density="compact"
-                />
-            </div>
-        </Box>
+            
+            <Paper elevation={0} sx={{ p: 2, backgroundColor: 'transparent' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="subtitle1" fontWeight="bold">
+                        Mostrando {filteredBienes.length} de {bienes.length} bienes
+                    </Typography>
+                    
+                    {filters.length > 0 && filteredBienes.length !== bienes.length && (
+                        <Typography variant="body2" color="text.secondary">
+                            {Math.round((filteredBienes.length / bienes.length) * 100)}% del total
+                        </Typography>
+                    )}
+                </Box>
+                
+                <div style={{ height: 400, width: '100%' }}>
+                    <DataGrid 
+                        rows={rows} 
+                        columns={columns}
+                        disableRowSelectionOnClick
+                        autoHeight
+                        density="compact"
+                        pageSizeOptions={[10, 25, 50, 100]}
+                        initialState={{
+                            pagination: { paginationModel: { pageSize: 25 } },
+                        }}
+                    />
+                </div>
+            </Paper>
+        </>
     );
 }

@@ -10,13 +10,15 @@ import {
     List, ListItem, ListItemButton, ListItemText, 
     SwipeableDrawer,
     Toolbar, Typography,
-
 } from "@mui/material";
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
 // aca se importan y asigna la paleta de colores para los temas, es un array con el hue y el shade en el indice
 import { indigo } from '@mui/material/colors';
+import _AgregarComprobante from "./components/formulario-comprobante";
+import { AppRoutes } from "./routes";
+import { InventarioProvider } from './contexts/inventario-contexto';
 
 const theme = createTheme({
   palette: {
@@ -24,23 +26,18 @@ const theme = createTheme({
         main: indigo [400]
     },
     secondary: {
-        //o directamente
         main: '#f44336',
     },
   },
 });
 
-import _AgregarComprobante from "./components/formulario-comprobante";
-import { AppRoutes } from "./routes";
-import { InventarioProvider } from './contexts/inventario-contexto';
-
 // @ts-ignore 
-var my=myOwn;
+var my = myOwn;
 
 class DmCaptureError extends React.Component<
     {children:any},
     {hasError:boolean, error:Error|{message:string}, info?:any}
->{
+> {
     constructor(props:{children:any}) {
         super(props);
         this.state = { hasError: false, error:{message:''} };
@@ -63,10 +60,9 @@ class DmCaptureError extends React.Component<
 
 interface LayoutProps {
     children?: React.ReactNode;
- }
+}
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-    
     return (
         <>
         {children}
@@ -76,14 +72,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
 export default Layout;
 
-function MenuAppBar(props: {baseUrl: string, subtitle: string, setSubtitle?: (subtitle: string) => void} = {baseUrl: "/", subtitle: "Subtitulo"}){
+function MenuAppBar(props: {baseUrl: string, subtitle: string, setSubtitle?: (subtitle: string) => void} = {baseUrl: "/", subtitle: "Subtitulo"}) {
     const {baseUrl, subtitle, setSubtitle} = props; 
     var [menuOpened, setMenuOpened] = useState(false);
 
     return <>        
     <AppBar position="static">
         <Toolbar>
-            <IconButton edge="start" color="inherit" aria-label="menu"  onClick={()=>setMenuOpened(true)}>
+            <IconButton edge="start" color="inherit" aria-label="menu" onClick={()=>setMenuOpened(true)}>
                 <ICON.Menu/>
             </IconButton>
             <Typography>
@@ -161,7 +157,7 @@ function MenuAppBar(props: {baseUrl: string, subtitle: string, setSubtitle?: (su
         </List>
       </div>
     </SwipeableDrawer>
-    </>
+    </>;
 }
 
 function AppPrincipal(){
