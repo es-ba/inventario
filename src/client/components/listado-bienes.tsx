@@ -1,20 +1,22 @@
 import * as React from "react";
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
-import { IconButton, CircularProgress, Box } from '@mui/material';
+import { IconButton, CircularProgress, Box, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
-import { FiltroBusqueda, FilterCriteria } from './filtro-busqueda';
+import { FiltroBusqueda } from './filtro-busqueda';
+import { useInventario } from '../contexts/inventario-contexto';
 
 interface ListadoBienesProps {
     onViewDetails: (bien: Bien) => void;
     filterCriteria?: (bien: Bien) => boolean;
+    onResultsCount?: (count: number) => void;
 }
 
-export function ListadoBienes({ onViewDetails, filterCriteria }: ListadoBienesProps) {
+export function ListadoBienes({ onViewDetails, filterCriteria, onResultsCount }: ListadoBienesProps) {
     const [bienes, setBienes] = useState<Bien[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<Error | null>(null);
-    const [filtro, setFiltro] = useState<FilterCriteria | null>(null);
+    const { filter } = useInventario();
     
     // Fetch bienes data
     useEffect(() => {
@@ -32,32 +34,30 @@ export function ListadoBienes({ onViewDetails, filterCriteria }: ListadoBienesPr
         fetchData();
     }, []);
 
-    // Handle filter changes
-    const handleFilterChange = useCallback((newFilter: FilterCriteria) => {
-        setFiltro(newFilter);
-    }, []);
-
-    // Apply all filters (both from props and from filter component)
     const filteredBienes = useMemo(() => {
         let result = bienes;
         
-        // Apply filter component filter
-        if (filtro && filtro.campo && filtro.valor) {
+        if (filter && filter.campo && filter.valor) {
             result = result.filter(bien => {
-                const fieldValue = bien[filtro.campo as keyof Bien];
+                const fieldValue = bien[filter.campo as keyof Bien];
                 return fieldValue && 
                        typeof fieldValue === 'string' && 
-                       fieldValue.toLowerCase().includes(filtro.valor.toLowerCase());
+                       fieldValue.toLowerCase().includes(filter.valor.toLowerCase());
             });
         }
         
-        // Apply prop filter if any
         if (filterCriteria) {
             result = result.filter(filterCriteria);
         }
         
         return result;
-    }, [bienes, filtro, filterCriteria]);
+    }, [bienes, filter, filterCriteria]);
+
+    useEffect(() => {
+        if (onResultsCount && !loading) {
+            onResultsCount(filteredBienes.length);
+        }
+    }, [filteredBienes, onResultsCount, loading]);
 
     const columns: GridColDef[] = useMemo(() => [
         { field: 'ficha', headerName: 'Ficha' },
@@ -107,12 +107,17 @@ export function ListadoBienes({ onViewDetails, filterCriteria }: ListadoBienesPr
 
     return (
         <Box sx={{ width: '100%' }}>
-            <FiltroBusqueda onFilterChange={handleFilterChange} />
+            <FiltroBusqueda />
+            <Typography variant="body2" sx={{ mb: 2 }}>
+                Mostrando {filteredBienes.length} bienes
+            </Typography>
             <div style={{ height: 400, width: '100%' }}>
                 <DataGrid 
                     rows={rows} 
                     columns={columns}
                     disableRowSelectionOnClick
+                    autoHeight
+                    density="compact"
                 />
             </div>
         </Box>

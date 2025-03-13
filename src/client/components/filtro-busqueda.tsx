@@ -1,20 +1,17 @@
 import * as React from "react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { TextField, Button, Box, MenuItem } from "@mui/material";
+import { useInventario, FilterCriteria } from "../contexts/inventario-contexto";
 
 interface FiltroBusquedaProps {
-  onFilterChange: (filters: FilterCriteria) => void;
+  onFilterChange?: (filters: FilterCriteria) => void;
   campos?: string[];
 }
 
-export interface FilterCriteria {
-  campo: string;
-  valor: string;
-}
-
 export function FiltroBusqueda({ onFilterChange, campos = [] }: FiltroBusquedaProps) {
-  const [campo, setCampo] = useState<string>("");
-  const [valor, setValor] = useState<string>("");
+  const { filter, setFilter } = useInventario();
+  const [campo, setCampo] = useState<string>(filter?.campo || "");
+  const [valor, setValor] = useState<string>(filter?.valor || "");
 
   const camposDisponibles = campos.length > 0 ? campos : [
     "ficha",
@@ -28,6 +25,13 @@ export function FiltroBusqueda({ onFilterChange, campos = [] }: FiltroBusquedaPr
     "estado"
   ];
 
+  useEffect(() => {
+    if (filter) {
+      setCampo(filter.campo);
+      setValor(filter.valor);
+    }
+  }, [filter]);
+
   const handleCampoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setCampo(e.target.value);
   }, []);
@@ -38,9 +42,22 @@ export function FiltroBusqueda({ onFilterChange, campos = [] }: FiltroBusquedaPr
 
   const handleFilterApply = useCallback(() => {
     if (campo && valor) {
-      onFilterChange({ campo, valor });
+      const newFilter = { campo, valor };
+      setFilter(newFilter);
+      if (onFilterChange) {
+        onFilterChange(newFilter);
+      }
     }
-  }, [campo, valor, onFilterChange]);
+  }, [campo, valor, setFilter, onFilterChange]);
+
+  const handleClearFilter = useCallback(() => {
+    setCampo("");
+    setValor("");
+    setFilter(null);
+    if (onFilterChange) {
+      onFilterChange({ campo: "", valor: "" });
+    }
+  }, [setFilter, onFilterChange]);
 
   const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -49,7 +66,7 @@ export function FiltroBusqueda({ onFilterChange, campos = [] }: FiltroBusquedaPr
   }, [handleFilterApply]);
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, flexWrap: 'wrap' }}>
       <TextField
         select
         label="Campo a filtrar"
@@ -73,7 +90,7 @@ export function FiltroBusqueda({ onFilterChange, campos = [] }: FiltroBusquedaPr
         onChange={handleValorChange}
         onKeyPress={handleKeyPress}
         margin="normal"
-        sx={{ flexGrow: 1 }}
+        sx={{ flexGrow: 1, mr: 2 }}
         InputProps={{
           startAdornment: (
             <Box sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
@@ -83,14 +100,23 @@ export function FiltroBusqueda({ onFilterChange, campos = [] }: FiltroBusquedaPr
         }}
       />
 
-      <Button 
-        variant="contained" 
-        color="primary" 
-        onClick={handleFilterApply}
-        sx={{ ml: 2, height: 40, alignSelf: 'center', mt: 1 }}
-      >
-        Buscar
-      </Button>
+      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 1 }}>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={handleFilterApply}
+        >
+          Buscar
+        </Button>
+        
+        <Button 
+          variant="outlined" 
+          color="secondary" 
+          onClick={handleClearFilter}
+        >
+          Limpiar
+        </Button>
+      </Box>
     </Box>
   );
 }

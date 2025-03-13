@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Fab, Box, Tabs, Tab, Modal } from '@mui/material';
 import { ListadoBienes } from "../components/listado-bienes";
 import DetalleBien from "../components/detalle-bien";
@@ -17,6 +17,27 @@ function BienesPage() {
     const [bienTab, setBienesTab] = useState(0);
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedBien, setSelectedBien] = useState<Bien | null>(null);
+    const [bienes, setBienes] = useState<Bien[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchData() {
+            try {
+                setLoading(true);
+                const response = await my.ajax.traer_bienes();
+                setBienes(response.map((bien: Bien) => ({ ...bien })));
+            } catch (err) {
+                console.error("Error fetching bienes:", err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchData();
+    }, []);
+
+    const bienesActivos = bienes.filter(bien => bien.estado !== "baja");
+    const bienesEnBaja = bienes.filter(bien => bien.estado === "baja");
+    const totalBienes = bienes.length;
 
     // @ts-ignore
     const handleBienesTab = useCallback((event: React.SyntheticEvent, newValue: number) => {
@@ -42,7 +63,9 @@ function BienesPage() {
                         <Tab
                             label={
                                 <div className="tab-label">
-                                    <div className="tab-number" style={{ fontSize: '20px', fontWeight: 'bold' }}>3.200</div>
+                                    <div className="tab-number" style={{ fontSize: '20px', fontWeight: 'bold' }}>
+                                        {loading ? '...' : bienesActivos.length}
+                                    </div>
                                     <div className="tab-text">Bienes activos</div>
                                 </div>
                             }
@@ -51,7 +74,9 @@ function BienesPage() {
                         <Tab
                             label={
                                 <div className="tab-label">
-                                    <div className="tab-number" style={{ fontSize: '20px', fontWeight: 'bold' }}>500</div>
+                                    <div className="tab-number" style={{ fontSize: '20px', fontWeight: 'bold' }}>
+                                        {loading ? '...' : bienesEnBaja.length}
+                                    </div>
                                     <div className="tab-text">Bienes en baja</div>
                                 </div>
                             }
@@ -60,7 +85,9 @@ function BienesPage() {
                         <Tab
                             label={
                                 <div className="tab-label">
-                                    <div className="tab-number" style={{ fontSize: '20px', fontWeight: 'bold' }}>3.700</div>
+                                    <div className="tab-number" style={{ fontSize: '20px', fontWeight: 'bold' }}>
+                                        {loading ? '...' : totalBienes}
+                                    </div>
                                     <div className="tab-text">Total de bienes</div>
                                 </div>
                             }
@@ -69,7 +96,10 @@ function BienesPage() {
                     </Tabs>
                 </Box>
                 <TabPanel value={bienTab} index={0}>
-                    <ListadoBienes onViewDetails={handleViewDetails} />
+                    <ListadoBienes 
+                        onViewDetails={handleViewDetails}
+                        filterCriteria={(bien) => bien.estado !== "baja"}
+                    />
                 </TabPanel>
                 <TabPanel value={bienTab} index={1}>
                     <ListadoBienes 

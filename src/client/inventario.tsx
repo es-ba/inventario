@@ -32,6 +32,7 @@ const theme = createTheme({
 
 import _AgregarComprobante from "./components/formulario-comprobante";
 import { AppRoutes } from "./routes";
+import { InventarioProvider } from './contexts/inventario-contexto';
 
 // @ts-ignore 
 var my=myOwn;
@@ -167,21 +168,22 @@ function AppPrincipal(){
     //@ts-ignore
     const baseUrl = "/inventario";
     const [subtitle, setSubtitle] = useState('Inicio');
-    return <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <DmCaptureError>
-            <BrowserRouter>                
-                <MenuAppBar baseUrl={baseUrl} subtitle={subtitle} setSubtitle={setSubtitle}  />
-                <Layout>
-                </Layout>
-                <AppRoutes />
-            </BrowserRouter>       
-        </DmCaptureError>
-    </ThemeProvider>
+    return (
+        <InventarioProvider>
+            <ThemeProvider theme={theme}>
+                <CssBaseline />
+                <DmCaptureError>
+                    <BrowserRouter>                
+                        <MenuAppBar baseUrl={baseUrl} subtitle={subtitle} setSubtitle={setSubtitle} />
+                        <Layout>
+                            <AppRoutes />
+                        </Layout>
+                    </BrowserRouter>       
+                </DmCaptureError>
+            </ThemeProvider>
+        </InventarioProvider>
+    );
 }
-
-
-
 
 export function mostrarPrincipal(){
     document.documentElement.setAttribute('letra','chica');
