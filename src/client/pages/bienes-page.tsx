@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useState, useCallback } from 'react';
-import { Fab, Box, Tabs, Tab, TextField, Modal } from '@mui/material';
+import { Fab, Box, Tabs, Tab, Modal } from '@mui/material';
 import { ListadoBienes } from "../components/listado-bienes";
 import DetalleBien from "../components/detalle-bien";
 import TabPanel from '../common/tabpanel';
@@ -69,46 +69,12 @@ function BienesPage() {
                     </Tabs>
                 </Box>
                 <TabPanel value={bienTab} index={0}>
-                    <div><h6 style={{ marginTop: 'auto', marginBottom: '2px', color: '#474747' }}>Filtros de busqueda</h6></div>
-                    <div style={{ marginBottom: '30px' }}>
-                        <TextField label="Seleccionar filtro" name="filtro" margin="normal" />
-                        <TextField
-                            style={{ marginLeft: '20px' }}
-                            label="Agregar filtro de busqueda"
-                            name="filtro-busqueda"
-                            margin="normal"
-                            InputProps={{
-                                startAdornment: (
-                                    <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginRight: '8px' }}>
-                                        <span className="mdi mdi-magnify" style={{ fontSize: '24px' }}></span>
-                                    </div>
-                                ),
-                            }}
-                        />
-                    </div>
                     <ListadoBienes onViewDetails={handleViewDetails} />
                 </TabPanel>
                 <TabPanel value={bienTab} index={1}>
-                    <div><h6 style={{ marginTop: 'auto', marginBottom: '2px', color: '#474747' }}>Filtros de busqueda</h6></div>
-                    <div style={{ marginBottom: '30px' }}>
-                        <TextField label="Seleccionar filtro" name="filtro" margin="normal" />
-                        <TextField
-                            style={{ marginLeft: '20px' }}
-                            label="Agregar filtro de busqueda"
-                            name="filtro-busqueda"
-                            margin="normal"
-                            InputProps={{
-                                startAdornment: (
-                                    <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginRight: '8px' }}>
-                                        <span className="mdi mdi-magnify" style={{ fontSize: '24px' }}></span>
-                                    </div>
-                                ),
-                            }}
-                        />
-                    </div>
                     <ListadoBienes 
                         onViewDetails={handleViewDetails} 
-                        filterCriteria={(bien) => bien.observacion.includes("baja")}
+                        filterCriteria={(bien) => bien.estado === "baja"}
                     />
                 </TabPanel>
                 <TabPanel value={bienTab} index={2}>

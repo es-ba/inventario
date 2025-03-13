@@ -88,6 +88,7 @@ export default function EditarBienPage({ onInsert, onUpdate }: EditarBienProps) 
                 grupo: "",
                 detalle: "",
                 fecha: "",
+                estado: ""
             };
             setBien(bienNuevo);
         }

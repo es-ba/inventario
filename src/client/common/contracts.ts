@@ -8,4 +8,5 @@ type Bien = {
     responsable:string
     grupo:string
     detalle:string
+    estado:string
 }
