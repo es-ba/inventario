@@ -1,40 +1,42 @@
-import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
-import { useState } from 'react';
-import { Box, Tabs, Tab, TextField, IconButton, Modal } from '@mui/material';
 import * as React from "react";
+import { useMemo, useState, useEffect } from 'react';
+import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
+import { IconButton, CircularProgress } from '@mui/material';
 import { Link } from 'react-router-dom';
-import TabPanel from '../common/tabpanel';
-import DetalleBien from "./detalle-bien";
 
 interface ListadoBienesProps {
-    bienes: Bien[];
+    onViewDetails: (bien: Bien) => void;
+    filterCriteria?: (bien: Bien) => boolean;
 }
 
-function a11yProps(index: number) {
-    return {
-        id: `simple-tab-${index}`,
-        'aria-controls': `simple-tabpanel-${index}`,
-    };
-}
+export function ListadoBienes({ onViewDetails, filterCriteria }: ListadoBienesProps) {
+    const [bienes, setBienes] = useState<Bien[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<Error | null>(null);
+    
+    useEffect(() => {
+        async function fetchData() {
+            try {
+                setLoading(true);
+                const response = await my.ajax.traer_bienes();
+                setBienes(response.map((bien: Bien) => ({ ...bien })));
+            } catch (err) {
+                setError(err instanceof Error ? err : new Error(String(err)));
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchData();
+    }, []);
 
-export function ListadoBienes({ bienes }: ListadoBienesProps) {
-    const [bienTab, setBienesTab] = React.useState(0);
-    const [modalOpen, setModalOpen] = useState(false);
-    const [selectedBien, setSelectedBien] = useState<Bien | null>(null);
+    const filteredBienes = useMemo(() => {
+        if (filterCriteria) {
+            return bienes.filter(filterCriteria);
+        }
+        return bienes;
+    }, [bienes, filterCriteria]);
 
-    // @ts-ignore
-    const handleBienesTab = (event: React.SyntheticEvent, newValue: number) => {
-        setBienesTab(newValue);
-    };
-
-    const handleOpenModal = (bien: Bien) => {
-        setSelectedBien(bien);
-        setModalOpen(true);
-    };
-
-    const handleClose = () => setModalOpen(false);
-
-    const columns: GridColDef[] = [
+    const columns: GridColDef[] = useMemo(() => [
         { field: 'ficha', headerName: 'Ficha' },
         { field: 'serie', headerName: 'Serie' },
         { field: 'espacio', headerName: 'Espacio' },
@@ -59,7 +61,7 @@ export function ListadoBienes({ bienes }: ListadoBienesProps) {
                             <span className="mdi mdi-pencil"></span>
                         </IconButton>
                         <IconButton
-                            onClick={() => handleOpenModal(bien)}
+                            onClick={() => onViewDetails(bien)}
                         >
                             <span className="mdi mdi-eye"></span>
                         </IconButton>
@@ -67,103 +69,22 @@ export function ListadoBienes({ bienes }: ListadoBienesProps) {
                 );
             },
         },
-    ];
+    ], [onViewDetails]);
 
-    console.log(bienes);
-    const rows: GridRowsProp = bienes.map((bien, index) => ({
-        id: index + 1,
-        ...bien,
-        opciones: "",
-    }));
+    const rows: GridRowsProp = useMemo(() => 
+        filteredBienes.map((bien, index) => ({
+            id: index + 1,
+            ...bien,
+            opciones: "",
+        }))
+    , [filteredBienes]);
+
+    if (loading) return <CircularProgress />;
+    if (error) return <div>Error: {error.message}</div>;
 
     return (
-        <>
-            <div className="componente-pantalla">
-                <Box sx={{ width: '100%' }}>
-                    <Box className="tabs-container" sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                        <Tabs className="tabs" value={bienTab} onChange={handleBienesTab} aria-label="basic tabs example">
-                            <Tab
-                                label={
-                                    <div className="tab-label">
-                                        <div className="tab-number" style={{ fontSize: '20px', fontWeight: 'bold' }}>3.200</div>
-                                        <div className="tab-text">Bienes activos</div>
-                                    </div>
-                                }
-                                {...a11yProps(0)}
-                            />
-                            <Tab
-                                label={
-                                    <div className="tab-label">
-                                        <div className="tab-number" style={{ fontSize: '20px', fontWeight: 'bold' }}>500</div>
-                                        <div className="tab-text">Bienes en baja</div>
-                                    </div>
-                                }
-                                {...a11yProps(1)}
-                            />
-                            <Tab
-                                label={
-                                    <div className="tab-label">
-                                        <div className="tab-number" style={{ fontSize: '20px', fontWeight: 'bold' }}>3.700</div>
-                                        <div className="tab-text">Total de bienes</div>
-                                    </div>
-                                }
-                                {...a11yProps(2)}
-                            />
-                        </Tabs>
-                    </Box>
-                    <TabPanel value={bienTab} index={0}>
-                        <div><h6 style={{ marginTop: 'auto', marginBottom: '2px', color: '#474747' }}>Filtros de busqueda</h6></div>
-                        <div style={{ marginBottom: '30px' }}>
-                            <TextField label="Seleccionar filtro" name="filtro" margin="normal" />
-                            <TextField
-                                style={{ marginLeft: '20px' }}
-                                label="Agregar filtro de busqueda"
-                                name="filtro-busqueda"
-                                margin="normal"
-                                InputProps={{
-                                    startAdornment: (
-                                        <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginRight: '8px' }}>
-                                            <span className="mdi mdi-magnify" style={{ fontSize: '24px' }}></span>
-                                        </div>
-                                    ),
-                                }}
-                            />
-                        </div>
-                        <div>
-                            <DataGrid rows={rows} columns={columns} />
-                        </div>
-                    </TabPanel>
-                    <TabPanel value={bienTab} index={1}>
-                        <div><h6 style={{ marginTop: 'auto', marginBottom: '2px', color: '#474747' }}>Filtros de busqueda</h6></div>
-                        <div style={{ marginBottom: '30px' }}>
-                            <TextField label="Seleccionar filtro" name="filtro" margin="normal" />
-                            <TextField
-                                style={{ marginLeft: '20px' }}
-                                label="Agregar filtro de busqueda"
-                                name="filtro-busqueda"
-                                margin="normal"
-                                InputProps={{
-                                    startAdornment: (
-                                        <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginRight: '8px' }}>
-                                            <span className="mdi mdi-magnify" style={{ fontSize: '24px' }}></span>
-                                        </div>
-                                    ),
-                                }}
-                            />
-                        </div>
-                        <div>
-                            <DataGrid rows={rows} columns={columns} />
-                        </div>
-                    </TabPanel>
-                    <TabPanel value={bienTab} index={2}>
-                    </TabPanel>
-                </Box>
-            </div>
-            <Modal open={modalOpen} onClose={handleClose}>
-                <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90%', bgcolor: 'background.paper', border: '2px solid #000', boxShadow: 24, p: 4 }}>
-                    {selectedBien && <DetalleBien bien={selectedBien} />}
-                </Box>
-            </Modal>
-        </>
+        <div style={{ width: '100%', height: 400 }}>
+            <DataGrid rows={rows} columns={columns} />
+        </div>
     );
 }
