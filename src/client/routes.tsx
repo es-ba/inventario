@@ -9,8 +9,8 @@ export function AppRoutes() {
     return (
     <Routes>
         <Route path={`${baseUrl}/react`} element={<BienesPage />} />
-        <Route path={`${baseUrl}/react/bien`} element={<EditarBienPage />} />
-        <Route path={`${baseUrl}/react/bien/:ficha`} element={<EditarBienPage />} />
+        <Route path={`${baseUrl}/react/bien/add`} element={<EditarBienPage />} />
+        <Route path={`${baseUrl}/react/bien/edit/:ficha`} element={<EditarBienPage />} />
     </Routes>
     );
 }

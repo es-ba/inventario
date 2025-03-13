@@ -68,7 +68,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     
     return (
         <>
-        abajo estan los children
         {children}
         </>
     );
@@ -174,14 +173,7 @@ function AppPrincipal(){
             <BrowserRouter>                
                 <MenuAppBar baseUrl={baseUrl} subtitle={subtitle} setSubtitle={setSubtitle}  />
                 <Layout>
-                    <Typography>layout container</Typography>
                 </Layout>
-                    {/* <nav>
-                    
-                        <Link to={`${baseUrl}/react`}>Home</Link>
-                        <Link to={`${baseUrl}/react/grid`}>grid</Link>
-                        
-                    </nav> */}
                 <AppRoutes />
             </BrowserRouter>       
         </DmCaptureError>
