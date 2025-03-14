@@ -1,3 +1,6 @@
-ficha|orden|tipo_asig|accion|modalidadUso|responsable|en_uso_De|detalle|fecha_creacion|fecha_modificacion|usuario_creacion|usuario_modificacion
-12345|1|comp|pend|rem|mario|inf|hahahha|05/12|07/12|Fer|Mabe
-65478|2|comp|compl|rem|meme|com|leeeeee|06/12|10/12|Abel|Mabe
+ficha|orden|tipo_asignacion|accion|modalidaduso|responsable|enusode|detalle|fecha_creacion|fecha_modificacion|usuario_creacion|usuario_modificacion
+123345|1|acta|entrega|trabajoremoto|MGARCIA|En uso|Laptop Dell entregada a usuario responsable|2023-01-02|2023-01-02|perry|perry
+678910|1|comodato|entrega|prestamo|ARODRIGUEZ|En uso|Impresora HP entregada en calidad de préstamo|2023-02-02|2023-02-02|perry|perry
+111213|1|acta|devolucion|trabajoremoto|RPEREZ|Devuelto|Monitor Samsung devuelto por usuario|2023-03-15|2023-03-15|perry|perry
+141516|1|comodato|entrega|trabajoremoto|CFERNANDEZ|En uso|Proyector Epson entregado a usuario responsable|2023-04-02|2023-04-02|perry|perry
+171819|1|acta|entrega|prestamo|LMARTINEZ|En uso|Tablet Apple entregada en calidad de préstamo|2023-05-02|2023-05-02|perry|perry

@@ -1,19 +1,3 @@
-// ,[orden_compra]
-// ,[estado]
-// ,[tipo]
-// ,[descripcion]
-// ,[proveedor]
-// ,[archivo_adjunto]
-// ,[expediente]
-// ,[numero_procedimiento]
-// ,[unidad_ejecutora]
-// ,[auditoria_creadopor]
-// ,[auditoria_creadoen]
-// ,[auditoria_modificadopor]
-// ,[auditoria_modificadoen]
-// ,[fecha_pedido]
-// ,[fecha_recibido]
-
 
 import {TableDefinition, TableContext} from "./types-principal";
 

@@ -134,18 +134,18 @@ export class AppInventario extends AppBackend{
         super.prepareGetTables();
         this.getTableDefinition={
             ... this.getTableDefinition,
-            usuarios    ,    
+            usuarios    ,
+            responsables,
+            sedes       ,    
             tipo_area   ,
             areas       ,
             grupos      ,
             espacios    ,
             ordenescompra,
-            responsables,
             rubros      ,
-            sedes       ,
             tipo_bien   ,
-            bienes      ,
             asignaciones,
+            bienes      ,
             auditorias  
         }
     }       

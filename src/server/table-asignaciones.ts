@@ -25,12 +25,12 @@ export function asignaciones(context:TableContext):TableDefinition{
             {name:'accion'                      , typeName:'text'    , options:['entrega', 'devolucion']},
             {name:'modalidaduso'                , typeName:'text'    , options:['trabajoremoto', 'prestamo']},//fk //transferencia pasaria a baja, consultar
             {name:'responsable'                 , typeName:'text'    , nullable:true},
-            {name:'enusode'                     , typeName:'text'    },
-            {name:'detalle'                     , typeName:'text'    },
+            {name:'enusode'                     , typeName:'text'    , nullable:true},
+            {name:'detalle'                     , typeName:'text'    , nullable:true},
             {name:'fecha_creacion'              , typeName:'date'    , nullable:false, specialDefaultValue:'current_date'},
             {name:'fecha_modificacion'          , typeName:'date'    , nullable:false},
-            {name:'usuario_creacion'            , typeName:'text'    },
-            {name:'usuario_modificacion'        , typeName:'text'    },
+            {name:'usuario_creacion'            , typeName:'text'    , nullable:true},
+            {name:'usuario_modificacion'        , typeName:'text'    , nullable:true},
 
         ],
         primaryKey:['ficha'],

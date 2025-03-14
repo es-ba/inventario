@@ -23,9 +23,9 @@ export function responsables(context:TableContext):TableDefinition{
             {name:'nombre'                  , typeName:'text'       },  
             {name:'apellido'                , typeName:'text'       }, 
             {name:'mail'                    , typeName:'text'       },
-            {name:'externo'                 , typeName:'boolean'    },
+            {name:'externo'                 , typeName:'boolean'    , defaultValue:false},
             {name:'usuario'                 , typeName:'text'       , nullable:true},
-            {name:'activo'                  , typeName:'boolean'    },
+            {name:'activo'                  , typeName:'boolean'    , defaultValue:true},
             {name:'fecha_creacion'          , typeName:'date'    , defaultValue:null},
             {name:'fecha_modificacion'      , typeName:'date'    , nullable:true, defaultValue:null},
 

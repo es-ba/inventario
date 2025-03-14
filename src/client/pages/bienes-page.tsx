@@ -55,8 +55,6 @@ function BienesPage() {
 
     return (
         <div>
-            <h1>Bienes</h1>
-            
             <Box sx={{ width: '100%' }}>
                 <Box className="tabs-container" sx={{ borderBottom: 1, borderColor: 'divider' }}>
                     <Tabs className="tabs" value={bienTab} onChange={handleBienesTab} aria-label="basic tabs example">

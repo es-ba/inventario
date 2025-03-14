@@ -4,8 +4,8 @@ import {TableDefinition, TableContext, AppBackend} from "./types-principal";
 
 export function getPolicies(be:AppBackend){
     return {
-        select:{ using: `${be.dbUserRolExpr} = 'admin' or responsable = ${be.dbUserNameExpr}`},// or publicar`},
-        all:{ using: `${be.dbUserRolExpr} = 'admin' or responsable = ${be.dbUserNameExpr}`}// and publicar is not true` }
+        select:{ using: `${be.dbUserRolExpr} = 'admin' or responsable = ${be.dbUserNameExpr}`},
+        all:{ using: `${be.dbUserRolExpr} = 'admin' or responsable = ${be.dbUserNameExpr}`}
     }
 }
 
@@ -16,42 +16,61 @@ export function bienes(context:TableContext):TableDefinition{
     return {
         name:'bienes',
         elementName:'bien', 
-        title:'Bienes', // solo si es distinto al "name", si es igual se puede omitir
+        title:'Bienes',
         editable:admin || responsable,
         fields:[
             {name:'ficha'                       , typeName:'text'    }, 
             {name:'numero_integrado'            , typeName:'text'    }, 
-            {name:'ubicacion'                   , typeName:'text'    },
-            {name:'observacion'                 , typeName:'text'    },
-            {name:'detalle'                     , typeName:'text'    },
+            {name:'ubicacion'                   , typeName:'text'    , nullable:true},
+            {name:'observacion'                 , typeName:'text'    , nullable:true},
+            {name:'detalle'                     , typeName:'text'    , nullable:true},
             {name:'importe'                     , typeName:'text'    , nullable:true},
-            {name:'importetotal'                , typeName:'text'    , nullable:true},//solo importe
-            {name:'tipo_bien'                   , typeName:'text'    },//fk
-            {name:'estado'                      , typeName:'text'    , options:['alta', 'baja']},//fk //transferencia pasaria a baja, consultar
+            {name:'importetotal'                , typeName:'text'    , nullable:true},
+            {name:'tipo_bien'                   , typeName:'text'    , nullable:true},
+            {name:'estado'                      , typeName:'text'    , options:['alta', 'baja', 'uso_precario']},
             {name:'categoria'                   , typeName:'text'    , options:['transferencia', 'etc']},
-            {name:'modalidaduso'                , typeName:'text'    , options:['trabajoremoto', 'prestamo']},//fk //transferencia pasaria a baja, consultar
-            {name:'rubro'                       , typeName:'text'    , nullable:true},//fk
-            {name:'clase'                       , typeName:'text'    , nullable:true},//fk
-            {name:'cuenta'                      , typeName:'text'    , nullable:true},//fk
-            {name:'grupo'                       , typeName:'text'    , nullable:true},//fk
-            {name:'marca'                       , typeName:'text'    },
-            {name:'serie'                       , typeName:'text'    },
-            {name:'imei'                        , typeName:'text'    },
-            {name:'modelo'                      , typeName:'text'    },
-            {name:'anio'                        , typeName:'text'    },
-            {name:'prd'                         , typeName:'text'    },
-            {name:'caracteridentificador'       , typeName:'text'    },//?
-            {name:'enusode'                     , typeName:'text'    },
-            {name:'clasificacion'               , typeName:'text'    },
-            {name:'area'                        , typeName:'text'    , nullable:true},//fk 
-            {name:'sede'                        , typeName:'text'    , nullable:true},//fk
-            {name:'espacio'                     , typeName:'text'    , nullable:true},//fk
-            {name:'responsable'                 , typeName:'text'    , nullable:true},//fk
-            // {name:'publicar'         , typeName:'boolean' , editable:admin },
-            // {name:'formato'          , typeName:'text'    , options:['plano', 'md', 'html', 'jade']},
-            {name:'ordencompra'                 , typeName:'text'    , nullable:true},//fk //viejomantenimiento
-            {name:'fecha'              , typeName:'date'    , nullable:false, specialDefaultValue:'current_date'},//de mas, se puede usar log
-            // {name:'aclaracion'                  , typeName:'text'    },//?
+            {name:'modalidad_uso'                , typeName:'text'    , options:['trabajoremoto', 'prestamo']},
+            {name:'rubro'                       , typeName:'text'    , nullable:true},
+            {name:'clase'                       , typeName:'text'    , nullable:true},
+            {name:'cuenta'                      , typeName:'text'    , nullable:true},
+            {name:'grupo'                       , typeName:'text'    , nullable:true},
+            {name:'marca'                       , typeName:'text'    , nullable:true},
+            {name:'serie'                       , typeName:'text'    , nullable:true},
+            {name:'imei'                        , typeName:'text'    , nullable:true},
+            {name:'modelo'                      , typeName:'text'    , nullable:true},
+            {name:'anio'                        , typeName:'text'    , nullable:true},
+            {name:'prd'                         , typeName:'text'    , nullable:true},
+            {name:'caracteridentificador'       , typeName:'text'    , nullable:true},
+            {name:'enusode'                     , typeName:'text'    , nullable:true},
+            {name:'clasificacion'               , typeName:'text'    , nullable:true},
+            {name:'area'                        , typeName:'text'    , nullable:true},
+            {name:'sede'                        , typeName:'text'    , nullable:true},
+            {name:'espacio'                     , typeName:'text'    , nullable:true},
+            {name:'responsable'                 , typeName:'text'    , nullable:true},
+            {name:'ordencompra'                 , typeName:'text'    , nullable:true},
+            {name:'fecha'                       , typeName:'date'    , nullable:false, specialDefaultValue:'current_date'},
+            {name:'entidad_prestadora'          , typeName:'text'    , nullable:true},
+            {name:'tipo_contrato'               , typeName:'text'    , options:['comodato', 'prestamo', 'alquiler', 'otro'], nullable:true},
+            {name:'fecha_inicio'                , typeName:'date'    , nullable:true},
+            {name:'fecha_fin'                   , typeName:'date'    , nullable:true},
+            {name:'renovable'                   , typeName:'boolean' , nullable:true, defaultValue:false},
+            {name:'condiciones'                 , typeName:'text'    , nullable:true},
+            {name:'costo_mensual'               , typeName:'decimal' , nullable:true},
+            {name:'fecha_solicitud'             , typeName:'date'    , nullable:true},
+            {name:'motivo'                      , typeName:'text'    , options:[
+                'obsolescencia', 
+                'deterioro', 
+                'robo', 
+                'perdida', 
+                'donacion', 
+                'venta', 
+                'devolucion',
+                'otro'
+            ], nullable:true},
+            {name:'valor_residual'              , typeName:'decimal' , nullable:true},
+            {name:'autorizado_por'              , typeName:'text'    , nullable:true},
+            {name:'documento_respaldo'          , typeName:'text'    , nullable:true},
+            {name:'estado_baja'                 , typeName:'text'    , options:['solicitada', 'en_revision', 'aprobada', 'rechazada'], nullable:true},
         ],
         primaryKey:['ficha'],
         foreignKeys:[
@@ -66,25 +85,12 @@ export function bienes(context:TableContext):TableDefinition{
         constraints:[
             {constraintType:'unique', fields:['ficha']}
         ],
-        detailTables:[
-            // {table:'areas', fields:['area'], abr:'V'}
-        ],
         sql:{
-            /* 
-               ATENCIÓN
-               --------
-               Las pólicies son algo nuevo en backend-plus, utilizan las policies de PostgreSQL: https://www.postgresql.org/docs/9.5/ddl-rowsecurity.html
-               Permiten cambiar los permisos en función del contenido de cada registro.
-
-               Como son nuevas es complicado de usarlas, hay que definir todo a mano.
-               Más adelante la forma de hacer esto puede cambiar o pueden haber herramientas que lo hagan más simple.
-               
-            */
             policies:getPolicies(be)
         }
     };
 }
 
 
- 
+
 
