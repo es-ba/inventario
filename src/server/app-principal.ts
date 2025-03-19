@@ -21,6 +21,12 @@ import { sedes } from "./table-sedes";
 import { tipo_bien } from "./table-tipo_bien";
 import { tipo_area } from "./table-tipo_area";
 import { areas } from './table-areas';
+import { categoria_bien } from "./table-categoria_bien";
+import { estados_baja } from "./table-estados_baja";
+import { estados } from "./table-estados";
+import { modalidad_uso } from "./table-modalidad_uso";
+import { motivos_baja } from "./table-motivos_baja";
+import { tipo_contrato } from "./table-tipo_contrato";
 
 import {staticConfigYaml} from './def-config';
 import * as express from "express";
@@ -135,6 +141,12 @@ export class AppInventario extends AppBackend{
         this.getTableDefinition={
             ... this.getTableDefinition,
             usuarios    ,
+            categoria_bien,
+            estados_baja,
+            estados,
+            modalidad_uso,
+            motivos_baja,
+            tipo_contrato,
             responsables,
             sedes       ,    
             tipo_area   ,
