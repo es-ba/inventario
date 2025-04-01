@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Fab, Box, Tabs, Tab, Modal } from '@mui/material';
 import { ListadoBienes } from "../components/listado-bienes";
 import DetalleBien from "../components/detalle-bien";
-import TabPanel from '../common/tabpanel';
+import TabPanel from '../components/tabpanel';
 import { Link } from "react-router-dom";
 
 function a11yProps(index: number) {

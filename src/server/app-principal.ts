@@ -106,17 +106,32 @@ export class AppInventario extends AppBackend{
     }
     override getMenu(context:Context):MenuDefinition{
         var menuContent:MenuInfoBase[]=[
+            {menuType:'prueba', name:'prueba', label:'principal'},
             {menuType:'menu', name:'inventario', label:'inventario',  menuContent:[
                 {menuType:'table', name:'bienes', label:'bienes', selectedByDefault:true},
                 {menuType:'table', name:'areas', label:'areas'},
+                {menuType:'table', name:'responsables' },
                 {menuType:'table', name:'grupos', label:'grupos'},
-                {menuType:'prueba', name:'prueba', label:'prueba'}
             ]},
         ];
         if(context.user && context.user.rol=="admin"){
             menuContent.push(
                 {menuType:'menu', name:'config', label:'configurar', menuContent:[
                     {menuType:'table', name:'usuarios'  },
+                    {menuType:'menu', name:'referenciales', label:'referenciales', menuContent:[
+                        {menuType:'table', name:'tipo_bien' },
+                        {menuType:'table', name:'tipo_area' },
+                        {menuType:'table', name:'categoria_bien' },
+                        {menuType:'table', name:'estados_baja' },
+                        {menuType:'table', name:'estados' },
+                        {menuType:'table', name:'modalidad_uso' },
+                        {menuType:'table', name:'motivos_baja' },
+                        {menuType:'table', name:'tipo_contrato' },
+                        {menuType:'table', name:'sedes' },
+                        {menuType:'table', name:'grupos' },
+                        {menuType:'table', name:'espacios' },
+                        {menuType:'table', name:'rubros' },
+                    ]},
                 ]}
             )
         };

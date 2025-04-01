@@ -82,6 +82,12 @@ export function bienes(context:TableContext):TableDefinition{
         constraints:[
             {constraintType:'unique', fields:['ficha']}
         ],
+        detailTables:[
+            {table:'asignaciones', fields:['ficha'], abr:'A', label:'Asignaciones'},
+            {table:'auditorias', fields:['ficha'], abr:'Au', label:'Auditorias'},
+            {table:'ordenescompra', fields:['ficha'], abr:'OC', label:'Ordenes de compra'},
+            
+        ],
         sql:{
             policies:getPolicies(be)
         }
