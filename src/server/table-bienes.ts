@@ -47,7 +47,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'sede'                        , typeName:'text'    , nullable:true},
             {name:'espacio'                     , typeName:'text'    , nullable:true},
             {name:'responsable'                 , typeName:'text'    , nullable:true},
-            {name:'ordencompra'                 , typeName:'text'    , nullable:true},
+            {name:'orden_compra'                , typeName:'text'    , nullable:true},
             {name:'fecha'                       , typeName:'date'    , nullable:false, specialDefaultValue:'current_date'},
             {name:'entidad_prestadora'          , typeName:'text'    , nullable:true},
             {name:'tipo_contrato'               , typeName:'text'    , nullable:true},
@@ -62,6 +62,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'autorizado_por'              , typeName:'text'    , nullable:true},
             {name:'documento_respaldo'          , typeName:'text'    , nullable:true},
             {name:'estado_baja'                 , typeName:'text'    , nullable:true},
+            {name:'codigo_barra'                , typeName:'text'    , inTable:false, clientSide:'codigo_barra', editable:false},
         ],
         primaryKey:['ficha'],
         foreignKeys:[
@@ -77,16 +78,15 @@ export function bienes(context:TableContext):TableDefinition{
             {references:'modalidad_uso', fields:['modalidad_uso']},
             {references:'estados', fields:['estado']},
             {references:'tipo_contrato', fields:['tipo_contrato']},
-            {references:'estados_baja', fields:['estado_baja']}
+            {references:'estados_baja', fields:['estado_baja']},
+            {references:'ordenes_compra', fields:['orden_compra']},
         ],
         constraints:[
             {constraintType:'unique', fields:['ficha']}
         ],
         detailTables:[
             {table:'asignaciones', fields:['ficha'], abr:'A', label:'Asignaciones'},
-            {table:'auditorias', fields:['ficha'], abr:'Au', label:'Auditorias'},
-            {table:'ordenescompra', fields:['ficha'], abr:'OC', label:'Ordenes de compra'},
-            
+            {table:'auditorias', fields:['ficha'], abr:'Au', label:'Auditorias'} 
         ],
         sql:{
             policies:getPolicies(be)

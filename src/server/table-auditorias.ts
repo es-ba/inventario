@@ -27,7 +27,7 @@ export function auditorias(context:TableContext):TableDefinition{
             {name:'importetotal'                , typeName:'text'    , nullable:true},
             {name:'tipo_bien'                   , typeName:'text'    },
             {name:'estado'                      , typeName:'text'    , options:['alta', 'baja', 'uso_precario']},
-            {name:'categoria'                   , typeName:'text'    , options:['transferencia', 'etc']},
+            {name:'categoria'                   , typeName:'text'    , options:['transferencia']},
             {name:'modalidaduso'                , typeName:'text'    , options:['trabajoremoto', 'prestamo']},
             {name:'rubro'                       , typeName:'text'    , nullable:true},
             {name:'clase'                       , typeName:'text'    , nullable:true},

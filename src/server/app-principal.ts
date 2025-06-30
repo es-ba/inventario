@@ -14,7 +14,7 @@ import { grupos } from './table-grupos';
 import { asignaciones } from "./table-asignaciones";
 import { auditorias } from "./table-auditorias";
 import { espacios } from "./table-espacios";
-import { ordenescompra } from "./table-ordenescompra";
+import { ordenes_compra } from "./table-ordenes_compra";
 import { rubros } from "./table-rubros";
 import { responsables } from "./table-responsables";
 import { sedes } from "./table-sedes";
@@ -142,6 +142,7 @@ export class AppInventario extends AppBackend{
             {type:'js' , src:'client/client.js' },
         ]:[
             {type:'js' , src:'unlogged.js' },
+            
         ];
         var list: ClientModuleDefinition[] = [
             ...super.clientIncludes(req, opts),
@@ -168,7 +169,7 @@ export class AppInventario extends AppBackend{
             areas       ,
             grupos      ,
             espacios    ,
-            ordenescompra,
+            ordenes_compra,
             rubros      ,
             tipo_bien   ,
             asignaciones,
