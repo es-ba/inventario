@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Paper, Typography } from "@mui/material";
+import { Paper, Typography, TextField, } from "@mui/material";
 
 type DetalleBienProps = {
     bien: Bien;
@@ -8,21 +8,34 @@ type DetalleBienProps = {
 function DetalleBien({ bien }: DetalleBienProps) {
     console.log(bien);
     return (
-        <Paper className="form-container">
-            <Typography variant="h6"><span className="mdi mdi-eye"></span>Detalle de bien</Typography>
+        <Paper className="form-modal-container">
+            <Typography sx={{ marginBottom: '30px',}} variant="h6"><span className="mdi mdi-eye"></span>Detalle del bien</Typography>
             <div className="form-row">
                 <div className="form-group">
-                    <Typography variant="body1"><strong>Ficha:</strong> {bien.ficha}</Typography>
-                    <Typography variant="body1"><strong>Serie:</strong> {bien.serie}</Typography>
+                <TextField label="Ficha" value={bien.ficha} variant="outlined" fullWidth margin="dense"/>
+                    {/*<Typography variant="body1"><strong>Serie:</strong> {bien.serie}</Typography>*/}
                 </div>
                 <div className="form-group">
-                    <Typography variant="body1"><strong>Responsable:</strong> {bien.responsable}</Typography>
-                    <Typography variant="body1"><strong>Área:</strong> {bien.area}</Typography>
+                <TextField label="Responsable" value={bien.responsable} variant="outlined" fullWidth margin="dense"/>
+                <TextField label="En uso de" value={bien.enusode} variant="outlined" fullWidth margin="dense"/>
                 </div>
                 <div className="form-group">
-                    <Typography variant="body1"><strong>Espacio:</strong> {bien.espacio}</Typography>
-                    <Typography variant="body1"><strong>Grupo:</strong> {bien.grupo}</Typography>
+                <TextField label="Área" value={bien.area} variant="outlined" fullWidth margin="dense"/>
                 </div>
+                <div className="form-group">
+                    {/* //no va Estado segun maqueta//
+                    // <Typography variant="body1"><strong>Espacio:</strong> {bien.espacio}</Typography> */}
+                    <TextField label="Comodato" variant="outlined" fullWidth margin="dense"/>
+                    <TextField label="Ubicación:" value={bien.ubicacion} variant="outlined" fullWidth margin="dense"/>
+                </div>
+                <div className="form-group">
+                <TextField label="Estado" value={bien.estado} variant="outlined" fullWidth margin="dense"/>
+                <TextField label="Último comodato firmado"variant="outlined" fullWidth margin="dense"/>
+                </div>
+                {/* //no va grupo segun maqueta//
+                <div className="form-group">
+                <Typography variant="body1"><strong>Grupo:</strong> {bien.grupo}</Typography>
+                </div>*/}
                 <div className="form-group">
                     <Typography variant="body1"><strong>Detalle:</strong> {bien.detalle}</Typography>
                 </div>
