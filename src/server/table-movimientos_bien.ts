@@ -9,14 +9,14 @@ export function getPolicies(be:AppBackend){
     }
 }
 
-export function asignaciones(context:TableContext):TableDefinition{
+export function movimientos_bien(context:TableContext):TableDefinition{
     var be = context.be;
     var admin = context.user.rol==='admin';
     var responsable = context.user.rol==='responsable';
     return {
-        name:'asignaciones',
-        elementName:'asignacion', 
-        title:'Asignaciones', // solo si es distinto al "name", si es igual se puede omitir
+        name:'movimientos_bien',
+        elementName:'movimiento_bien', 
+        title:'movimientos de bienes', // solo si es distinto al "name", si es igual se puede omitir
         editable:admin || responsable,
         fields:[
             {name:'ficha'                       , typeName:'text'    }, 
@@ -25,6 +25,9 @@ export function asignaciones(context:TableContext):TableDefinition{
             {name:'accion'                      , typeName:'text'    , options:['entrega', 'devolucion']},
             {name:'modalidaduso'                , typeName:'text'    , options:['trabajoremoto', 'prestamo']},//fk //transferencia pasaria a baja, consultar
             {name:'responsable'                 , typeName:'text'    , nullable:true},
+            {name:'area'                        , typeName:'text'    , nullable:true},
+            {name:'sede'                        , typeName:'text'    , nullable:true},
+            {name:'espacio'                     , typeName:'text'    , nullable:true},
             {name:'enusode'                     , typeName:'text'    , nullable:true},
             {name:'detalle'                     , typeName:'text'    , nullable:true},
             {name:'fecha_creacion'              , typeName:'date'    , nullable:false, specialDefaultValue:'current_date'},
