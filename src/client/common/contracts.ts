@@ -23,7 +23,7 @@ type Bien = {
     marca?: string;
     imei?: string;
     modelo?: string;
-    anio?: string;
+    annio?: string;
     prd?: string;
     caracteridentificador?: string;
     enusode?: string;
