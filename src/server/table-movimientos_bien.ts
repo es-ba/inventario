@@ -9,7 +9,7 @@ export function getPolicies(be:AppBackend){
     }
 }
 
-export function movimientos_bien(context:TableContext):TableDefinition{
+export function mov(context:TableContext):TableDefinition{
     var be = context.be;
     var admin = context.user.rol==='admin';
     var responsable = context.user.rol==='responsable';
@@ -42,6 +42,10 @@ export function movimientos_bien(context:TableContext):TableDefinition{
             {references:'responsables', fields:['responsable']},
             {references:'usuarios', fields:[{source:'usuario_creacion' , target:'usuario'}], alias: 'usuario_creacion'},
             {references:'usuarios', fields:[{source:'usuario_modificacion' , target:'usuario'}], alias: 'usuario_modificacion'},
+            {references:'responsables', fields:['responsable']},
+            {references:'areas', fields:['area']},
+            {references:'sedes', fields:['sede']},
+            {references:'espacios', fields:['espacio']},
             // {references:'tipo_asignacion', fields:['tipo_asignacion']},
         ],
         sql:{
