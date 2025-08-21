@@ -4,8 +4,8 @@ import {TableDefinition, TableContext, AppBackend} from "./types-principal";
 
 export function getPolicies(be:AppBackend){
     return {
-        select:{ using: `${be.dbUserRolExpr} = 'admin' or responsable = ${be.dbUserNameExpr}`},
-        all:{ using: `${be.dbUserRolExpr} = 'admin' or responsable = ${be.dbUserNameExpr}`}
+        select:{ using: `${be.dbUserRolExpr} = 'admin'`},
+        all:{ using: `${be.dbUserRolExpr} = 'admin'`}
     }
 }
 
@@ -29,7 +29,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'tipo_bien'                   , typeName:'text'    , nullable:true},
             {name:'estado'                      , typeName:'text'    , nullable:true},
             {name:'categoria'                   , typeName:'text'    , nullable:true},
-            {name:'modalidad_uso'               , typeName:'text'    , nullable:true},
+            // {name:'modalidad_uso'               , typeName:'text'    , nullable:true},
             {name:'rubro'                       , typeName:'text'    , nullable:true},
             {name:'clase'                       , typeName:'text'    , nullable:true},
             {name:'cuenta'                      , typeName:'text'    , nullable:true},
@@ -62,12 +62,14 @@ export function bienes(context:TableContext):TableDefinition{
         ],
         primaryKey:['ficha'],
         foreignKeys:[
-            {references:'rubros', fields:['rubro', 'clase', 'cuenta'] },
+            {references:'rubros', fields:['rubro'] },
+            {references:'clases', fields:['rubro', 'clase'] },
+            {references:'cuentas', fields:['rubro', 'clase', 'cuenta'] },
             {references:'tipo_bien', fields:['tipo_bien']},
             {references:'grupos', fields:['grupo']},
             {references:'motivos_baja', fields:['motivo_baja']},
             {references:'categoria_bien', fields:['categoria']},
-            {references:'modalidad_uso', fields:['modalidad_uso']},
+            // {references:'modalidad_uso', fields:['modalidad_uso']},
             {references:'estados', fields:['estado']},
             {references:'tipo_contrato', fields:['tipo_contrato']},
             {references:'estados_baja', fields:['estado_baja']},

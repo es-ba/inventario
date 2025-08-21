@@ -10,7 +10,7 @@ export function clases(context:TableContext):TableDefinition{
         fields:[
             {name:'rubro'      , typeName:'text'},
             {name:'clase'      , typeName:'text'},
-            {name:'nombre'     , typeName:'text'},
+            {name:'nombre'     , typeName:'text', isName:true},
             {name:'descripcion' , typeName:'text'},
         ],
         primaryKey:['rubro','clase'],

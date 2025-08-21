@@ -11,7 +11,7 @@ import {ProceduresInventario} from "./procedures-principal";
 import { bienes } from './table-bienes';
 import { usuarios   } from './table-usuarios';
 import { grupos } from './table-grupos';
-import { asignaciones } from "./table-asignaciones";
+import { movimientos_bien } from "./table-movimientos_bien";
 import { auditorias } from "./table-auditorias";
 import { espacios } from "./table-espacios";
 import { ordenes_compra } from "./table-ordenes_compra";
@@ -27,6 +27,8 @@ import { estados } from "./table-estados";
 import { modalidad_uso } from "./table-modalidad_uso";
 import { motivos_baja } from "./table-motivos_baja";
 import { tipo_contrato } from "./table-tipo_contrato";
+import { cuentas } from "./table-cuentas";
+import { clases } from "./table-clases";
 
 import {staticConfigYaml} from './def-config';
 import * as express from "express";
@@ -170,9 +172,11 @@ export class AppInventario extends AppBackend{
             grupos      ,
             espacios    ,
             ordenes_compra,
+            cuentas     ,
+            clases      ,
             rubros      ,
             tipo_bien   ,
-            asignaciones,
+            movimientos_bien,
             bienes      ,
             auditorias  
         }

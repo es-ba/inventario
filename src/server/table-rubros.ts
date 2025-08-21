@@ -16,7 +16,7 @@ export function rubros(context:TableContext):TableDefinition{
         editable: admin,
         fields:[
             {name:'rubro'      , typeName:'text'},
-            {name:'nombre'     , typeName:'text'},
+            {name:'nombre'     , typeName:'text', isName:true},
             {name:'descripcion' , typeName:'text'},
         ],
         primaryKey:['rubro'],

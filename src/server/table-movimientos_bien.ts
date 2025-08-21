@@ -9,7 +9,7 @@ export function getPolicies(be:AppBackend){
     }
 }
 
-export function mov(context:TableContext):TableDefinition{
+export function movimientos_bien(context:TableContext):TableDefinition{
     var be = context.be;
     var admin = context.user.rol==='admin';
     var responsable = context.user.rol==='responsable';
@@ -23,7 +23,7 @@ export function mov(context:TableContext):TableDefinition{
             {name:'orden'                       , typeName:'text'    },
             {name:'tipo_asignacion'             , typeName:'text'    , options:['acta', 'comodato']},
             {name:'accion'                      , typeName:'text'    , options:['entrega', 'devolucion']},
-            {name:'modalidaduso'                , typeName:'text'    , options:['trabajoremoto', 'prestamo']},//fk //transferencia pasaria a baja, consultar
+            {name:'modalidad_uso'               , typeName:'text'    , options:['trabajoremoto', 'prestamo']},//fk //transferencia pasaria a baja, consultar
             {name:'responsable'                 , typeName:'text'    , nullable:true},
             {name:'area'                        , typeName:'text'    , nullable:true},
             {name:'sede'                        , typeName:'text'    , nullable:true},
@@ -42,7 +42,6 @@ export function mov(context:TableContext):TableDefinition{
             {references:'responsables', fields:['responsable']},
             {references:'usuarios', fields:[{source:'usuario_creacion' , target:'usuario'}], alias: 'usuario_creacion'},
             {references:'usuarios', fields:[{source:'usuario_modificacion' , target:'usuario'}], alias: 'usuario_modificacion'},
-            {references:'responsables', fields:['responsable']},
             {references:'areas', fields:['area']},
             {references:'sedes', fields:['sede']},
             {references:'espacios', fields:['espacio']},
