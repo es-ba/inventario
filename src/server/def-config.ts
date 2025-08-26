@@ -32,6 +32,8 @@ install:
     db:
       owner: inventario_owner
     scripts:
+      pre-adapt:
+      - ../install/movimientos_bien_pk_trg.sql
       post-adapt:
       - ../node_modules/pg-triggers/lib/recreate-his.sql
       - ../node_modules/pg-triggers/lib/table-changes.sql

@@ -20,7 +20,7 @@ export function movimientos_bien(context:TableContext):TableDefinition{
         editable:admin || responsable,
         fields:[
             {name:'ficha'                       , typeName:'text'    }, 
-            {name:'orden'                       , typeName:'text'    },
+            {name:'orden'                       , typeName:'bigint'  , nullable:true, editable:false  },
             {name:'tipo_asignacion'             , typeName:'text'    , options:['acta', 'comodato']},
             {name:'accion'                      , typeName:'text'    , options:['entrega', 'devolucion']},
             {name:'modalidad_uso'               , typeName:'text'    , options:['trabajoremoto', 'prestamo']},//fk //transferencia pasaria a baja, consultar
@@ -31,12 +31,12 @@ export function movimientos_bien(context:TableContext):TableDefinition{
             {name:'enusode'                     , typeName:'text'    , nullable:true},
             {name:'detalle'                     , typeName:'text'    , nullable:true},
             {name:'fecha_creacion'              , typeName:'date'    , nullable:false, specialDefaultValue:'current_date'},
-            {name:'fecha_modificacion'          , typeName:'date'    , nullable:false},
+            {name:'fecha_modificacion'          , typeName:'date'    , nullable:true},
             {name:'usuario_creacion'            , typeName:'text'    , nullable:true},
             {name:'usuario_modificacion'        , typeName:'text'    , nullable:true},
 
         ],
-        primaryKey:['ficha'],
+        primaryKey:['ficha', 'orden'],
         foreignKeys:[
             {references:'bienes', fields:['ficha']},
             {references:'responsables', fields:['responsable']},

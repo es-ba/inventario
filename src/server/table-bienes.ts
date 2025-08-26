@@ -59,7 +59,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'documento_respaldo'          , typeName:'text'    , nullable:true},
             {name:'estado_baja'                 , typeName:'text'    , nullable:true},
             {name:'codigo_barra'                , typeName:'text'    , inTable:false, clientSide:'codigo_barra', editable:false},
-        ],
+        ],  
         primaryKey:['ficha'],
         foreignKeys:[
             {references:'rubros', fields:['rubro'] },
@@ -80,7 +80,8 @@ export function bienes(context:TableContext):TableDefinition{
         ],
         detailTables:[
             {table:'asignaciones', fields:['ficha'], abr:'A', label:'Asignaciones'},
-            {table:'auditorias', fields:['ficha'], abr:'Au', label:'Auditorias'} 
+            {table:'auditorias', fields:['ficha'], abr:'Au', label:'Auditorias'},
+            {table:'movimientos_bien', fields:['ficha'], abr:'Mov'},
         ],
         sql:{
             policies:getPolicies(be)
