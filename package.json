@@ -17,7 +17,7 @@
     "@mui/lab": "^6.0.0-beta.19",
     "@mui/material": "^6.2.0",
     "@mui/x-data-grid": "^7.23.1",
-    "backend-plus": "^2.1.8",
+    "backend-plus": "^2.5.2-betha.23",
     "frontend-plus": "^1.0.3-alpha.1",
     "jsbarcode": "^3.12.1",
     "pg-triggers": "^0.3.3",
@@ -28,7 +28,7 @@
     "redux-typed-reducer": "^0.1.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.26.0",
+    "@babel/core": "^7.26.0",   
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-react": "^7.26.3",
     "@types/node": "^22.10.1",

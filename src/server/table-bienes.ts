@@ -29,7 +29,6 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'tipo_bien'                   , typeName:'text'    , nullable:true},
             {name:'estado'                      , typeName:'text'    , nullable:true},
             {name:'categoria'                   , typeName:'text'    , nullable:true},
-            // {name:'modalidad_uso'               , typeName:'text'    , nullable:true},
             {name:'rubro'                       , typeName:'text'    , nullable:true},
             {name:'clase'                       , typeName:'text'    , nullable:true},
             {name:'cuenta'                      , typeName:'text'    , nullable:true},
@@ -58,7 +57,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'autorizado_por'              , typeName:'text'    , nullable:true},
             {name:'documento_respaldo'          , typeName:'text'    , nullable:true},
             {name:'estado_baja'                 , typeName:'text'    , nullable:true},
-            {name:'codigo_barra'                , typeName:'text'    , inTable:false, clientSide:'codigo_barra', editable:false},
+            // {name:'codigo_barra'                , typeName:'text'    , inTable:false, editable:false},
         ],  
         primaryKey:['ficha'],
         foreignKeys:[
@@ -69,7 +68,6 @@ export function bienes(context:TableContext):TableDefinition{
             {references:'grupos', fields:['grupo']},
             {references:'motivos_baja', fields:['motivo_baja']},
             {references:'categoria_bien', fields:['categoria']},
-            // {references:'modalidad_uso', fields:['modalidad_uso']},
             {references:'estados', fields:['estado']},
             {references:'tipo_contrato', fields:['tipo_contrato']},
             {references:'estados_baja', fields:['estado_baja']},
@@ -79,7 +77,6 @@ export function bienes(context:TableContext):TableDefinition{
             {constraintType:'unique', fields:['ficha']}
         ],
         detailTables:[
-            {table:'asignaciones', fields:['ficha'], abr:'A', label:'Asignaciones'},
             {table:'auditorias', fields:['ficha'], abr:'Au', label:'Auditorias'},
             {table:'movimientos_bien', fields:['ficha'], abr:'Mov'},
         ],

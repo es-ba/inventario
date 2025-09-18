@@ -2,6 +2,7 @@ export const staticConfigYaml=`
 server:
   port: 3021
   session-store: memory-saved
+  allowedHosts: [localhost]
 db:
   motor: postgresql
   host: localhost
