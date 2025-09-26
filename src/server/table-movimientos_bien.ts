@@ -34,6 +34,9 @@ export function movimientos_bien(context:TableContext):TableDefinition{
             {name:'fecha_modificacion'          , typeName:'date'    , nullable:true},
             {name:'usuario_creacion'            , typeName:'text'    , nullable:true},
             {name:'usuario_modificacion'        , typeName:'text'    , nullable:true},
+            {name:'solicitado_por'              , typeName:'text'    , nullable:true},
+            {name:'firmado_por'                 , typeName:'text'    , nullable:true},
+            {name:'vincular_responsable'        , typeName:'text'    , nullable:true},
 
         ],
         primaryKey:['ficha', 'orden'],
