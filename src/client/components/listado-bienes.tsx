@@ -5,6 +5,7 @@ import { IconButton, CircularProgress, Box, Typography, Paper } from '@mui/mater
 import { Link } from 'react-router-dom';
 import { FiltroBusqueda } from './filtro-busqueda';
 import { useInventario } from '../contexts/inventario-contexto';
+const baseUrl = "/inventario";
 
 interface ListadoBienesProps {
     onViewDetails: (bien: Bien) => void;

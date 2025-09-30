@@ -5,6 +5,7 @@ import { ListadoBienes } from "../components/listado-bienes";
 import DetalleBien from "../components/detalle-bien";
 import TabPanel from '../components/tabpanel';
 import { Link } from "react-router-dom";
+const baseUrl = "/inventario";
 
 function a11yProps(index: number) {
     return {

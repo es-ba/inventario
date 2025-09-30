@@ -30,7 +30,6 @@ import { clases } from "./table-clases";
 import { movimientos_bien } from "./table-movimientos_bien";
 import { tipo_asignacion } from "./table-tipo_asignacion";
 
-
 import {staticConfigYaml} from './def-config';
 // import * as express from "express";
 
@@ -76,7 +75,7 @@ export class AppInventario extends AppBackend{
     }
     override getMenu(context:Context):MenuDefinition{
         var menuContent:MenuInfoBase[]=[
-            // {menuType:'prueba', name:'prueba', label:'principal'},
+            {menuType:'prueba', name:'prueba', label:'principal'},
             {menuType:'menu', name:'inventario', label:'inventario',  menuContent:[
                 {menuType:'table', name:'bienes', label:'bienes', selectedByDefault:true},
                 {menuType:'table', name:'areas', label:'areas'},
