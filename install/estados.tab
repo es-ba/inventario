@@ -1,4 +1,5 @@
 estado|descripcion|identificador
 alta|Bien en estado activo|
 baja|Bien dado de baja|
-uso_precario|Bien en uso precario o temporal|
+endesuso|Bien en desuso|
+
