@@ -11,6 +11,7 @@ import { bienes } from './table-bienes';
 import { usuarios   } from './table-usuarios';
 import { grupos } from './table-grupos';
 import { auditorias } from "./table-auditorias";
+import { tipo_espacio } from "./table-tipo-espacio";
 import { espacios } from "./table-espacios";
 import { ordenes_compra } from "./table-ordenes_compra";
 import { rubros } from "./table-rubros";
@@ -22,6 +23,7 @@ import { areas } from './table-areas';
 import { categoria_bien } from "./table-categoria_bien";
 import { estados_baja } from "./table-estados_baja";
 import { estados } from "./table-estados";
+import { marcas } from "./table-marcas";
 import { modalidad_uso } from "./table-modalidad_uso";
 import { motivos_baja } from "./table-motivos_baja";
 import { tipo_contrato } from "./table-tipo_contrato";
@@ -31,6 +33,8 @@ import { movimientos_bien } from "./table-movimientos_bien";
 import { tipo_asignacion } from "./table-tipo_asignacion";
 
 import {staticConfigYaml} from './def-config';
+import { tipo_ordencompra } from "./table-tipo-ordencompra";
+import { estado_ordencompra } from "./table-estado-ordencompra";
 // import * as express from "express";
 
 export class AppInventario extends AppBackend{
@@ -98,8 +102,12 @@ export class AppInventario extends AppBackend{
                         {menuType:'table', name:'tipo_contrato' },
                         {menuType:'table', name:'sedes' },
                         {menuType:'table', name:'grupos' },
+                        {menuType:'table', name:'tipo_espacio' },
                         {menuType:'table', name:'espacios' },
                         {menuType:'table', name:'rubros' },
+                        {menuType:'table', name:'marcas' },
+                        {menuType:'table', name:'tipo_ordencompra' },
+                        {menuType:'table', name:'estado_ordencompra' },
                     ]},
                 ]}
             )
@@ -139,11 +147,15 @@ export class AppInventario extends AppBackend{
             tipo_area   ,
             areas       ,
             grupos      ,
+            tipo_espacio,
             espacios    ,
+            tipo_ordencompra,
+            estado_ordencompra,
             ordenes_compra,
             cuentas     ,
             clases      ,
             rubros      ,
+            marcas,
             tipo_bien   ,
             bienes      ,
             auditorias,            

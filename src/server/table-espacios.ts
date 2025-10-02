@@ -29,6 +29,7 @@ export function espacios(context:TableContext):TableDefinition{
         ],
         primaryKey:['espacio'],
         foreignKeys:[
+            {references:'tipo_espacio', fields:[{ source: 'tipo', target: 'tipo_espacio' }]},
             {references:'responsables', fields:['responsable']},
             {references:'areas', fields:['area']},
             {references:'sedes', fields:['sede']}
