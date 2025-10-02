@@ -71,6 +71,7 @@ export function bienes(context:TableContext):TableDefinition{
             {references:'estados', fields:['estado']},
             {references:'tipo_contrato', fields:['tipo_contrato']},
             {references:'estados_baja', fields:['estado_baja']},
+            {references:'marcas', fields:['marca']},
             {references:'ordenes_compra', fields:['orden_compra']},
         ],
         constraints:[

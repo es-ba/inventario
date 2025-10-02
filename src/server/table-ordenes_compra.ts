@@ -27,6 +27,10 @@ export function ordenes_compra(context:TableContext):TableDefinition{
             {name:'fecha_recibido'                      , typeName:'text'    },
         ],
         primaryKey:['orden_compra'],
+        foreignKeys:[
+            {references:'estado_ordencompra', fields:[{ source: 'estado', target: 'estado_ordencompra' }]},
+            {references:'tipo_ordencompra', fields:[{ source: 'tipo', target: 'tipo_ordencompra' }]},
+        ],
         constraints:[
             {constraintType:'unique', fields:['orden_compra']}
         ],
