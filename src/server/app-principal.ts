@@ -11,7 +11,7 @@ import { bienes } from './table-bienes';
 import { usuarios   } from './table-usuarios';
 import { grupos } from './table-grupos';
 import { auditorias } from "./table-auditorias";
-import { tipo_espacio } from "./table-tipo-espacio";
+import { tipo_espacio } from "./table-tipo_espacio";
 import { espacios } from "./table-espacios";
 import { ordenes_compra } from "./table-ordenes_compra";
 import { rubros } from "./table-rubros";
@@ -33,8 +33,8 @@ import { movimientos_bien } from "./table-movimientos_bien";
 import { tipo_asignacion } from "./table-tipo_asignacion";
 
 import {staticConfigYaml} from './def-config';
-import { tipo_ordencompra } from "./table-tipo-ordencompra";
-import { estado_ordencompra } from "./table-estado-ordencompra";
+import { tipo_ordencompra } from "./table-tipo_ordencompra";
+import { estado_ordencompra } from "./table-estado_ordencompra";
 // import * as express from "express";
 
 export class AppInventario extends AppBackend{
