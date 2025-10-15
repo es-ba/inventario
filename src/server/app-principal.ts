@@ -86,6 +86,10 @@ export class AppInventario extends AppBackend{
                 {menuType:'table', name:'responsables' },
                 {menuType:'table', name:'grupos', label:'grupos'},
             ]},
+            {menuType:'menu', name:'ver', label:'ver',  menuContent:[
+                { menuType: 'table', name: 'bienes_activos', table: 'bienes', ff: { estado: 'alta' }  },
+                { menuType: 'table', name: 'bienes_inactivos', table: 'bienes', ff: { estado: 'desuso' } },
+            ]},
         ];
         if(context.user && context.user.rol=="admin"){
             menuContent.push(
