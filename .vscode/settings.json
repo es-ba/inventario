@@ -1,0 +1,3 @@
+{
+    "window.title": "(poner caracter descriptivo) ${dirty}${separator}${rootName}${separator}${activeEditorMedium}"
+}
