@@ -36,7 +36,8 @@ export function movimientos_bien(context:TableContext):TableDefinition{
             {name:'usuario_modificacion'        , typeName:'text'    , nullable:true},
             {name:'solicitado_por'              , typeName:'text'    , nullable:true},
             {name:'firmado_por'                 , typeName:'text'    , nullable:true},
-            {name:'vincular_responsableficha'        , typeName:'text'    , nullable:true},
+            {name:'archivo'                     , typeName:'text'    , nullable:true, editable:false, clientSide:'archivo_subir'},
+            {name:'vincular_responsableficha'   , typeName:'text'    , nullable:true},
 
         ],
         primaryKey:['ficha', 'orden'],
