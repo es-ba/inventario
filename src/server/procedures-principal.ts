@@ -124,6 +124,21 @@ export const ProceduresInventario:ProcedureDef[] = [
                 await fsPromises.unlink(finalAbsolutePath).catch(()=>null);
                 throw err;
             }
+            const updatedRowResult = await client.query(`
+                SELECT *
+                  FROM movimientos_bien
+                 WHERE ficha = $1 AND orden = $2
+            `, [
+                parameters.ficha,
+                parameters.orden
+            ]).fetchOneRowIfExists();
+            if(!updatedRowResult.row){
+                throw new Error('No se pudo recuperar el movimiento actualizado.');
+            }
+            const updatedRow = {
+                ...updatedRowResult.row,
+                archivo_nombre: path.basename(storedPath)
+            };
             if(previousStoredPath){
                 const previousAbsolutePath = path.join(context.be.rootPath, previousStoredPath);
                 if(previousAbsolutePath !== finalAbsolutePath){
@@ -135,8 +150,12 @@ export const ProceduresInventario:ProcedureDef[] = [
                 }
             }
             return {
-                archivo: storedPath,
-                archivo_nombre: path.basename(storedPath)
+                row:{
+                    updatedRow,
+                    sendedForUpdate:{}
+                },
+                nombre: path.basename(storedPath),
+                message: 'Archivo adjuntado correctamente.'
             };
         }
     },

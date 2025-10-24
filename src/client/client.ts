@@ -1,30 +1,18 @@
-﻿import {html} from "js-to-html";
+﻿
+import {html} from "js-to-html";
 import * as likeAr from "like-ar";
 import "dialog-promise";
-
-
 "use strict";
-
 declare const myOwn: any;
 const my = myOwn;
-
-
-
 // Helpers
-const getSubirArchivoPathAndParams = (depot: myOwn.Depot) => {
-  const controls = depot.rowControls ?? {};
-  const ficha = depot.row.ficha ?? controls.ficha?.getTypedValue?.();
-  const orden = depot.row.orden ?? controls.orden?.getTypedValue?.();
-  const missingFicha = ficha == null || ficha === '';
-  const missingOrden = orden == null || orden === '';
-  return {
-    ajaxPath: "adjuntar",
-    params: { ficha, orden },
-    missingFicha,
-    missingOrden
-  };
-};
-
+const getSubirArchivoPathAndParams = (depot: myOwn.Depot) => ({
+  ajaxPath: "adjuntar",
+  params: {
+    ficha: depot.row.ficha,
+    orden: depot.row.orden
+  }
+});
 myOwn.clientSides.subirAdjunto = {
   prepare: function(depot: myOwn.Depot, fieldName: string){
     const botonCargar = html.button('archivo').create();  
@@ -38,18 +26,9 @@ myOwn.clientSides.subirAdjunto = {
                     importDataFromFile: 'Seleccione un archivo',
                     import: 'Cargar'
                 };
-                const uploadInfo = getSubirArchivoPathAndParams(depot);
-                if (uploadInfo.missingFicha) {
-                    await alertPromise('Primero guarda o completa la ficha del movimiento antes de adjuntar un archivo.');
-                    return;
-                }
-                if (uploadInfo.missingOrden) {
-                    await alertPromise('Guarda el movimiento para obtener el numero de orden antes de subir un archivo.');
-                    return;
-                }
-                const {ajaxPath, params} = uploadInfo;
+                const {ajaxPath, params} = getSubirArchivoPathAndParams(depot);
                 my.dialogUpload(
-                    ajaxPath,
+                    [ajaxPath],
                     params,
                     function(result:{nombre: string, message:string, row:Record<string, string>}){
                         depot.rowControls.archivo.setTypedValue(result.nombre);
@@ -63,12 +42,8 @@ myOwn.clientSides.subirAdjunto = {
                 )
             });
         }
-
             depot.row.botonCargar = botonCargar;
-
-
   },
-
       update: function(depot:myOwn.Depot){
         const grid = depot.manager;
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -90,54 +65,37 @@ myOwn.clientSides.subirAdjunto = {
                             let promiseChain = Promise.resolve();
                             if(depot.row.archivo){
                                 promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
-                                promiseChain = promiseChain.then(async ()=>{
+                                    await confirmPromise("la anotación ya contiene un adjunto, desea crear una nueva?")
+                                    myImageDepot=grid.createRowInsertElements(null,depot);
+                                    return
+                                })
+                            }
+                            await promiseChain;
+                            const {ajaxPath, params} = getSubirArchivoPathAndParams(myImageDepot);
+                            const newFile = new File([blob], `pasted-${params.ficha || '$$ficha'}.${blob.name.split('.').pop()}`, {type: blob.type});
+                            is_image = true;
+                            const {row} = await my.ajax[ajaxPath]({
+                                ...params,
+                                ficha: params.ficha || null,
+                                files: [newFile]
+                            })
+                            grid.depotRefresh(myImageDepot,{updatedRow:row, sendedForUpdate:{}},{noDispatchEvents:true});
+                        }
+                    }
+                    if(is_image == true){
+                        e.preventDefault();
+                    }
+                }
+            }
+        })
+    }
+};
+my.wScreens.prueba=async function(){
+    // history.replaceState(null, '', `${location.origin+location.pathname}/../react`);
+    // location.reload();
+    let layout = document.getElementById('main_layout')!;
+    layout.innerHTML = '';
+    layout.appendChild(
+        html.div({class:'prueba-screen'}, 'Pantalla de prueba del inventario').create()
+    )
+}
