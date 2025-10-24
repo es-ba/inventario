@@ -5,6 +5,8 @@ import { AppBackend, Context, Request,
 } from "./types-principal";
 
 // import * as MiniTools from 'mini-tools';
+import * as express from "express";
+import * as path from "path";
 
 import {ProceduresInventario} from "./procedures-principal";
 import { bienes } from './table-bienes';
@@ -128,6 +130,11 @@ export class AppInventario extends AppBackend{
             ... menuedResources
         ] satisfies ClientModuleDefinition[];
         return list;
+    }
+    override addLoggedServices(){
+        super.addLoggedServices();
+        var attachmentsRoot = path.join(this.rootPath, 'adjuntos');
+        this.app.use('/adjuntos', express.static(attachmentsRoot));
     }
     override prepareGetTables(){
         super.prepareGetTables();
