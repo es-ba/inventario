@@ -4,20 +4,18 @@ import {TableDefinition, TableContext, AppBackend} from "./types-principal";
 
 export function getPolicies(be:AppBackend){
     return {
-        select:{ using: `${be.dbUserRolExpr} = 'admin'`},
-        all:{ using: `${be.dbUserRolExpr} = 'admin'`}
+        select:{ using: `${be.dbUserRolExpr} = 'admin' or responsable = ${be.dbUserNameExpr}`},
+        all:{ using: `${be.dbUserRolExpr} = 'admin' or responsable = ${be.dbUserNameExpr}`}
     }
 }
 
-export function bienes(context:TableContext):TableDefinition{
+export function historial(context:TableContext):TableDefinition{
     var be = context.be;
-    var admin = context.user.rol==='admin';
-    var responsable = context.user.rol==='responsable';
     return {
-        name:'bienes',
-        elementName:'bien', 
-        title:'Bienes',
-        editable:admin || responsable,
+        name:'historial',
+        elementName:'historial', 
+        title:'Historial',
+        editable:false,
         fields:[
             {name:'ficha'                       , typeName:'text'    }, 
             {name:'numero_integrado'            , typeName:'text'    }, 
@@ -57,29 +55,13 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'autorizado_por'              , typeName:'text'    , nullable:true},
             {name:'documento_respaldo'          , typeName:'text'    , nullable:true},
             {name:'estado_baja'                 , typeName:'text'    , nullable:true},
-            // {name:'codigo_barra'                , typeName:'text'    , inTable:false, editable:false},
-        ],  
-        primaryKey:['ficha'],
+        ],
+        primaryKey:['ficha', 'orden'],
         foreignKeys:[
-            {references:'rubros', fields:['rubro'] },
-            {references:'clases', fields:['rubro', 'clase'] },
-            {references:'cuentas', fields:['rubro', 'clase', 'cuenta'] },
-            {references:'tipo_bien', fields:['tipo_bien']},
-            {references:'grupos', fields:['grupo']},
-            {references:'motivos_baja', fields:['motivo_baja']},
-            {references:'categoria_bien', fields:['categoria']},
-            {references:'estados', fields:['estado']},
-            {references:'tipo_contrato', fields:['tipo_contrato']},
-            {references:'estados_baja', fields:['estado_baja']},
-            {references:'marcas', fields:['marca']},
-            {references:'ordenes_compra', fields:['orden_compra']},
-        ],
-        constraints:[
-            {constraintType:'unique', fields:['ficha']}
-        ],
-        detailTables:[
-            {table:'historial', fields:['ficha'], abr:'His', label:'Historial'},
-            {table:'movimientos_bien', fields:['ficha'], abr:'Mov'},
+            {references:'bienes', fields:['ficha']},
+            {references:'usuarios', fields:['usuario']},
+            {references:'movimientos_bien', fields:['ficha']},
+
         ],
         sql:{
             policies:getPolicies(be)
