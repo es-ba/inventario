@@ -10,7 +10,7 @@ import {ProceduresInventario} from "./procedures-principal";
 import { bienes } from './table-bienes';
 import { usuarios   } from './table-usuarios';
 import { grupos } from './table-grupos';
-import { auditorias } from "./table-auditorias";
+import { historial } from "./table-historial";
 import { tipo_espacio } from "./table-tipo_espacio";
 import { espacios } from "./table-espacios";
 import { ordenes_compra } from "./table-ordenes_compra";
@@ -162,7 +162,7 @@ export class AppInventario extends AppBackend{
             marcas,
             tipo_bien   ,
             bienes      ,
-            auditorias,            
+            historial,            
          
   
         }
