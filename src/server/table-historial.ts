@@ -73,7 +73,9 @@ export function historial(context:TableContext):TableDefinition{
             {name:'solicitado_por'              , typeName:'text'    , nullable:true},
             {name:'firmado_por'                 , typeName:'text'    , nullable:true},
             {name:'vincular_responsableficha'   , typeName:'text'    , nullable:true},
-            
+            {name:'movimiento_orden'            , typeName:'bigint'  , nullable:true}
+
+
 
         ],
         primaryKey:['ficha', 'orden'],
