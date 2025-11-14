@@ -10,7 +10,7 @@ export function getPolicies(be:AppBackend){
 }
 
 export function bienes(context:TableContext):TableDefinition{
-    //var be = context.be;
+    var be = context.be;
     var admin = context.user.rol==='admin';
     var responsable = context.user.rol==='responsable';
     return {
@@ -81,6 +81,9 @@ export function bienes(context:TableContext):TableDefinition{
             {table:'historial', fields:['ficha'], abr:'His', label:'Historial'},
             {table:'movimientos_bien', fields:['ficha'], abr:'Mov'},
         ],
+           sql:{
+            policies:getPolicies(be)
+        }
        
     };
 }

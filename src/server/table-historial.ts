@@ -20,7 +20,7 @@ export function historial(context:TableContext):TableDefinition{
         editable:admin || responsable,
         fields:[
             {name:'ficha'                       , typeName:'text'    },
-            {name:'orden'                       , typeName:"integer" , nullable:true},
+            {name:'orden'                       , typeName:'bigint'  , nullable:true, editable:false  },
             {name:'numero_integrado'            , typeName:'text'    }, 
             {name:'ubicacion'                   , typeName:'text'    , nullable:true},
             {name:'tipo_asignacion'             , typeName:'text'    },
@@ -80,7 +80,6 @@ export function historial(context:TableContext):TableDefinition{
         foreignKeys:[
             {references:'bienes', fields:['ficha']},
             {references:'usuarios', fields:['usuario']},
-            {references:'movimientos_bien', fields:['ficha', 'orden']},
 
         ],
        
