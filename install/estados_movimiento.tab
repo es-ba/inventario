@@ -1,0 +1,5 @@
+estado_movimiento|descripcion|identificador
+PENDIENTE||pendiente de aprobacion
+APROBADO||aprobado
+RECHAZADO||rechazado
+REALIZADO||realizado

@@ -23,7 +23,8 @@ export function movimientos_bien(context:TableContext):TableDefinition{
             {name:'orden'                       , typeName:'bigint'  , nullable:true, editable:false  },
             {name:'tipo_asignacion'             , typeName:'text'    },
             {name:'accion'                      , typeName:'text'    , options:['entrega', 'devolucion']},
-            {name:'modalidad_uso'               , typeName:'text'    },//fk //transferencia pasaria a baja, consultar
+            {name:'modalidad_uso'               , typeName:'text'    },
+            {name:'estado_movimiento'           , typeName:'text'    },
             {name:'responsable'                 , typeName:'text'    , nullable:true},
             {name:'area'                        , typeName:'text'    , nullable:true},
             {name:'sede'                        , typeName:'text'    , nullable:true},
@@ -36,7 +37,6 @@ export function movimientos_bien(context:TableContext):TableDefinition{
             {name:'usuario_modificacion'        , typeName:'text'    , nullable:true},
             {name:'solicitado_por'              , typeName:'text'    , nullable:true},
             {name:'firmado_por'                 , typeName:'text'    , nullable:true},
-            {name:'vincular_responsableficha'        , typeName:'text'    , nullable:true},
 
         ],
         primaryKey:['ficha', 'orden'],
@@ -50,6 +50,7 @@ export function movimientos_bien(context:TableContext):TableDefinition{
             {references:'espacios', fields:['espacio']},
             {references:'tipo_asignacion', fields:['tipo_asignacion']},
             {references:'modalidad_uso', fields:['modalidad_uso']},
+            {references:'estados_movimiento', fields:['estado_movimiento']},
         ],
         sql:{
             /* 
