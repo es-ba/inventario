@@ -10,7 +10,6 @@ export function getPolicies(be:AppBackend){
 }
 
 export function historial(context:TableContext):TableDefinition{
-       //var be = context.be;
        var admin = context.user.rol==='admin';
        var responsable = context.user.rol==='responsable';
     return {
@@ -74,6 +73,7 @@ export function historial(context:TableContext):TableDefinition{
             {name:'solicitado_por'              , typeName:'text'    , nullable:true},
             {name:'firmado_por'                 , typeName:'text'    , nullable:true},
             {name:'vincular_responsableficha'   , typeName:'text'    , nullable:true},
+            
 
         ],
         primaryKey:['ficha', 'orden'],
