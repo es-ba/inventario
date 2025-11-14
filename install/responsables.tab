@@ -1,7 +1,0 @@
-responsable|nombre|apellido|mail|externo|usuario|activo|fecha_creacion|fecha_modificacion
-MGARCIA|Marta|Garcia|marta.garcia@ejemplo.com|false|clark|true|2023-01-01|2023-01-01
-ARODRIGUEZ|Alfredo|Rodriguez|alfredo.rodriguez@ejemplo.com|false||true|2023-01-02|2023-01-02
-RPEREZ|Ramon|Perez|ramon.perez@ejemplo.com|true||true|2023-01-03|2023-02-15
-CFERNANDEZ|Carlos|Fernandez|carlos.fernandez@ejemplo.com|false||true|2023-01-04|2023-01-04
-LMARTINEZ|Laura|Martinez|laura.martinez@ejemplo.com|false||true|2023-01-05|2023-03-10
-ADMIN|Administrador|Sistema|admin@sistema.com|false||true|2022-12-01|2022-12-01
