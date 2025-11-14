@@ -10,17 +10,24 @@ export function getPolicies(be:AppBackend){
 }
 
 export function historial(context:TableContext):TableDefinition{
-    var be = context.be;
+       //var be = context.be;
+       var admin = context.user.rol==='admin';
+       var responsable = context.user.rol==='responsable';
     return {
         name:'historial',
         elementName:'historial', 
         title:'Historial',
-        editable:false,
+        editable:admin || responsable,
         fields:[
             {name:'ficha'                       , typeName:'text'    },
-            {name:'orden'                       , typeName:'text'    , nullable:true},
+            {name:'orden'                       , typeName:"integer" , nullable:true},
             {name:'numero_integrado'            , typeName:'text'    }, 
             {name:'ubicacion'                   , typeName:'text'    , nullable:true},
+            {name:'tipo_asignacion'             , typeName:'text'    },
+            {name:'accion'                      , typeName:'text'    , nullable:true},
+            {name:'modalidad_uso'               , typeName:'text'    , nullable:true},
+            {name:'responsable'                 , typeName:'text'    , nullable:true},
+            {name:'area'                        , typeName:'text'    , nullable:true},
             {name:'observacion'                 , typeName:'text'    , nullable:true},
             {name:'detalle'                     , typeName:'text'    , nullable:true},
             {name:'importe'                     , typeName:'text'    , nullable:true},
@@ -59,8 +66,14 @@ export function historial(context:TableContext):TableDefinition{
             {name:'usuario'                     , typeName:'text'    },
             {name:'usuario_nombre'              , typeName:'text'    , nullable:true},
             {name:'observaciones'               , typeName:'text'    , nullable:true},
-        
-
+            {name:'sede'                        , typeName:'text'    , nullable:true},
+            {name:'espacio'                     , typeName:'text'    , nullable:true},
+            {name:'fecha_creacion'              , typeName:'date'    , nullable:false, specialDefaultValue:'current_date'},
+            {name:'fecha_modificacion'          , typeName:'date'    , nullable:true},
+            {name:'usuario_modificacion'        , typeName:'text'    , nullable:true},
+            {name:'solicitado_por'              , typeName:'text'    , nullable:true},
+            {name:'firmado_por'                 , typeName:'text'    , nullable:true},
+            {name:'vincular_responsableficha'   , typeName:'text'    , nullable:true},
 
         ],
         primaryKey:['ficha', 'orden'],
@@ -70,11 +83,10 @@ export function historial(context:TableContext):TableDefinition{
             {references:'movimientos_bien', fields:['ficha', 'orden']},
 
         ],
-        sql:{
-            policies:getPolicies(be)
+       
         }
     };
-}
+
 
 
 
