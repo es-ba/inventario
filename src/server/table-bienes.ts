@@ -37,7 +37,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'serie'                       , typeName:'text'    , nullable:true},
             {name:'imei'                        , typeName:'text'    , nullable:true},
             {name:'modelo'                      , typeName:'text'    , nullable:true},
-            {name:'annio'                        , typeName:'text'    , nullable:true},
+            {name:'annio'                       , typeName:'text'    , nullable:true},
             {name:'prd'                         , typeName:'text'    , nullable:true},
             {name:'caracteridentificador'       , typeName:'text'    , nullable:true},
             {name:'enusode'                     , typeName:'text'    , nullable:true},
@@ -56,8 +56,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'valor_residual'              , typeName:'decimal' , nullable:true},
             {name:'autorizado_por'              , typeName:'text'    , nullable:true},
             {name:'documento_respaldo'          , typeName:'text'    , nullable:true},
-            {name:'estado_baja'                 , typeName:'text'    , nullable:true},
-            // {name:'codigo_barra'                , typeName:'text'    , inTable:false, editable:false},
+            {name:'estado_baja'                 , typeName:'text'    , nullable:true}
         ],  
         primaryKey:['ficha'],
         foreignKeys:[
@@ -81,10 +80,9 @@ export function bienes(context:TableContext):TableDefinition{
             {table:'historial', fields:['ficha'], abr:'His', label:'Historial'},
             {table:'movimientos_bien', fields:['ficha'], abr:'Mov'},
         ],
-           sql:{
+        sql:{
             policies:getPolicies(be)
         }
-       
     };
 }
 

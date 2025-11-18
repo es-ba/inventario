@@ -31,12 +31,12 @@ import { cuentas } from "./table-cuentas";
 import { clases } from "./table-clases";
 import { movimientos_bien } from "./table-movimientos_bien";
 import { tipo_asignacion } from "./table-tipo_asignacion";
-
-import {staticConfigYaml} from './def-config';
 import { tipo_ordencompra } from "./table-tipo_ordencompra";
 import { estado_ordencompra } from "./table-estado_ordencompra";
 import { proveedores } from "./table-proveedores";
-// import * as express from "express";
+import { estados_movimiento } from "./table-estados_movimiento";
+
+import {staticConfigYaml} from './def-config';
 
 export class AppInventario extends AppBackend{
     constructor(){
@@ -144,6 +144,7 @@ export class AppInventario extends AppBackend{
             usuarios    ,
             categoria_bien,
             estados_baja,
+            estados_movimiento,
             estados,
             movimientos_bien,
             tipo_asignacion,
@@ -167,9 +168,7 @@ export class AppInventario extends AppBackend{
             tipo_bien   ,
             bienes      ,
             historial,
-            proveedores            
-         
-  
+            proveedores
         }
     }       
 }

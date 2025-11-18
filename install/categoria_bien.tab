@@ -1,4 +1,4 @@
 categoria|descripcion|identificador
-transferencia|Bienes transferidos desde otra unidad|
-comodato||
-prestamo||
+TRANSFERENCIA|Bienes transferidos desde otra unidad|transferencia
+COMODATO||comodato
+PRESTAMO||prestamo
