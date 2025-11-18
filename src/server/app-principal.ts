@@ -33,6 +33,7 @@ import { movimientos_bien } from "./table-movimientos_bien";
 import { tipo_asignacion } from "./table-tipo_asignacion";
 import { tipo_ordencompra } from "./table-tipo_ordencompra";
 import { estado_ordencompra } from "./table-estado_ordencompra";
+import { proveedores } from "./table-proveedores";
 import { estados_movimiento } from "./table-estados_movimiento";
 
 import {staticConfigYaml} from './def-config';
@@ -112,6 +113,9 @@ export class AppInventario extends AppBackend{
                         {menuType:'table', name:'marcas' },
                         {menuType:'table', name:'tipo_ordencompra' },
                         {menuType:'table', name:'estado_ordencompra' },
+                        {menuType:'table', name:'proveedores' },
+
+
                     ]},
                 ]}
             )
@@ -163,9 +167,8 @@ export class AppInventario extends AppBackend{
             marcas,
             tipo_bien   ,
             bienes      ,
-            historial,            
-         
-  
+            historial,
+            proveedores
         }
     }       
 }
