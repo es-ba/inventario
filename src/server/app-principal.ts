@@ -35,6 +35,7 @@ import { tipo_asignacion } from "./table-tipo_asignacion";
 import {staticConfigYaml} from './def-config';
 import { tipo_ordencompra } from "./table-tipo_ordencompra";
 import { estado_ordencompra } from "./table-estado_ordencompra";
+import { proveedores } from "./table-proveedores";
 // import * as express from "express";
 
 export class AppInventario extends AppBackend{
@@ -112,6 +113,9 @@ export class AppInventario extends AppBackend{
                         {menuType:'table', name:'marcas' },
                         {menuType:'table', name:'tipo_ordencompra' },
                         {menuType:'table', name:'estado_ordencompra' },
+                        {menuType:'table', name:'proveedores' },
+
+
                     ]},
                 ]}
             )
@@ -162,7 +166,8 @@ export class AppInventario extends AppBackend{
             marcas,
             tipo_bien   ,
             bienes      ,
-            historial,            
+            historial,
+            proveedores            
          
   
         }

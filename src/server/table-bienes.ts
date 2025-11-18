@@ -37,7 +37,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'serie'                       , typeName:'text'    , nullable:true},
             {name:'imei'                        , typeName:'text'    , nullable:true},
             {name:'modelo'                      , typeName:'text'    , nullable:true},
-            {name:'anio'                        , typeName:'text'    , nullable:true},
+            {name:'annio'                        , typeName:'text'    , nullable:true},
             {name:'prd'                         , typeName:'text'    , nullable:true},
             {name:'caracteridentificador'       , typeName:'text'    , nullable:true},
             {name:'enusode'                     , typeName:'text'    , nullable:true},
