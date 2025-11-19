@@ -30,6 +30,7 @@ export function ordenes_compra(context:TableContext):TableDefinition{
         foreignKeys:[
             {references:'estado_ordencompra', fields:[{ source: 'estado', target: 'estado_ordencompra' }]},
             {references:'tipo_ordencompra', fields:[{ source: 'tipo', target: 'tipo_ordencompra' }]},
+            { references: 'proveedores', fields:[{ source:'proveedor', target:'razonsocial' }] },
         ],
         constraints:[
             {constraintType:'unique', fields:['orden_compra']}

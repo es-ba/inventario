@@ -11,7 +11,7 @@ export function proveedores(context:TableContext):TableDefinition{
         editable: admin,
         fields:[
             {name:'proveedor' , typeName:'text'},
-            {name:'razonsocial' , typeName:'text'},
+            {name:'razonsocial' , typeName:'text', isName:true},
             {name:'telefono' , typeName:'text'},
             {name:'fax' , typeName:'text'},
             {name:'mail' , typeName:'text'},
