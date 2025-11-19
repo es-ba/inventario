@@ -23,6 +23,6 @@ export function proveedores(context:TableContext):TableDefinition{
             {name:'localidad' , typeName:'text'},
             {name:'provincia' , typeName:'text'},
         ],
-        primaryKey:['razonsocial']
+        primaryKey:['proveedor']
     };
 }
