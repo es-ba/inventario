@@ -167,7 +167,7 @@ export class AppInventario extends AppBackend{
             marcas,
             tipo_bien   ,
             bienes      ,
-            historial,
+            historial   ,
             proveedores
         }
     }       
