@@ -1,0 +1,7 @@
+rol|descripcion|puede_ver_todo|puede_restaurar_baja|puede_eliminar|puede_guardar_borrador|puede_mover
+admin|admin|true|true|true|true|true
+rrhh|rrhh|true|true|true|true|true
+basico|basico|false|false|false|true|true
+registra|registra|false|false|false|true|true
+superior|superior|true|true|true|true|true
+

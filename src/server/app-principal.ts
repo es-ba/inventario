@@ -7,6 +7,7 @@ import { AppBackend, Context, Request,
 // import * as MiniTools from 'mini-tools';
 
 import {ProceduresInventario} from "./procedures-principal";
+import { roles } from "./table-roles";
 import { bienes } from './table-bienes';
 import { usuarios   } from './table-usuarios';
 import { grupos } from './table-grupos';
@@ -114,6 +115,7 @@ export class AppInventario extends AppBackend{
                         {menuType:'table', name:'tipo_ordencompra' },
                         {menuType:'table', name:'estado_ordencompra' },
                         {menuType:'table', name:'proveedores' },
+                        {menuType:'table', name:'roles' },
 
 
                     ]},
@@ -151,7 +153,8 @@ export class AppInventario extends AppBackend{
             motivos_baja,
             tipo_contrato,
             responsables,
-            sedes       ,    
+            sedes       ,
+            roles       ,    
             tipo_area   ,
             areas       ,
             grupos      ,
