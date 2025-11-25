@@ -22,7 +22,7 @@ import { tipo_area } from "./table-tipo_area";
 import { areas } from './table-areas';
 import { categoria_bien } from "./table-categoria_bien";
 import { estados_baja } from "./table-estados_baja";
-import { estados } from "./table-estados";
+import { estados_bien } from "./table-estados_bien";
 import { marcas } from "./table-marcas";
 import { modalidad_uso } from "./table-modalidad_uso";
 import { motivos_baja } from "./table-motivos_baja";
@@ -35,6 +35,12 @@ import { tipo_ordencompra } from "./table-tipo_ordencompra";
 import { estado_ordencompra } from "./table-estado_ordencompra";
 import { proveedores } from "./table-proveedores";
 import { estados_movimiento } from "./table-estados_movimiento";
+import { movimientos_solicitudes } from "./table-movimientos_solicitudes";
+import { movimientos_solicitud_bien } from "./table-movimientos_solicitud_bien";
+import { acciones } from "./table-acciones";
+import { estados } from "./table-estados";
+import { estados_acciones } from "./table-estados_acciones";
+import { movimientos_solicitudes_acciones } from "./table-movimientos_solicitudes_acciones";
 
 import {staticConfigYaml} from './def-config';
 
@@ -96,6 +102,11 @@ export class AppInventario extends AppBackend{
             menuContent.push(
                 {menuType:'menu', name:'config', label:'configurar', menuContent:[
                     {menuType:'table', name:'usuarios'  },
+                    {menuType:'table', name:'acciones'  },
+                    {menuType:'table', name:'estados_acciones'  },
+                    {menuType:'table', name:'estados'  },
+                    {menuType:'table', name:'movimientos_solicitudes'  },
+                    {menuType:'table', name:'movimientos_solicitudes_acciones'  },
                     {menuType:'menu', name:'referenciales', label:'referenciales', menuContent:[
                         {menuType:'table', name:'tipo_bien' },
                         {menuType:'table', name:'tipo_area' },
@@ -145,8 +156,14 @@ export class AppInventario extends AppBackend{
             categoria_bien,
             estados_baja,
             estados_movimiento,
+            estados_bien,
+            acciones,
             estados,
+            estados_acciones,
+            movimientos_solicitudes,
+            movimientos_solicitud_bien,
             movimientos_bien,
+            movimientos_solicitudes_acciones,
             tipo_asignacion,
             modalidad_uso,
             motivos_baja,

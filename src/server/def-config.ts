@@ -35,6 +35,7 @@ install:
     scripts:
       pre-adapt:
       - ../install/movimientos_bien_pk_trg.sql
+      - ../install/generador_accion_cumple_condicion.sql
       post-adapt:
       - ../node_modules/pg-triggers/lib/recreate-his.sql
       - ../node_modules/pg-triggers/lib/table-changes.sql
