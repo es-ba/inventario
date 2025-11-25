@@ -7,7 +7,7 @@ export * from "pg-promise-strict";
 declare module "backend-plus"{
     interface Context {
         forDump?:boolean
-        es:{admin:boolean, oficina:boolean, puedePares:boolean}
+        es:{admin:boolean, superior:boolean, administrativo:boolean, lectura:boolean}
     }
     interface ProcedureContext {
         be:AppInventario
