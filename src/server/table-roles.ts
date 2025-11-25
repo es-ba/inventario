@@ -15,7 +15,7 @@ export function roles(context:TableContext):TableDefinition{
             {name:'puede_ver_todo' , typeName:'boolean'},
             {name:'puede_restaurar_baja' , typeName:'boolean'},
             {name:'puede_eliminar' , typeName:'boolean'},
-            {name:'puede_guardar_borrador' , typeName:'boolean'},
+            {name:'puede_guardar' , typeName:'boolean'},
             {name:'puede_mover' , typeName:'boolean'},
 
 
