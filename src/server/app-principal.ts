@@ -89,6 +89,17 @@ export class AppInventario extends AppBackend{
         context.es = es;
     }
 
+    override getContextForDump():Context{
+        var context = super.getContextForDump();
+        this.completeContext(context);
+        return context;
+    }
+    override getContext(req:Request):Context{
+        var context = super.getContext(req);
+        this.completeContext(context);
+        return context;
+    }
+
     override getMenu(context:Context):MenuDefinition{
         var menuContent:MenuInfoBase[]=[
             {menuType:'prueba', name:'prueba', label:'principal'},
