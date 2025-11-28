@@ -114,7 +114,7 @@ export class AppInventario extends AppBackend{
                 { menuType: 'table', name: 'bienes_inactivos', table: 'bienes', ff: { estado: 'desuso' } },
             ]},
         ];
-        if(context.user && context.user.rol=="admin"){
+        if(context.user && context.es.administrativo){
             menuContent.push(
                 {menuType:'menu', name:'config', label:'configurar', menuContent:[
                     {menuType:'table', name:'usuarios'  },
