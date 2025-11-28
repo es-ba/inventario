@@ -7,6 +7,7 @@ import { AppBackend, Context, Request,
 // import * as MiniTools from 'mini-tools';
 
 import {ProceduresInventario} from "./procedures-principal";
+import { roles } from "./table-roles";
 import { bienes } from './table-bienes';
 import { usuarios   } from './table-usuarios';
 import { grupos } from './table-grupos';
@@ -78,6 +79,27 @@ export class AppInventario extends AppBackend{
             ...ProceduresInventario
         ].map(be.procedureDefCompleter, be);
     }
+
+        completeContext(context:Context){
+        var es = context.es ?? {} as Context["es"]
+        es.admin = context.user && context.user.rol=="admin"
+        es.superior = es.admin || context.user && (context.user.rol=="superior" || context.user.rol=="superior")
+        es.administrativo = es.superior || context.user && context.user.rol=="administrativo" 
+        es.lectura = es.administrativo || context.user && context.user.rol=="lectura"
+        context.es = es;
+    }
+
+    override getContextForDump():Context{
+        var context = super.getContextForDump();
+        this.completeContext(context);
+        return context;
+    }
+    override getContext(req:Request):Context{
+        var context = super.getContext(req);
+        this.completeContext(context);
+        return context;
+    }
+
     override getMenu(context:Context):MenuDefinition{
         var menuContent:MenuInfoBase[]=[
             {menuType:'prueba', name:'prueba', label:'principal'},
@@ -92,7 +114,7 @@ export class AppInventario extends AppBackend{
                 { menuType: 'table', name: 'bienes_inactivos', table: 'bienes', ff: { estado: 'desuso' } },
             ]},
         ];
-        if(context.user && context.user.rol=="admin"){
+        if(context.user && context.es.administrativo){
             menuContent.push(
                 {menuType:'menu', name:'config', label:'configurar', menuContent:[
                     {menuType:'table', name:'usuarios'  },
@@ -114,6 +136,7 @@ export class AppInventario extends AppBackend{
                         {menuType:'table', name:'tipo_ordencompra' },
                         {menuType:'table', name:'estado_ordencompra' },
                         {menuType:'table', name:'proveedores' },
+                        {menuType:'table', name:'roles' },
 
 
                     ]},
@@ -152,7 +175,8 @@ export class AppInventario extends AppBackend{
             motivos_baja,
             tipo_contrato,
             responsables,
-            sedes       ,    
+            sedes       ,
+            roles       ,    
             tipo_area   ,
             areas       ,
             grupos      ,

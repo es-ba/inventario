@@ -22,6 +22,9 @@ export function usuarios(context:TableContext):TableDefinition{
             {name:'clave_nueva'      , typeName:'text', clientSide:'newPass', allow:{select:admin, update:true, insert:false}},
         ],
         primaryKey:['usuario'],
+        foreignKeys:[
+            {references:'roles', fields:[{ source: 'rol', target: 'rol' }]},
+        ],
         sql:{
             where:admin || context.forDump?'true':"usuario = "+context.be.db.quoteNullable(context.user.usuario)
         }

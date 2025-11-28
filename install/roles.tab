@@ -1,0 +1,7 @@
+rol|descripcion|puede_ver_todo|puede_restaurar_baja|puede_eliminar|puede_guardar|puede_mover
+admin|admin|true|true|true|true|true
+superior|superior|true|true|true|true|true
+administrativo|administrativo|false|false|true|true|true
+lectura|lectura|false|false|false|false|false
+
+
