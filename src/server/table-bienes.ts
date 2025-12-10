@@ -7,7 +7,65 @@ export function getPolicies(be:AppBackend){
         select:{ using: `${be.dbUserRolExpr} = 'admin'`},
         all:{ using: `${be.dbUserRolExpr} = 'admin'`}
     }
-}
+}export const sqlBienes = `
+SELECT 
+    b.ficha,
+    b.numero_integrado,
+    b.ubicacion,
+    b.observacion,
+    b.detalle,
+    b.importe,
+    b.importetotal,
+    b.tipo_bien,
+    b.estado,
+    b.categoria,
+    b.rubro,
+    b.clase,
+    b.cuenta,
+    b.grupo,
+    b.marca,
+    b.serie,
+    b.modelo,
+    b.imei,
+    b.annio,
+    b.prd,
+    b.caracteridentificador,
+    b.clasificacion,
+    b.orden_compra,
+    b.fecha,
+    b.entidad_prestadora,
+    b.tipo_contrato,
+    b.fecha_inicio,
+    b.fecha_fin,
+    b.renovable,
+    b.condiciones,
+    b.costo_mensual,
+    b.fecha_solicitud,
+    b.valor_residual,
+    b.motivo_baja,
+    b.autorizado_por,
+    b.documento_respaldo,
+    b.estado_baja,
+    ult.area,
+    ult.sede,
+    ult.responsable,
+    ult.espacio,
+    ult.enusode
+    FROM bienes b
+LEFT JOIN LATERAL (
+    SELECT 
+        mb.area,
+        mb.sede,
+        mb.responsable,
+        mb.espacio,
+        mb.enusode
+    FROM movimientos_bien mb
+    WHERE mb.ficha = b.ficha
+    ORDER BY mb.orden DESC
+    LIMIT 1
+) ult ON true
+`;
+
 
 export function bienes(context:TableContext):TableDefinition{
     var be = context.be;
@@ -57,9 +115,19 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'autorizado_por'              , typeName:'text'    , nullable:true},
             {name:'documento_respaldo'          , typeName:'text'    , nullable:true},
             {name:'estado_baja'                 , typeName:'text'    , nullable:true},
+            {name:'area'                        , typeName:'text'    , nullable:true},
+            {name:'sede'                        , typeName:'text'    , nullable:true},
+            {name:'responsable'                 , typeName:'text'    , nullable:true},
+            {name:'espacio'                     , typeName:'text'    , nullable:true},
+
+
+            
             // {name:'codigo_barra'                , typeName:'text'    , inTable:false, editable:false},
         ],  
         primaryKey:['ficha'],
+        sortColumns:[{column:'fecha', order:-1}], 
+        
+
         foreignKeys:[
             {references:'rubros', fields:['rubro'] },
             {references:'clases', fields:['rubro', 'clase'] },
@@ -82,6 +150,8 @@ export function bienes(context:TableContext):TableDefinition{
             {table:'movimientos_bien', fields:['ficha'], abr:'Mov'},
         ],
            sql:{
+             isTable: true,
+            from: `(${sqlBienes})`,
             policies:getPolicies(be)
         }
        
