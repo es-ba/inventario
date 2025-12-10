@@ -40,7 +40,7 @@ export function movimientos_bien(context:TableContext):TableDefinition{
 
         ],
         primaryKey:['ficha', 'orden'],
-       sortColumns:[{column:'fecha_modificacion', order:-1}], 
+       sortColumns:[{column:'orden', order:-1}], 
 
 
 
