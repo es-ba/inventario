@@ -1,5 +1,5 @@
 estado_baja|descripcion|identificador
-solicitada||
-enrevision||
-aprobada||
-rechazada||
+SOLICITADA||solicitada
+ENREVISION||enrevision
+APROBADA||aprobada
+RECHAZADA||rechazada

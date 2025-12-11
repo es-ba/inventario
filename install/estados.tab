@@ -1,5 +1,4 @@
 estado|descripcion|identificador
-alta|Bien en estado activo|
-baja|Bien dado de baja|
-endesuso|Bien en desuso|
-
+ALTA|Bien en estado activo|
+BAJA|Bien dado de baja|
+ENDESUSO|Bien en desuso|

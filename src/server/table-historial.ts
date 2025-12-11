@@ -1,13 +1,6 @@
 "use strict";
 
-import {TableDefinition, TableContext, AppBackend} from "./types-principal";
-
-export function getPolicies(be:AppBackend){
-    return {
-        select:{ using: `${be.dbUserRolExpr} = 'admin' or responsable = ${be.dbUserNameExpr}`},
-        all:{ using: `${be.dbUserRolExpr} = 'admin' or responsable = ${be.dbUserNameExpr}`}
-    }
-}
+import {TableDefinition, TableContext} from "./types-principal";
 
 export function historial(context:TableContext):TableDefinition{
        var admin = context.user.rol==='admin';
@@ -48,7 +41,7 @@ export function historial(context:TableContext):TableDefinition{
             {name:'enusode'                     , typeName:'text'    , nullable:true},
             {name:'clasificacion'               , typeName:'text'    , nullable:true},
             {name:'orden_compra'                , typeName:'text'    , nullable:true},
-            {name:'fecha'                       , typeName:'date'    , nullable:false, specialDefaultValue:'current_date'},
+            {name:'fecha'                       , typeName:'date'    , nullable:true,},
             {name:'entidad_prestadora'          , typeName:'text'    , nullable:true},
             {name:'tipo_contrato'               , typeName:'text'    , nullable:true},
             {name:'fecha_inicio'                , typeName:'date'    , nullable:true},
@@ -74,19 +67,14 @@ export function historial(context:TableContext):TableDefinition{
             {name:'firmado_por'                 , typeName:'text'    , nullable:true},
             {name:'vincular_responsableficha'   , typeName:'text'    , nullable:true},
             {name:'movimiento_orden'            , typeName:'bigint'  , nullable:true}
-
-
-
         ],
         primaryKey:['ficha', 'orden'],
         foreignKeys:[
             {references:'bienes', fields:['ficha']},
             {references:'usuarios', fields:['usuario']},
-
         ],
-       
-        }
-    };
+    }
+};
 
 
 

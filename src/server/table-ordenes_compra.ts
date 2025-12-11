@@ -10,7 +10,8 @@ export function ordenes_compra(context:TableContext):TableDefinition{
         title:'orden_compra', // solo si es distinto al "name", si es igual se puede omitir
         editable:admin || responsable,
         fields:[
-            {name:'orden_compra'                        , typeName:'text'    }, 
+            {name:'orden_compra'                        , typeName:'text'    },
+            {name:'codigo'                              , typeName:'text'    },
             {name:'estado'                              , typeName:'text'    },  
             {name:'tipo'                                , typeName:'text'    }, 
             {name:'descripcion'                         , typeName:'text'    }, 

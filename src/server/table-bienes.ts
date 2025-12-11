@@ -108,7 +108,6 @@ export function bienes(context:TableContext):TableDefinition{
             from: `(${sqlBienes})`,
             policies:getPolicies(be)
         }
-       
     };
 }
 
