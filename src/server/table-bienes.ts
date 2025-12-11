@@ -1,14 +1,32 @@
 "use strict";
-
 import {TableDefinition, TableContext, AppBackend} from "./types-principal";
-
 export function getPolicies(be:AppBackend){
     return {
         select:{ using: `${be.dbUserRolExpr} = 'admin'`},
         all:{ using: `${be.dbUserRolExpr} = 'admin'`}
     }
-}
-
+}export const sqlBienes = `
+SELECT 
+      b.*,
+    ult.area,
+    ult.sede,
+    ult.responsable,
+    ult.espacio,
+    ult.enusode
+    FROM bienes b
+LEFT JOIN LATERAL (
+    SELECT 
+        mb.area,
+        mb.sede,
+        mb.responsable,
+        mb.espacio,
+        mb.enusode
+    FROM movimientos_bien mb
+    WHERE mb.ficha = b.ficha
+    ORDER BY mb.orden DESC
+    LIMIT 1
+) ult ON true
+`;
 export function bienes(context:TableContext):TableDefinition{
     var be = context.be;
     var admin = context.user.rol==='admin';
@@ -40,7 +58,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'annio'                       , typeName:'text'    , nullable:true},
             {name:'prd'                         , typeName:'text'    , nullable:true},
             {name:'caracteridentificador'       , typeName:'text'    , nullable:true},
-            {name:'enusode'                     , typeName:'text'    , nullable:true},
+            {name:'enusode'                     , typeName:'text'    , editable:false, inTable:false},
             {name:'clasificacion'               , typeName:'text'    , nullable:true},
             {name:'orden_compra'                , typeName:'text'    , nullable:true},
             {name:'fecha'                       , typeName:'date'    , nullable:false, specialDefaultValue:'current_date'},
@@ -56,7 +74,12 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'valor_residual'              , typeName:'decimal' , nullable:true},
             {name:'autorizado_por'              , typeName:'text'    , nullable:true},
             {name:'documento_respaldo'          , typeName:'text'    , nullable:true},
-            {name:'estado_baja'                 , typeName:'text'    , nullable:true}
+            {name:'estado_baja'                 , typeName:'text'    , nullable:true},
+            {name:'area'                        , typeName:'text'    , editable:false, inTable:false},
+            {name:'sede'                        , typeName:'text'    , editable:false, inTable:false},
+            {name:'responsable'                 , typeName:'text'    , editable:false, inTable:false},
+            {name:'espacio'                     , typeName:'text'    , editable:false, inTable:false},
+            // {name:'codigo_barra'                , typeName:'text'    , inTable:false, editable:false},
         ],  
         primaryKey:['ficha'],
         foreignKeys:[
@@ -80,7 +103,9 @@ export function bienes(context:TableContext):TableDefinition{
             {table:'historial', fields:['ficha'], abr:'His', label:'Historial'},
             {table:'movimientos_bien', fields:['ficha'], abr:'Mov'},
         ],
-        sql:{
+           sql:{
+             isTable: true,
+            from: `(${sqlBienes})`,
             policies:getPolicies(be)
         }
     };
