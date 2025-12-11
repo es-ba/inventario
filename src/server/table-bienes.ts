@@ -59,10 +59,10 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'serie'                       , typeName:'text'    , nullable:true},
             {name:'imei'                        , typeName:'text'    , nullable:true},
             {name:'modelo'                      , typeName:'text'    , nullable:true},
-            {name:'annio'                        , typeName:'text'    , nullable:true},
+            {name:'annio'                       , typeName:'text'    , nullable:true},
             {name:'prd'                         , typeName:'text'    , nullable:true},
             {name:'caracteridentificador'       , typeName:'text'    , nullable:true},
-            {name:'enusode'                     , typeName:'text'    , nullable:true, editable:false, inTable:false},
+            {name:'enusode'                     , typeName:'text'    , editable:false, inTable:false},
             {name:'clasificacion'               , typeName:'text'    , nullable:true},
             {name:'orden_compra'                , typeName:'text'    , nullable:true},
             {name:'fecha'                       , typeName:'date'    , nullable:false, specialDefaultValue:'current_date'},
@@ -79,17 +79,16 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'autorizado_por'              , typeName:'text'    , nullable:true},
             {name:'documento_respaldo'          , typeName:'text'    , nullable:true},
             {name:'estado_baja'                 , typeName:'text'    , nullable:true},
-            {name:'area'                        , typeName:'text'    , nullable:true, editable:false, inTable:false},
-            {name:'sede'                        , typeName:'text'    , nullable:true, editable:false, inTable:false},
-            {name:'responsable'                 , typeName:'text'    , nullable:true, editable:false, inTable:false},
-            {name:'espacio'                     , typeName:'text'    , nullable:true, editable:false, inTable:false},
+            {name:'area'                        , typeName:'text'    , editable:false, inTable:false},
+            {name:'sede'                        , typeName:'text'    , editable:false, inTable:false},
+            {name:'responsable'                 , typeName:'text'    , editable:false, inTable:false},
+            {name:'espacio'                     , typeName:'text'    , editable:false, inTable:false},
 
 
             
             // {name:'codigo_barra'                , typeName:'text'    , inTable:false, editable:false},
         ],  
         primaryKey:['ficha'],
-        sortColumns:[{column:'fecha', order:-1}], 
         
 
         foreignKeys:[
