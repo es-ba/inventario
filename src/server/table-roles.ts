@@ -17,11 +17,6 @@ export function roles(context:TableContext):TableDefinition{
             {name:'puede_eliminar' , typeName:'boolean'},
             {name:'puede_guardar' , typeName:'boolean'},
             {name:'puede_mover' , typeName:'boolean'},
-
-
-
-
-
         ],
         primaryKey:['rol'],
       

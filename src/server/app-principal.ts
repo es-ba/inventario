@@ -80,10 +80,10 @@ export class AppInventario extends AppBackend{
         ].map(be.procedureDefCompleter, be);
     }
 
-        completeContext(context:Context){
+    completeContext(context:Context){
         var es = context.es ?? {} as Context["es"]
         es.admin = context.user && context.user.rol=="admin"
-        es.superior = es.admin || context.user && (context.user.rol=="superior" || context.user.rol=="superior")
+        es.superior = es.admin || context.user && context.user.rol=="superior"
         es.administrativo = es.superior || context.user && context.user.rol=="administrativo" 
         es.lectura = es.administrativo || context.user && context.user.rol=="lectura"
         context.es = es;

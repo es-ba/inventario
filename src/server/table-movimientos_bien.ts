@@ -40,11 +40,7 @@ export function movimientos_bien(context:TableContext):TableDefinition{
 
         ],
         primaryKey:['ficha', 'orden'],
-       sortColumns:[{column:'orden', order:-1}], 
-
-
-
-        
+        sortColumns:[{column:'orden', order:-1}], 
         foreignKeys:[
             {references:'bienes', fields:['ficha']},
             {references:'responsables', fields:['responsable']},

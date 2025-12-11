@@ -1,11 +1,15 @@
 "use strict";
+
 import {TableDefinition, TableContext, AppBackend} from "./types-principal";
+
 export function getPolicies(be:AppBackend){
     return {
         select:{ using: `${be.dbUserRolExpr} = 'admin'`},
         all:{ using: `${be.dbUserRolExpr} = 'admin'`}
     }
-}export const sqlBienes = `
+}
+
+export const sqlBienes = `
 SELECT 
       b.*,
     ult.area,
@@ -27,6 +31,7 @@ LEFT JOIN LATERAL (
     LIMIT 1
 ) ult ON true
 `;
+
 export function bienes(context:TableContext):TableDefinition{
     var be = context.be;
     var admin = context.user.rol==='admin';
@@ -79,7 +84,6 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'sede'                        , typeName:'text'    , editable:false, inTable:false},
             {name:'responsable'                 , typeName:'text'    , editable:false, inTable:false},
             {name:'espacio'                     , typeName:'text'    , editable:false, inTable:false},
-            // {name:'codigo_barra'                , typeName:'text'    , inTable:false, editable:false},
         ],  
         primaryKey:['ficha'],
         foreignKeys:[
@@ -103,8 +107,8 @@ export function bienes(context:TableContext):TableDefinition{
             {table:'historial', fields:['ficha'], abr:'His', label:'Historial'},
             {table:'movimientos_bien', fields:['ficha'], abr:'Mov'},
         ],
-           sql:{
-             isTable: true,
+        sql:{
+            isTable: true,
             from: `(${sqlBienes})`,
             policies:getPolicies(be)
         }
