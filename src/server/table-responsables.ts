@@ -1,9 +1,3 @@
-//        [responsable]
-//       ,[nombre]
-//       ,[apellido]
-//       ,[mail]
-//       ,[externo]
-//       ,[usuario]
 "use strict";
 
 import { FieldDefinition } from "backend-plus";
@@ -26,9 +20,9 @@ export function responsables(context:TableContext):TableDefinition{
             {name:'externo'                 , typeName:'boolean'    , defaultValue:false},
             {name:'usuario'                 , typeName:'text'       , nullable:true},
             {name:'activo'                  , typeName:'boolean'    , defaultValue:true},
-            {name:'fecha_creacion'          , typeName:'date'    , defaultValue:null},
+            {name:'fecha_creacion'          , typeName:'date'    , specialDefaultValue:'current_date'},
             {name:'fecha_modificacion'      , typeName:'date'    , nullable:true, defaultValue:null},
-
+            {name:'id_anterior'             , typeName:'text'       },
         ],
         primaryKey:[responsable.name],
         constraints:[

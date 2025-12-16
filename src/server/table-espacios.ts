@@ -26,6 +26,7 @@ export function espacios(context:TableContext):TableDefinition{
             {name:'area'                , typeName:'text'    },
             {name:'responsable'         , typeName:'text'    },
             {name:'sede'                , typeName:'text'    },
+            {name:'id_anterior'         , typeName:'text'    },
         ],
         primaryKey:['espacio'],
         foreignKeys:[
