@@ -23,7 +23,6 @@ export function areas(context:TableContext):TableDefinition{
             {name:'tipo_area'          , typeName:'text'        },
             {name:'fecha_creacion'     , typeName:'date'        , defaultValue:null},
             {name:'fecha_modificacion' , typeName:'date'        , nullable:true, defaultValue:null},
-            {name:'id_anterior'         , typeName:'text'    },
         ],
         primaryKey:[area.name],
         foreignKeys:[
