@@ -84,6 +84,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'sede'                        , typeName:'text'    , editable:false, inTable:false},
             {name:'responsable'                 , typeName:'text'    , editable:false, inTable:false},
             {name:'espacio'                     , typeName:'text'    , editable:false, inTable:false},
+            //{name:'codigo_barra'                , typeName:'text'    , inTable:false, editable:false},
         ],  
         primaryKey:['ficha'],
         foreignKeys:[
