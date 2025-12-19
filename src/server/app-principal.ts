@@ -125,8 +125,6 @@ export class AppInventario extends AppBackend{
                         {menuType:'table', name:'tipo_ordencompra' },
                         {menuType:'table', name:'estado_ordencompra' },
                         {menuType:'table', name:'proveedores' },
-
-
                     ]},
                 ]}
             )
