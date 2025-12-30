@@ -141,6 +141,8 @@ export class AppInventario extends AppBackend{
                         {menuType:'table', name:'espacios' },
                         {menuType:'table', name:'areas' },
                         {menuType:'table', name:'bienes_activos_por_responsable' },
+                        
+                        
 
 
                     ]},
