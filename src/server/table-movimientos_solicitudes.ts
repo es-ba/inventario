@@ -24,7 +24,7 @@ export function movimientos_solicitudes(context:TableContext):TableDefinition{
             {name:'tipo_asignacion'             , typeName:'text'    },
             {name:'accion'                      , typeName:'text'    },
             {name:'modalidad_uso'               , typeName:'text'    },
-            {name:'estado'                      , typeName:'text'    , defaultDbValue:'B', editable:false},
+            {name:'estado'                      , typeName:'text'    , defaultDbValue:"'B'", editable:false},
             {name:'responsable'                 , typeName:'text'    , nullable:true},
             {name:'area'                        , typeName:'text'    , nullable:true},
             {name:'sede'                        , typeName:'text'    , nullable:true},

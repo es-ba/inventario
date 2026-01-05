@@ -18,7 +18,6 @@ export function estados_acciones(context:TableContext):TableDefinition {
             {name:'nombre_procedure'        , typeName:'text'},
             {name:'nombre_wscreen'          , typeName:'text'},
         ],
-        hiddenColumns:['estados__permite_editar_encuesta','estdest__permite_editar_encuesta'],
         primaryKey:['estado','eaccion', 'estado_destino'],
         foreignKeys: [
             {references: 'estados',fields: ['estado']},

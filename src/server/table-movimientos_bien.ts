@@ -44,7 +44,7 @@ export function movimientos_bien(context:TableContext):TableDefinition{
         sortColumns:[{column:'orden', order:-1}], 
         foreignKeys:[
             {references:'bienes', fields:['ficha']},
-            {references:'movimientos_solicitudes', fields:['acta']},
+            {references:'movimientos_solicitud_bien', fields:['acta', 'ficha']},
             {references:'responsables', fields:['responsable']},
             {references:'usuarios', fields:[{source:'usuario_creacion' , target:'usuario'}], alias: 'usuario_creacion'},
             {references:'usuarios', fields:[{source:'usuario_modificacion' , target:'usuario'}], alias: 'usuario_modificacion'},
