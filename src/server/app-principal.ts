@@ -36,7 +36,6 @@ import { tipo_ordencompra } from "./table-tipo_ordencompra";
 import { estado_ordencompra } from "./table-estado_ordencompra";
 import { proveedores } from "./table-proveedores";
 import { estados_movimiento } from "./table-estados_movimiento";
-import { bienes_activos_por_responsable } from "./table-bienes-act";
 
 import {staticConfigYaml} from './def-config';
 
@@ -89,7 +88,6 @@ export class AppInventario extends AppBackend{
         es.lectura = es.administrativo || context.user && context.user.rol=="lectura"
         context.es = es;
     }
-
     override getContextForDump():Context{
         var context = super.getContextForDump();
         this.completeContext(context);
@@ -100,7 +98,6 @@ export class AppInventario extends AppBackend{
         this.completeContext(context);
         return context;
     }
-
     override getMenu(context:Context):MenuDefinition{
         var menuContent:MenuInfoBase[]=[
             {menuType:'prueba', name:'prueba', label:'principal'},
@@ -140,11 +137,7 @@ export class AppInventario extends AppBackend{
                         {menuType:'table', name:'roles' },
                         {menuType:'table', name:'espacios' },
                         {menuType:'table', name:'areas' },
-                        {menuType:'table', name:'bienes_activos_por_responsable' },
-                        
-                        
-
-
+                        {menuType:'proc', name:'bienes_activos_por_responsable' },
                     ]},
                 ]}
             )
@@ -199,7 +192,6 @@ export class AppInventario extends AppBackend{
             bienes      ,
             historial   ,
             proveedores,
-            bienes_activos_por_responsable,
         
         }
     }       
