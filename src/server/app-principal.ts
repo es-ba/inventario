@@ -42,6 +42,8 @@ import { acciones } from "./table-acciones";
 import { estados } from "./table-estados";
 import { estados_acciones } from "./table-estados_acciones";
 import { movimientos_solicitudes_acciones } from "./table-movimientos_solicitudes_acciones";
+import { historial_bienes } from "./table-historial_bienes";
+import { historial_evento_bien } from "./table-historial_evento_bien";
 
 import {staticConfigYaml} from './def-config';
 
@@ -175,6 +177,8 @@ export class AppInventario extends AppBackend{
             ... this.getTableDefinition,
             usuarios    ,
             categoria_bien,
+            historial_bienes,
+            historial_evento_bien,
             estados_baja,
             estados_movimiento,
             estados_bien,
