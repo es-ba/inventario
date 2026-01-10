@@ -46,6 +46,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'numero_integrado'            , typeName:'text'    , nullable:true}, 
             {name:'ubicacion'                   , typeName:'text'    , nullable:true},
             {name:'observacion'                 , typeName:'text'    , nullable:true},
+            {name:'aclaracion'                  , typeName:'text'    , nullable:true},
             {name:'detalle'                     , typeName:'text'    , nullable:true},
             {name:'importe'                     , typeName:'text'    , nullable:true},
             {name:'importetotal'                , typeName:'text'    , nullable:true},
