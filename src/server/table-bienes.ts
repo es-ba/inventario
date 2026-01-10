@@ -104,6 +104,7 @@ export function bienes(context:TableContext):TableDefinition{
         detailTables:[
             {table:'historial', fields:['ficha'], abr:'His', label:'Historial'},
             {table:'movimientos_bien', fields:['ficha'], abr:'Mov'},
+            {table:'bien_atributo', fields:['ficha'], abr:'Atr', label:'Atributos'}
         ],
         sql:{
             isTable: true,
