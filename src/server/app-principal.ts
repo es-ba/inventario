@@ -154,7 +154,7 @@ export class AppInventario extends AppBackend{
                         {menuType: 'table', name: 'jerarquias', label: 'jerarquías'},                   
                     ]},
                       {menuType: 'menu', name: 'definiciones_estados', label: 'estados y flujos', menuContent: [
-                          {menuType: 'table', name: 'estados_bien', label: 'estados del bien (alta/baja)'},
+                          {menuType: 'table', name: 'estados_bien', label: 'estados del bien'},
                           {menuType: 'table', name: 'estado_ordencompra', label: 'estados de OC'},
                           {menuType: 'table', name: 'estados', label: 'estados de movimientos'},
                           {menuType: 'table', name: 'motivos_baja', label: 'motivos de baja'},
