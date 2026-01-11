@@ -41,6 +41,7 @@ export function bienes(context:TableContext):TableDefinition{
         elementName:'bien', 
         title:'Bienes',
         editable:admin || responsable,
+        allow:{ delete:false, deleteAll:false },
         fields:[
             {name:'ficha'                       , typeName:'text'    }, 
             {name:'numero_integrado'            , typeName:'text'    , nullable:true}, 
