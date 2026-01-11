@@ -36,6 +36,7 @@ import { tipo_ordencompra } from "./table-tipo_ordencompra";
 import { estado_ordencompra } from "./table-estado_ordencompra";
 import { proveedores } from "./table-proveedores";
 import { estados_movimiento } from "./table-estados_movimiento";
+import { estado_bien_viejo } from "./table-estado_bien_viejo";
 import { movimientos_solicitudes } from "./table-movimientos_solicitudes";
 import { movimientos_solicitud_bien } from "./table-movimientos_solicitud_bien";
 import { acciones } from "./table-acciones";
@@ -152,13 +153,13 @@ export class AppInventario extends AppBackend{
                         {menuType: 'table', name: 'clases', label: 'clases'},
                         {menuType: 'table', name: 'jerarquias', label: 'jerarquías'},                   
                     ]},
-                    {menuType: 'menu', name: 'definiciones_estados', label: 'estados y flujos', menuContent: [
-                        {menuType: 'table', name: 'estados_bien', label: 'estados del bien (alta/baja)'},
-                        {menuType: 'table', name: 'estado_ordencompra', label: 'estados de OC'},
-                        {menuType: 'table', name: 'estados', label: 'estados de movimientos'},
-                        {menuType: 'table', name: 'motivos_baja', label: 'motivos de baja'},
-                        {menuType: 'table', name: 'estados_acciones', label: 'estados de acciones'},
-                    ]},                    
+                      {menuType: 'menu', name: 'definiciones_estados', label: 'estados y flujos', menuContent: [
+                          {menuType: 'table', name: 'estados_bien', label: 'estados del bien (alta/baja)'},
+                          {menuType: 'table', name: 'estado_ordencompra', label: 'estados de OC'},
+                          {menuType: 'table', name: 'estados', label: 'estados de movimientos'},
+                          {menuType: 'table', name: 'motivos_baja', label: 'motivos de baja'},
+                          {menuType: 'table', name: 'estados_acciones', label: 'estados de acciones'},
+                      ]},                    
                     {menuType: 'menu', name: 'sistema', label: 'sistema y seguridad', menuContent: [
                         {menuType: 'table', name: 'usuarios', label: 'gestión de usuarios'},
                         {menuType: 'table', name: 'roles', label: 'roles de acceso'},
@@ -192,6 +193,7 @@ export class AppInventario extends AppBackend{
             estados_baja,
             estados_movimiento,
             estados_bien,
+            estado_bien_viejo,
             acciones,
             estados,
             estados_acciones,
