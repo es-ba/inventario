@@ -16,7 +16,7 @@ export function movimientos_solicitudes(context:TableContext):TableDefinition{
     return {
         name:'movimientos_solicitudes',
         elementName:'movimiento_solicitud', 
-        title:'movimientos de solicitudes',
+        title:'solicitudes de movimiento',
         editable:admin,
         fields:[
             {name:'orden'                       , typeName:'bigint'  , nullable:true, editable:false},
