@@ -113,6 +113,10 @@ export class AppInventario extends AppBackend{
     override getMenu(context: Context): MenuDefinition {
         var menuContent: MenuInfoBase[] = [
             {menuType: 'table', name: 'bienes', label: 'inventario', selectedByDefault: true},
+            {menuType: 'menu', name: 'bienes_estado' , label: 'bienes por estado', menuContent: [
+                {menuType: 'table', name: 'bienes_activos', table: 'bienes', label: 'bienes en alta', ff: {estado: 'ALTA'}},
+                {menuType: 'table', name: 'bienes_inactivos', table: 'bienes', label: 'bienes en baja', ff: {estado: 'BAJA'}},
+            ]},            
             {menuType: 'menu', name: 'operaciones', label: 'operaciones', menuContent: [
                 {menuType: 'table', name: 'declaraciones', label: 'declaraciones'},
                 {menuType: 'table', name: 'movimientos_solicitudes', label: 'solicitudes de movimiento'},
@@ -128,11 +132,6 @@ export class AppInventario extends AppBackend{
                 {menuType: 'table', name: 'marcas', label: 'marcas'},
                 {menuType: 'table', name: 'grupos', label: 'grupos'},
                 {menuType: 'table', name: 'sedes', label: 'sedes'},
-            ]},
-    
-            {menuType: 'menu', name: 'bienes_estado' , label: 'bienes por estado', menuContent: [
-                {menuType: 'table', name: 'bienes_activos', table: 'bienes', label: 'bienes en alta', ff: {estado: 'alta'}},
-                {menuType: 'table', name: 'bienes_inactivos', table: 'bienes', label: 'bienes en baja', ff: {estado: 'baja'}},
             ]},
         ];
         
