@@ -112,8 +112,8 @@ export class AppInventario extends AppBackend{
 
     override getMenu(context: Context): MenuDefinition {
         var menuContent: MenuInfoBase[] = [
-            {menuType: 'table', name: 'bienes', label: 'inventario', selectedByDefault: true},
-            {menuType: 'menu', name: 'bienes_estado' , label: 'bienes por estado', menuContent: [
+            {menuType: 'menu', name: 'bienes' , label: 'inventario', menuContent: [
+                {menuType: 'table', name: 'bienes', label: 'todos', selectedByDefault: true},
                 {menuType: 'table', name: 'bienes_activos', table: 'bienes', label: 'bienes en alta', ff: {estado: 'ALTA'}},
                 {menuType: 'table', name: 'bienes_inactivos', table: 'bienes', label: 'bienes en baja', ff: {estado: 'BAJA'}},
             ]},            
@@ -145,6 +145,7 @@ export class AppInventario extends AppBackend{
                         {menuType: 'table', name: 'tipo_espacio', label: 'tipos de espacio'},
                         {menuType: 'table', name: 'tipo_contrato', label: 'tipos de contrato'},
                         {menuType: 'table', name: 'tipo_ordencompra', label: 'tipos de OC'},
+                        {menuType: 'table', name: 'tipo_asignacion', label: 'tipos de asignación'},
                         {menuType: 'table', name: 'marcas', label: 'marcas'},
                         {menuType: 'table', name: 'rubros', label: 'rubros'},
                         {menuType: 'table', name: 'rubros', label: 'rubros'},
