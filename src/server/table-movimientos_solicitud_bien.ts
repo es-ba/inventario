@@ -14,7 +14,6 @@ export function movimientos_solicitud_bien(context:TableContext):TableDefinition
         fields:[
             {name:'acta'                        , typeName:'text'    , nullable:false},
             {name:'ficha'                       , typeName:'text'    , nullable:false},
-            {name:'cantidad'                    , typeName:'integer' , nullable:true, defaultValue:1}, // Si aplica
             {name:'observaciones'               , typeName:'text'    , nullable:true}, // Por si necesitas notas por bien
             {name:'verificado'                  , typeName:'boolean' , nullable:true, defaultValue:false}, // Para marcar cuando se verifica
             {name:'fecha_creacion'              , typeName:'date'    , nullable:false, specialDefaultValue:'current_date', editable:false},

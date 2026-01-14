@@ -1,7 +1,6 @@
 "use strict";
 
 import { ProcedureContext, ProcedureDef } from './types-principal';
-import { sqlBienes } from './table-bienes';
 
 export const ProceduresInventario:ProcedureDef[] = [
     {
@@ -57,155 +56,41 @@ export const ProceduresInventario:ProcedureDef[] = [
     },
 
     { action: 'bienes_activos_por_responsable',
-      parameters: [
-        { name: 'responsable', typeName: 'text', label: 'Responsable' },
-        { name : 'anio', typeName: 'text', label: 'Año', defaultValue: null },
-        
-      ],
-   resultOk: 'showGrid',
-  coreFunction: async function(_context: ProcedureContext, params:any){
-    const grilla = {
-      tableName: 'bienes',
-      fixedFields: [
-        { fieldName: 'estado', value: 'alta' },
-      ],
-      tableDef: {
-        title: 'Declaracion de Bienes',
-        firstDisplayOverLimit: 20000,
-        firstDisplayCount: 20000,
-        sortColumns: [
-          { column:'responsable', order: 1 },
-          { column:'ficha', order: 1 },
-        ],
-      }
-    };
-
-    if (params.responsable != null && String(params.responsable).trim() !== '') {
-      const resp = String(params.responsable).trim();
-      grilla.fixedFields.push({ fieldName:'responsable', value: resp });
-      grilla.tableDef.title += ` - Responsable: ${resp}`;
-    }
-    if (params.anio != null && String(params.anio).trim() !== '') {
-      const anio = String(params.anio).trim();
-      grilla.fixedFields.push({ fieldName:'annio', value: anio });
-      grilla.tableDef.title += ` - Año: ${anio}`;
-    }
-
-    return grilla;
-  }
-}
-    
-    {
-        action: 'guardar_bien',
         parameters: [
-            {name:'ficha'                 , typeName:'text'},
-            {name:'numero_integrado'      , typeName:'text', defaultValue:null},
-            {name:'ubicacion'             , typeName:'text', defaultValue:null},
-            {name:'observacion'           , typeName:'text', defaultValue:null},
-            {name:'detalle'               , typeName:'text', defaultValue:null},
-            {name:'importe'               , typeName:'text', defaultValue:null},
-            {name:'importetotal'          , typeName:'text', defaultValue:null},
-            {name:'tipo_bien'             , typeName:'text', defaultValue:null},
-            {name:'estado'                , typeName:'text', defaultValue:null},
-            {name:'categoria'             , typeName:'text', defaultValue:null},
-            {name:'rubro'                 , typeName:'text', defaultValue:null},
-            {name:'clase'                 , typeName:'text', defaultValue:null},
-            {name:'cuenta'                , typeName:'text', defaultValue:null},
-            {name:'grupo'                 , typeName:'text', defaultValue:null},
-            {name:'marca'                 , typeName:'text', defaultValue:null},
-            {name:'serie'                 , typeName:'text', defaultValue:null},
-            {name:'imei'                  , typeName:'text', defaultValue:null},
-            {name:'modelo'                , typeName:'text', defaultValue:null},
-            {name:'annio'                 , typeName:'text', defaultValue:null},
-            {name:'prd'                   , typeName:'text', defaultValue:null},
-            {name:'caracteridentificador' , typeName:'text', defaultValue:null},
-            {name:'clasificacion'         , typeName:'text', defaultValue:null},
-            {name:'orden_compra'          , typeName:'text', defaultValue:null},
-            {name:'fecha'                 , typeName:'date', defaultValue:null, specialDefaultValue:'current_date'},
-            {name:'entidad_prestadora'    , typeName:'text', defaultValue:null},
-            {name:'tipo_contrato'         , typeName:'text', defaultValue:null},
-            {name:'fecha_inicio'          , typeName:'date', defaultValue:null},
-            {name:'fecha_fin'             , typeName:'date', defaultValue:null},
-            {name:'renovable'             , typeName:'boolean', defaultValue:false},
-            {name:'condiciones'           , typeName:'text', defaultValue:null},
-            {name:'costo_mensual'         , typeName:'decimal', defaultValue:null},
-            {name:'fecha_solicitud'       , typeName:'date', defaultValue:null},
-            {name:'motivo_baja'           , typeName:'text', defaultValue:null},
-            {name:'valor_residual'        , typeName:'decimal', defaultValue:null},
-            {name:'autorizado_por'        , typeName:'text', defaultValue:null},
-            {name:'documento_respaldo'    , typeName:'text', defaultValue:null},
-            {name:'estado_baja'           , typeName:'text', defaultValue:null},
+            { name: 'responsable', typeName: 'text', label: 'Responsable' },
+            { name : 'anio', typeName: 'text', label: 'Año', defaultValue: null },
+            
         ],
-        proceedLabel: 'guardar bien',
-        coreFunction: async function(context: ProcedureContext, parameters: any){
-            const {client} = context;
-            const columns = [
-                'ficha',
-                'numero_integrado',
-                'ubicacion',
-                'observacion',
-                'detalle',
-                'importe',
-                'importetotal',
-                'tipo_bien',
-                'estado',
-                'categoria',
-                'rubro',
-                'clase',
-                'cuenta',
-                'grupo',
-                'marca',
-                'serie',
-                'imei',
-                'modelo',
-                'annio',
-                'prd',
-                'caracteridentificador',
-                'clasificacion',
-                'orden_compra',
-                'fecha',
-                'entidad_prestadora',
-                'tipo_contrato',
-                'fecha_inicio',
-                'fecha_fin',
-                'renovable',
-                'condiciones',
-                'costo_mensual',
-                'fecha_solicitud',
-                'motivo_baja',
-                'valor_residual',
-                'autorizado_por',
-                'documento_respaldo',
-                'estado_baja',
-            ] as const;
+        resultOk: 'showGrid',
+        coreFunction: async function(_context: ProcedureContext, params:any){
+            const grilla = {
+            tableName: 'bienes',
+            fixedFields: [
+                { fieldName: 'estado', value: 'alta' },
+            ],
+            tableDef: {
+                title: 'Declaracion de Bienes',
+                firstDisplayOverLimit: 20000,
+                firstDisplayCount: 20000,
+                sortColumns: [
+                { column:'responsable', order: 1 },
+                { column:'ficha', order: 1 },
+                ],
+            }
+            };
 
-            const values = columns.map(column => parameters[column]);
-            const insertValuesSql = columns.map((column, index) => (
-                column === 'fecha' ? `COALESCE($${index+1}, current_date)` : `$${index+1}`
-            )).join(', ');
-            const updateSql = columns
-                .filter(column => column !== 'ficha')
-                .map(column => (
-                    column === 'fecha'
-                        ? `fecha = COALESCE(EXCLUDED.fecha, bienes.fecha)`
-                        : `${column} = EXCLUDED.${column}`
-                ))
-                .join(', ');
+            if (params.responsable != null && String(params.responsable).trim() !== '') {
+            const resp = String(params.responsable).trim();
+            grilla.fixedFields.push({ fieldName:'responsable', value: resp });
+            grilla.tableDef.title += ` - Responsable: ${resp}`;
+            }
+            if (params.anio != null && String(params.anio).trim() !== '') {
+            const anio = String(params.anio).trim();
+            grilla.fixedFields.push({ fieldName:'annio', value: anio });
+            grilla.tableDef.title += ` - Año: ${anio}`;
+            }
 
-            await client.query(`
-                INSERT INTO bienes (${columns.join(', ')})
-                    VALUES (${insertValuesSql})
-                    ON CONFLICT (ficha) DO UPDATE
-                        SET ${updateSql}
-                    RETURNING ficha
-            `, values).fetchUniqueRow();
-
-            const result = await client.query(`
-                SELECT *
-                    FROM (${sqlBienes}) x
-                    WHERE ficha = $1
-            `, [parameters.ficha]).fetchUniqueRow();
-            return result.row;
+            return grilla;
         }
     },
     {
