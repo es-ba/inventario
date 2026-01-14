@@ -17,7 +17,7 @@ export function grupos(context:TableContext):TableDefinition{
         fields:[
             {name:'grupo'             , typeName:'text'    }, 
             {name:'pertenece_a'       , typeName:'text'    },  
-            {name:'descripcion'       , typeName:'text'    }, 
+            {name:'descripcion'       , typeName:'text'    , isName:true}, 
         ],
         primaryKey:['grupo'],
         constraints:[

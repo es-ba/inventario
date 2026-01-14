@@ -15,7 +15,7 @@ export function responsables(context:TableContext):TableDefinition{
         fields:[
             responsable,
             {name:'nombre'                  , typeName:'text'       },  
-            {name:'apellido'                , typeName:'text'       }, 
+            {name:'apellido'                , typeName:'text'       , isName:true}, 
             {name:'mail'                    , typeName:'text'       },
             {name:'externo'                 , typeName:'boolean'    , defaultValue:false},
             {name:'usuario'                 , typeName:'text'       , nullable:true},
