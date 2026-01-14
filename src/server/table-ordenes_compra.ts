@@ -11,7 +11,7 @@ export function ordenes_compra(context:TableContext):TableDefinition{
         editable:admin || responsable,
         fields:[
             {name:'orden_compra'                        , typeName:'text'    },
-            {name:'codigo'                              , typeName:'text'    },
+            {name:'codigo'                              , typeName:'text'    , isName:true},
             {name:'estado'                              , typeName:'text'    },  
             {name:'tipo'                                , typeName:'text'    }, 
             {name:'descripcion'                         , typeName:'text'    }, 
