@@ -11,7 +11,7 @@ export function marcas(context:TableContext):TableDefinition{
         editable: admin,
         fields:[
             {name:'marca' , typeName:'text'},
-            {name:'descripcion' , typeName:'text'},
+            {name:'descripcion' , typeName:'text' , isName:true},
         ],
         primaryKey:['marca']
     };

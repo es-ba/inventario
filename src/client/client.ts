@@ -11,7 +11,7 @@ my.wScreens.prueba=async function(){
     let layout = document.getElementById('main_layout')!;
     layout.innerHTML = '';
     layout.appendChild(
-        html.div({class:'prueba-screen'}, 'Pantalla de prueba del inventario').create()
+    html.div({class:'prueba-screen'}, 'Pantalla de prueba del inventario').create()
     )
 }
 

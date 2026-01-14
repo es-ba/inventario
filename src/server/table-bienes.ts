@@ -41,6 +41,7 @@ export function bienes(context:TableContext):TableDefinition{
         elementName:'bien', 
         title:'Bienes',
         editable:admin || responsable,
+        allow:{ delete:false, deleteAll:false },
         fields:[
             {name:'ficha'                       , typeName:'text'    }, 
             {name:'numero_integrado'            , typeName:'text'    , nullable:true}, 
@@ -52,6 +53,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'importetotal'                , typeName:'text'    , nullable:true},
             {name:'tipo_bien'                   , typeName:'text'    , nullable:true},
             {name:'estado'                      , typeName:'text'    , nullable:true},
+            {name:'estado_bien_viejo'           , typeName:'text'    , nullable:true},
             {name:'categoria'                   , typeName:'text'    , nullable:true},
             {name:'rubro'                       , typeName:'text'    , nullable:true},
             {name:'clase'                       , typeName:'text'    , nullable:true},
@@ -84,6 +86,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'sede'                        , typeName:'text'    , editable:false, inTable:false},
             {name:'responsable'                 , typeName:'text'    , editable:false, inTable:false},
             {name:'espacio'                     , typeName:'text'    , editable:false, inTable:false},
+            //{name:'codigo_barra'                , typeName:'text'    , inTable:false, editable:false},
         ],  
         primaryKey:['ficha'],
         foreignKeys:[
@@ -95,6 +98,7 @@ export function bienes(context:TableContext):TableDefinition{
             {references:'motivos_baja', fields:['motivo_baja']},
             {references:'categoria_bien', fields:['categoria']},
             {references:'estados_bien', fields:['estado']},
+            {references:'estado_bien_viejo', fields:['estado_bien_viejo']},
             {references:'estados_baja', fields:['estado_baja']},
             {references:'marcas', fields:['marca']},
             {references:'ordenes_compra', fields:['orden_compra']},
@@ -106,6 +110,8 @@ export function bienes(context:TableContext):TableDefinition{
             {table:'historial', fields:['ficha'], abr:'His', label:'Historial'},
             {table:'historial_evento_bien', fields:['ficha'], abr:'Au', label:'Auditoria'},
             {table:'movimientos_bien', fields:['ficha'], abr:'Mov', label:'Movimientos'},
+            {table:'movimientos_bien', fields:['ficha'], abr:'Mov'},
+            {table:'bien_atributo', fields:['ficha'], abr:'Atr', label:'Atributos'}
         ],
         sql:{
             isTable: true,

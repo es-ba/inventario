@@ -36,6 +36,7 @@ import { tipo_ordencompra } from "./table-tipo_ordencompra";
 import { estado_ordencompra } from "./table-estado_ordencompra";
 import { proveedores } from "./table-proveedores";
 import { estados_movimiento } from "./table-estados_movimiento";
+import { estado_bien_viejo } from "./table-estado_bien_viejo";
 import { movimientos_solicitudes } from "./table-movimientos_solicitudes";
 import { movimientos_solicitud_bien } from "./table-movimientos_solicitud_bien";
 import { acciones } from "./table-acciones";
@@ -44,6 +45,12 @@ import { estados_acciones } from "./table-estados_acciones";
 import { movimientos_solicitudes_acciones } from "./table-movimientos_solicitudes_acciones";
 import { historial_bienes } from "./table-historial_bienes";
 import { historial_evento_bien } from "./table-historial_evento_bien";
+import { bienes_atributos } from "./table-bienes_atributos";
+import { bien_atributo } from "./table-bien_atributo";
+import { bienes_atributo_valores } from "./table-bienes_atributo_valores";
+import { declaraciones } from "./table-declaraciones";
+import { declaraciones_bienes } from "./table-declaraciones_bienes";
+import { jerarquias } from "./table-jerarquias";
 
 import {staticConfigYaml} from './def-config';
 
@@ -96,7 +103,6 @@ export class AppInventario extends AppBackend{
         es.lectura = es.administrativo || context.user && context.user.rol=="lectura"
         context.es = es;
     }
-
     override getContextForDump():Context{
         var context = super.getContextForDump();
         this.completeContext(context);
@@ -108,52 +114,63 @@ export class AppInventario extends AppBackend{
         return context;
     }
 
-    override getMenu(context:Context):MenuDefinition{
-        var menuContent:MenuInfoBase[]=[
-            {menuType:'prueba', name:'prueba', label:'principal'},
-            {menuType:'menu', name:'inventario', label:'inventario',  menuContent:[
-                {menuType:'table', name:'bienes', label:'bienes', selectedByDefault:true},
-                {menuType:'table', name:'areas', label:'areas'},
-                {menuType:'table', name:'responsables' },
-                {menuType:'table', name:'grupos', label:'grupos'},
+    override getMenu(context: Context): MenuDefinition {
+        var menuContent: MenuInfoBase[] = [
+            {menuType: 'menu', name: 'bienes' , label: 'inventario', menuContent: [
+                {menuType: 'table', name: 'bienes', label: 'todos', selectedByDefault: true},
+                {menuType: 'table', name: 'bienes_activos', table: 'bienes', label: 'bienes en alta', ff: {estado: 'ALTA'}},
+                {menuType: 'table', name: 'bienes_inactivos', table: 'bienes', label: 'bienes en baja', ff: {estado: 'BAJA'}},
+            ]},            
+            {menuType: 'menu', name: 'operaciones', label: 'operaciones', menuContent: [
+                {menuType: 'table', name: 'declaraciones', label: 'declaraciones'},
+                {menuType: 'table', name: 'movimientos_solicitudes', label: 'solicitudes de movimiento'},
+                {menuType: 'table', name: 'historial', label: 'historial de cambios'},
             ]},
-            {menuType:'menu', name:'ver', label:'ver',  menuContent:[
-                { menuType: 'table', name: 'bienes_activos', table: 'bienes', ff: { estado: 'alta' }  },
-                { menuType: 'table', name: 'bienes_inactivos', table: 'bienes', ff: { estado: 'desuso' } },
+    
+            {menuType: 'menu', name: 'gestion', label: 'gestion de datos', menuContent: [
+                {menuType: 'table', name: 'areas', label: 'áreas'},
+                {menuType: 'table', name: 'responsables', label: 'responsables'},
+                {menuType: 'table', name: 'espacios', label: 'espacios'},
+                {menuType: 'table', name: 'ordenes_compra', label: 'ordenes de compra'},
+                {menuType: 'table', name: 'proveedores', label: 'proveedores'},
+                {menuType: 'table', name: 'marcas', label: 'marcas'},
+                {menuType: 'table', name: 'grupos', label: 'grupos'},
+                {menuType: 'table', name: 'sedes', label: 'sedes'},
             ]},
         ];
+        
         if(context.user && context.es.administrativo){
             menuContent.push(
-                {menuType:'menu', name:'config', label:'configurar', menuContent:[
-                    {menuType:'table', name:'usuarios'  },
-                    {menuType:'table', name:'acciones'  },
-                    {menuType:'table', name:'estados_acciones'  },
-                    {menuType:'table', name:'estados'  },
-                    {menuType:'table', name:'movimientos_solicitudes'  },
-                    {menuType:'table', name:'movimientos_solicitudes_acciones'  },
-                    {menuType:'menu', name:'referenciales', label:'referenciales', menuContent:[
-                        {menuType:'table', name:'tipo_bien' },
-                        {menuType:'table', name:'tipo_area' },
-                        {menuType:'table', name:'categoria_bien' },
-                        {menuType:'table', name:'estados_baja' },
-                        {menuType:'table', name:'estados' },
-                        {menuType:'table', name:'modalidad_uso' },
-                        {menuType:'table', name:'motivos_baja' },
-                        {menuType:'table', name:'tipo_contrato' },
-                        {menuType:'table', name:'sedes' },
-                        {menuType:'table', name:'grupos' },
-                        {menuType:'table', name:'tipo_espacio' },
-                        {menuType:'table', name:'espacios' },
-                        {menuType:'table', name:'rubros' },
-                        {menuType:'table', name:'marcas' },
-                        {menuType:'table', name:'tipo_ordencompra' },
-                        {menuType:'table', name:'estado_ordencompra' },
-                        {menuType:'table', name:'proveedores' },
-                        {menuType:'table', name:'roles' },
+                {menuType: 'menu', name: 'configuracion', label: 'configuración', menuContent: [
+                    {menuType: 'menu', name: 'referenciales', label: 'tablas referenciales', menuContent: [
+                        {menuType: 'table', name: 'tipo_bien', label: 'tipos de bien'},
+                        {menuType: 'table', name: 'categoria_bien', label: 'categorías de bien'},
+                        {menuType: 'table', name: 'tipo_area', label: 'tipos de área'},
+                        {menuType: 'table', name: 'tipo_espacio', label: 'tipos de espacio'},
+                        {menuType: 'table', name: 'tipo_contrato', label: 'tipos de contrato'},
+                        {menuType: 'table', name: 'tipo_ordencompra', label: 'tipos de OC'},
+                        {menuType: 'table', name: 'tipo_asignacion', label: 'tipos de asignación'},
+                        {menuType: 'table', name: 'marcas', label: 'marcas'},
+                        {menuType: 'table', name: 'rubros', label: 'rubros'},
+                        {menuType: 'table', name: 'rubros', label: 'rubros'},
+                        {menuType: 'table', name: 'cuentas', label: 'cuentas contables'},
+                        {menuType: 'table', name: 'clases', label: 'clases'},
+                        {menuType: 'table', name: 'jerarquias', label: 'jerarquías'},                   
+                    ]},
+                      {menuType: 'menu', name: 'definiciones_estados', label: 'estados y flujos', menuContent: [
+                          {menuType: 'table', name: 'estados_bien', label: 'estados del bien'},
+                          {menuType: 'table', name: 'estado_ordencompra', label: 'estados de OC'},
+                          {menuType: 'table', name: 'estados', label: 'estados de movimientos'},
+                          {menuType: 'table', name: 'motivos_baja', label: 'motivos de baja'},
+                          {menuType: 'table', name: 'estados_acciones', label: 'estados de acciones'},
+                      ]},                    
+                    {menuType: 'menu', name: 'sistema', label: 'sistema y seguridad', menuContent: [
+                        {menuType: 'table', name: 'usuarios', label: 'gestión de usuarios'},
+                        {menuType: 'table', name: 'roles', label: 'roles de acceso'},
                     ]},
                 ]}
-            )
-        };
+            );
+        }
         return {menu:menuContent};
     }
     override clientIncludes(req:Request|null, opts:OptsClientPage):ClientModuleDefinition[]{
@@ -179,9 +196,13 @@ export class AppInventario extends AppBackend{
             categoria_bien,
             historial_bienes,
             historial_evento_bien,
+            bienes_atributos,
+            bienes_atributo_valores,
+            bien_atributo,
             estados_baja,
             estados_movimiento,
             estados_bien,
+            estado_bien_viejo,
             acciones,
             estados,
             estados_acciones,
@@ -189,12 +210,15 @@ export class AppInventario extends AppBackend{
             movimientos_solicitud_bien,
             movimientos_bien,
             movimientos_solicitudes_acciones,
+            declaraciones,
+            declaraciones_bienes,
             tipo_asignacion,
             modalidad_uso,
             motivos_baja,
             tipo_contrato,
             responsables,
             sedes       ,
+            jerarquias  ,
             roles       ,    
             tipo_area   ,
             areas       ,
@@ -211,7 +235,7 @@ export class AppInventario extends AppBackend{
             tipo_bien   ,
             bienes      ,
             historial   ,
-            proveedores
+            proveedores 
         }
     }       
 }

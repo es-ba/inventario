@@ -11,7 +11,7 @@ export function sedes(context:TableContext):TableDefinition{
         editable: admin,
         fields:[
             {name:'sede' , typeName:'text'},
-            {name:'descripcion' , typeName:'text'},
+            {name:'descripcion' , typeName:'text', isName: true},
             {name:'identificador' , typeName:'text'},
         ],
         primaryKey:['sede']

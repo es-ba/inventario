@@ -17,6 +17,7 @@ export function areas(context:TableContext):TableDefinition{
             {name:'nombre_area'        , typeName:'text'        , isName:true}, 
             {name:'sigla'              , typeName:'text'        },  
             {name:'descripcion'        , typeName:'text'        }, 
+            {name:'jerarquia'          , typeName:'text'        , nullable:true}, 
             {name:'pertenece_a'        , typeName:area.typeName , nullable:true, defaultValue:null },
             {name:'activo'             , typeName:'boolean'    , nullable: false, defaultValue: true},
             {name:'responsable'        , typeName:'text'        , nullable:true},
@@ -29,6 +30,7 @@ export function areas(context:TableContext):TableDefinition{
             {references:'areas', fields:[{source:'pertenece_a', target:'area'}], alias: 'pertenece_a'},
             {references:'tipo_area', fields:['tipo_area']},
             {references:'responsables', fields:['responsable']},
+            {references:'jerarquias', fields:['jerarquia']},
         ],
         constraints:[
             {constraintType:'unique', fields:['area']}

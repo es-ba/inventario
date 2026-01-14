@@ -15,14 +15,15 @@ export function responsables(context:TableContext):TableDefinition{
         fields:[
             responsable,
             {name:'nombre'                  , typeName:'text'       },  
-            {name:'apellido'                , typeName:'text'       }, 
+            {name:'apellido'                , typeName:'text'       , isName:true}, 
             {name:'mail'                    , typeName:'text'       },
             {name:'externo'                 , typeName:'boolean'    , defaultValue:false},
             {name:'usuario'                 , typeName:'text'       , nullable:true},
             {name:'activo'                  , typeName:'boolean'    , defaultValue:true},
             {name:'fecha_creacion'          , typeName:'date'    , specialDefaultValue:'current_date'},
             {name:'fecha_modificacion'      , typeName:'date'    , nullable:true, defaultValue:null},
-            {name:'id_anterior'             , typeName:'text'       },
+            {name:'id_anterior'             , typeName:'text'    , nullable:true},
+
         ],
         primaryKey:[responsable.name],
         constraints:[
