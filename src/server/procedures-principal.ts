@@ -55,6 +55,46 @@ export const ProceduresInventario:ProcedureDef[] = [
             return result.rows.length ? result.rows[0] : 'Error al insertar el bien';
         }
     },
+
+    { action: 'bienes_activos_por_responsable',
+      parameters: [
+        { name: 'responsable', typeName: 'text', label: 'Responsable' },
+        { name : 'anio', typeName: 'text', label: 'Año', defaultValue: null },
+        
+      ],
+   resultOk: 'showGrid',
+  coreFunction: async function(_context: ProcedureContext, params:any){
+    const grilla = {
+      tableName: 'bienes',
+      fixedFields: [
+        { fieldName: 'estado', value: 'alta' },
+      ],
+      tableDef: {
+        title: 'Declaracion de Bienes',
+        firstDisplayOverLimit: 20000,
+        firstDisplayCount: 20000,
+        sortColumns: [
+          { column:'responsable', order: 1 },
+          { column:'ficha', order: 1 },
+        ],
+      }
+    };
+
+    if (params.responsable != null && String(params.responsable).trim() !== '') {
+      const resp = String(params.responsable).trim();
+      grilla.fixedFields.push({ fieldName:'responsable', value: resp });
+      grilla.tableDef.title += ` - Responsable: ${resp}`;
+    }
+    if (params.anio != null && String(params.anio).trim() !== '') {
+      const anio = String(params.anio).trim();
+      grilla.fixedFields.push({ fieldName:'annio', value: anio });
+      grilla.tableDef.title += ` - Año: ${anio}`;
+    }
+
+    return grilla;
+  }
+}
+    
     {
         action: 'guardar_bien',
         parameters: [

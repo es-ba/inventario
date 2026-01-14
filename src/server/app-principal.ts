@@ -98,7 +98,6 @@ export class AppInventario extends AppBackend{
         es.lectura = es.administrativo || context.user && context.user.rol=="lectura"
         context.es = es;
     }
-
     override getContextForDump():Context{
         var context = super.getContextForDump();
         this.completeContext(context);
@@ -226,7 +225,8 @@ export class AppInventario extends AppBackend{
             tipo_bien   ,
             bienes      ,
             historial   ,
-            proveedores
+            proveedores,
+        
         }
     }       
 }
