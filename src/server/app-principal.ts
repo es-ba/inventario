@@ -43,6 +43,9 @@ import { acciones } from "./table-acciones";
 import { estados } from "./table-estados";
 import { estados_acciones } from "./table-estados_acciones";
 import { movimientos_solicitudes_acciones } from "./table-movimientos_solicitudes_acciones";
+import { bienes_atributos } from "./table-bienes_atributos";
+import { bien_atributo } from "./table-bien_atributo";
+import { bienes_atributo_valores } from "./table-bienes_atributo_valores";
 import { declaraciones } from "./table-declaraciones";
 import { declaraciones_bienes } from "./table-declaraciones_bienes";
 import { jerarquias } from "./table-jerarquias";
@@ -189,6 +192,9 @@ export class AppInventario extends AppBackend{
             ... this.getTableDefinition,
             usuarios    ,
             categoria_bien,
+            bienes_atributos,
+            bienes_atributo_valores,
+            bien_atributo,
             estados_baja,
             estados_movimiento,
             estados_bien,
@@ -225,8 +231,7 @@ export class AppInventario extends AppBackend{
             tipo_bien   ,
             bienes      ,
             historial   ,
-            proveedores,
-        
+            proveedores 
         }
     }       
 }
