@@ -25,7 +25,7 @@ export function movimientos_bien(context:TableContext):TableDefinition{
             {name:'accion'                      , typeName:'text'    , options:['entrega', 'devolucion']},
             {name:'modalidad_uso'               , typeName:'text'    },
             {name:'estado_movimiento'           , typeName:'text'    },
-            {name:'responsable'                 , typeName:'text'    , nullable:true},
+            {name:'responsable'                 , typeName:'text'    , nullable:false},
             {name:'area'                        , typeName:'text'    , nullable:true},
             {name:'sede'                        , typeName:'text'    , nullable:true},
             {name:'espacio'                     , typeName:'text'    , nullable:true},
