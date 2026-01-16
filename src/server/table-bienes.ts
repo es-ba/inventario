@@ -80,6 +80,8 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'autorizado_por'              , typeName:'text'    , nullable:true},
             {name:'documento_respaldo'          , typeName:'text'    , nullable:true},
             {name:'estado_baja'                 , typeName:'text'    , nullable:true},
+            {name:'aclaracion'                  , typeName:'text'    , nullable:true},
+            {name:'estado_bien_viejo'          , typeName: 'text'   , nullable:true},
             {name:'area'                        , typeName:'text'    , editable:false, inTable:false},
             {name:'sede'                        , typeName:'text'    , editable:false, inTable:false},
             {name:'responsable'                 , typeName:'text'    , editable:false, inTable:false},
