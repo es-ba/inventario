@@ -55,6 +55,8 @@ export function espacios(context:TableContext):TableDefinition{
         //         select:{using:`(SELECT ${pol.select.using} FROM bienes WHERE area = bienes.area)`}
         //     }
         // },
-        sortColumns:[{column:'espacio', order:1}]
+        sortColumns:[{column:'espacio', order:1}],
+
+        hiddenColumns:['id_anterior'],
     };
 }

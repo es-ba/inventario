@@ -84,7 +84,8 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'sede'                        , typeName:'text'    , editable:false, inTable:false},
             {name:'responsable'                 , typeName:'text'    , editable:false, inTable:false},
             {name:'espacio'                     , typeName:'text'    , editable:false, inTable:false},
-            //{name:'codigo_barra'                , typeName:'text'    , inTable:false, editable:false},
+            {name:'sigaf'                       , typeName:'text'    , nullable:true},
+            {name:'es_provisorio'               , typeName:'boolean' , nullable:true, defaultValue:false},
         ],  
         primaryKey:['ficha'],
         foreignKeys:[
@@ -108,6 +109,7 @@ export function bienes(context:TableContext):TableDefinition{
             {table:'historial', fields:['ficha'], abr:'His', label:'Historial'},
             {table:'movimientos_bien', fields:['ficha'], abr:'Mov'},
         ],
+        hiddenColumns:['renovable', 'condiciones', 'costo_mensual', 'fecha_solicitud', 'valor_residual', 'autorizado_por', 'numero_integrado'],
         sql:{
             isTable: true,
             from: `(${sqlBienes})`,

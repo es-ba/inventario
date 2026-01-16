@@ -49,6 +49,7 @@ export function responsables(context:TableContext):TableDefinition{
         //         select:{using:`(SELECT ${pol.select.using} FROM bienes WHERE area = bienes.area)`}
         //     }
         // },
-        sortColumns:[{column:'responsable', order:1}]
+        sortColumns:[{column:'responsable', order:1}],
+        hiddenColumns:['id_anterior'],
     };
 }
