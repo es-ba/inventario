@@ -86,8 +86,14 @@ BEGIN
 END;
 $BODY$;
 
-CREATE TRIGGER bienes_auditar_trg
-BEFORE INSERT OR UPDATE OR DELETE
+CREATE TRIGGER bienes_auditar_trg_after
+AFTER INSERT OR UPDATE
+ON bienes
+FOR EACH ROW
+EXECUTE PROCEDURE bienes_auditar_trg();
+
+CREATE TRIGGER bienes_auditar_trg_before_delete
+BEFORE DELETE
 ON bienes
 FOR EACH ROW
 EXECUTE PROCEDURE bienes_auditar_trg();
