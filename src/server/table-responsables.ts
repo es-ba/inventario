@@ -20,9 +20,10 @@ export function responsables(context:TableContext):TableDefinition{
             {name:'externo'                 , typeName:'boolean'    , defaultValue:false},
             {name:'usuario'                 , typeName:'text'       , nullable:true},
             {name:'activo'                  , typeName:'boolean'    , defaultValue:true},
-            {name:'fecha_creacion'          , typeName:'date'    , specialDefaultValue:'current_date'},
-            {name:'fecha_modificacion'      , typeName:'date'    , nullable:true, defaultValue:null},
-            {name:'id_anterior'             , typeName:'text'    , nullable:true},
+            {name:'fecha_creacion'          , typeName:'date'       , specialDefaultValue:'current_date'},
+            {name:'fecha_modificacion'      , typeName:'date'       , nullable:true, defaultValue:null},
+            {name:'id_anterior'             , typeName:'text'       , nullable:true},
+            {name:'es_jefe'                 , typeName:'boolean'    , nullable:true},
 
         ],
         primaryKey:[responsable.name],

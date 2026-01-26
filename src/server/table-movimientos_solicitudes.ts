@@ -25,7 +25,7 @@ export function movimientos_solicitudes(context:TableContext):TableDefinition{
             {name:'accion'                      , typeName:'text'    },
             {name:'modalidad_uso'               , typeName:'text'    },
             {name:'estado'                      , typeName:'text'    , defaultDbValue:"'B'", editable:false},
-            {name:'responsable'                 , typeName:'text'    , nullable:true},
+            {name:'responsable'                 , typeName:'text'    , nullable:false},
             {name:'area'                        , typeName:'text'    , nullable:true},
             {name:'sede'                        , typeName:'text'    , nullable:true},
             {name:'espacio'                     , typeName:'text'    , nullable:true},
@@ -49,6 +49,7 @@ export function movimientos_solicitudes(context:TableContext):TableDefinition{
             {references:'tipo_asignacion', fields:['tipo_asignacion']},
             {references:'modalidad_uso', fields:['modalidad_uso']},
             {references:'estados', fields:['estado']},
+            {references:'tipo_accion', fields:['tipo_accion']},
         ],
         detailTables:[
             {table:'movimientos_solicitud_bien', fields:['acta'], abr:'B'}

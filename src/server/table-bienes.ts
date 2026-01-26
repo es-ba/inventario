@@ -16,7 +16,7 @@ SELECT
     ult.sede,
     ult.responsable,
     ult.espacio,
-    ult.enusode
+    ult.asignado_a
     FROM bienes b
 LEFT JOIN LATERAL (
     SELECT 
@@ -24,7 +24,7 @@ LEFT JOIN LATERAL (
         mb.sede,
         mb.responsable,
         mb.espacio,
-        mb.enusode
+        mb.asignado_a
     FROM movimientos_bien mb
     WHERE mb.ficha = b.ficha
     ORDER BY mb.orden DESC
@@ -66,7 +66,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'annio'                       , typeName:'text'    , nullable:true},
             {name:'prd'                         , typeName:'text'    , nullable:true},
             {name:'caracteridentificador'       , typeName:'text'    , nullable:true},
-            {name:'enusode'                     , typeName:'text'    , editable:false, inTable:false},
+            {name:'asignado_a'                  , typeName:'text'    , editable:false, inTable:false},
             {name:'clasificacion'               , typeName:'text'    , nullable:true},
             {name:'orden_compra'                , typeName:'text'    , nullable:true},
             {name:'fecha'                       , typeName:'date'    , specialDefaultValue:'current_date'},
