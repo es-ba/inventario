@@ -38,7 +38,7 @@ export function historial(context:TableContext):TableDefinition{
             {name:'anio'                        , typeName:'text'    , nullable:true},
             {name:'prd'                         , typeName:'text'    , nullable:true},
             {name:'caracteridentificador'       , typeName:'text'    , nullable:true},
-            {name:'enusode'                     , typeName:'text'    , nullable:true},
+            {name:'asignado_a'                  , typeName:'text'    , nullable:true},
             {name:'clasificacion'               , typeName:'text'    , nullable:true},
             {name:'orden_compra'                , typeName:'text'    , nullable:true},
             {name:'fecha'                       , typeName:'date'    , nullable:true,},

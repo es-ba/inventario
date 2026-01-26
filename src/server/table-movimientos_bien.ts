@@ -26,11 +26,11 @@ export function movimientos_bien(context:TableContext):TableDefinition{
             {name:'tipo_asignacion'             , typeName:'text'    , nullable:true},
             {name:'accion'                      , typeName:'text'    , nullable:true},
             {name:'modalidad_uso'               , typeName:'text'    , nullable:true},
-            {name:'responsable'                 , typeName:'text'    , nullable:true},
+            {name:'responsable'                 , typeName:'text'    , nullable:false},
             {name:'area'                        , typeName:'text'    , nullable:true},
             {name:'sede'                        , typeName:'text'    , nullable:true},
             {name:'espacio'                     , typeName:'text'    , nullable:true},
-            {name:'enusode'                     , typeName:'text'    , nullable:true},
+            {name:'asignado_a'                  , typeName:'text'    , nullable:true},
             {name:'detalle'                     , typeName:'text'    , nullable:true},
             {name:'fecha_movimiento'            , typeName:'date'    , nullable:false, specialDefaultValue:'current_date', editable:false}, // Fecha real del movimiento
             {name:'fecha_creacion'              , typeName:'date'    , nullable:false, specialDefaultValue:'current_date', editable:false},
@@ -46,6 +46,7 @@ export function movimientos_bien(context:TableContext):TableDefinition{
             {references:'bienes', fields:['ficha']},
             {references:'movimientos_solicitud_bien', fields:['acta', 'ficha']},
             {references:'responsables', fields:['responsable']},
+            {references:'responsables', fields:['asignado_a']},
             {references:'usuarios', fields:[{source:'usuario_creacion' , target:'usuario'}], alias: 'usuario_creacion'},
             {references:'usuarios', fields:[{source:'usuario_modificacion' , target:'usuario'}], alias: 'usuario_modificacion'},
             {references:'areas', fields:['area']},
@@ -53,6 +54,7 @@ export function movimientos_bien(context:TableContext):TableDefinition{
             {references:'espacios', fields:['espacio']},
             {references:'tipo_asignacion', fields:['tipo_asignacion']},
             {references:'modalidad_uso', fields:['modalidad_uso']},
+            {references:'tipo_accion', fields:['tipo_accion']},
         ],
         sql:{
             policies:getPolicies(be)
