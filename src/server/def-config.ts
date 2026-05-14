@@ -37,13 +37,13 @@ install:
       - ../install/movimientos_bien_pk_trg.sql
       - ../install/evento_bien_pk_trg.sql
       - ../install/historial_bien_acciones_trg.sql
-      - ../install/generador_accion_cumple_condicion.sql
       - ../install/archivo_borrar_trg.sql
       post-adapt:
       - ../node_modules/pg-triggers/lib/recreate-his.sql
       - ../node_modules/pg-triggers/lib/table-changes.sql
       - ../node_modules/pg-triggers/lib/function-changes-trg.sql
       - ../node_modules/pg-triggers/lib/enance.sql    
+      - ../install/generador_accion_cumple_condicion.sql
 logo: 
   path: client/img
 `;

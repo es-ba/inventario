@@ -169,6 +169,7 @@ export class AppInventario extends AppBackend{
 
     override getMenu(context: Context): MenuDefinition {
         var menuContent: MenuInfoBase[] = [
+            {menuType:'prueba', name:'prueba'     },
             {menuType: 'menu', name: 'bienes' , label: 'inventario', menuContent: [
                 {menuType: 'table', name: 'bienes', label: 'todos', selectedByDefault: true},
                 {menuType: 'table', name: 'bienes_activos', table: 'bienes', label: 'bienes en alta', ff: {estado: 'ALTA'}},
@@ -177,6 +178,7 @@ export class AppInventario extends AppBackend{
             {menuType: 'menu', name: 'operaciones', label: 'operaciones', menuContent: [
                 {menuType: 'table', name: 'declaraciones', label: 'declaraciones'},
                 {menuType: 'table', name: 'movimientos_solicitudes', label: 'solicitudes de movimiento'},
+                {menuType: 'table', name: 'movimientos_solicitudes_acciones', label: 'acciones en solicitudes de movimiento'},
                 {menuType: 'table', name: 'historial', label: 'historial de cambios'},
             ]},
     
