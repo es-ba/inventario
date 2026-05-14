@@ -1,10 +1,11 @@
 "use strict";
 
-import { AppBackend, Context, Request, 
+import { AppBackend, Context, Request, ExpressPlus,
     ClientModuleDefinition, OptsClientPage, MenuDefinition, MenuInfoBase
 } from "./types-principal";
 
-// import * as MiniTools from 'mini-tools';
+import { rm } from "fs/promises";
+import * as MiniTools from "mini-tools";
 
 import {ProceduresInventario} from "./procedures-principal";
 import { roles } from "./table-roles";
@@ -51,15 +52,67 @@ import { bienes_atributo_valores } from "./table-bienes_atributo_valores";
 import { declaraciones } from "./table-declaraciones";
 import { declaraciones_bienes } from "./table-declaraciones_bienes";
 import { jerarquias } from "./table-jerarquias";
+import { adjuntos_bienes } from "./table-adjuntos_bienes";
+import { archivos_borrar } from "./table-archivos_borrar";
 
 import {staticConfigYaml} from './def-config';
+
+const cronMantenimiento = (be:AppBackend) => {
+    const interval = setInterval(async ()=>{
+        try{
+            const d = new Date();
+            const date = `${d.getDate()}/${d.getMonth()}/${d.getFullYear()}, ${d.getHours()}:${d.getMinutes()}`;
+            if(d.getHours() == 23 && d.getMinutes() == 58){
+                const result = await be.inTransaction(null, async (client)=>{
+                    const {rows} = await client.query("select ruta_archivo from archivos_borrar").fetchAll();
+                    if(rows.length>0){
+                        rows.forEach(async (element) => {
+                            const path = `local-attachments/${element.ruta_archivo}`;
+                            await client.query(`delete from archivos_borrar where ruta_archivo = $1`, [element.ruta_archivo]).execute();
+                            await rm(path, { force: true });
+                        });
+                        return `Se borraron archivos adjuntos en la fecha y hora: ${date}`;
+                    }else{
+                        return `No hay archivos adjuntos para borrar en la fecha y hora: ${date}`;
+                    }
+                });
+                console.info("Resultado de cron: ", result);
+            }
+        }catch(err){
+            console.error(`Error en cron. ${err}`);
+        }
+    },60000);
+    be.shutdownCallbackListAdd({
+        message:'cron Mantenimiento',
+        fun:async function(){
+            clearInterval(interval);
+            return Promise.resolve();
+        }
+    });
+}
 
 export class AppInventario extends AppBackend{
     constructor(){
         super();
     }
     override async postConfig(){
+        cronMantenimiento(this);
         await super.postConfig();
+    }
+    override addSchrödingerServices(mainApp:ExpressPlus, baseUrl:string){
+        const be = this;
+        super.addSchrödingerServices(mainApp, baseUrl);
+        mainApp.get(baseUrl+'/download/adjunto_bien', async function (req, res) {
+            // @ts-ignore
+            await be.inDbClient(req, async (client)=>{
+                const result = await client.query(
+                    'SELECT ficha, numero_adjunto, archivo FROM adjuntos_bienes WHERE ficha = $1 AND numero_adjunto = $2',
+                    [req.query.ficha, req.query.numero_adjunto]
+                ).fetchUniqueRow();
+                const path = `local-attachments/${result.row.archivo}`;
+                MiniTools.serveFile(path, {})(req, res);
+            });
+        });
     }
     override configStaticConfig(){
         super.configStaticConfig();
@@ -235,7 +288,9 @@ export class AppInventario extends AppBackend{
             tipo_bien   ,
             bienes      ,
             historial   ,
-            proveedores 
+            proveedores ,
+            adjuntos_bienes,
+            archivos_borrar
         }
-    }       
+    }
 }

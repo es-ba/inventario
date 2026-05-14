@@ -1,6 +1,8 @@
 "use strict";
 
-import { ProcedureContext, ProcedureDef } from './types-principal';
+import * as fs from "fs-extra";
+import { guarantee, is } from "guarantee-type";
+import { ProcedureContext, ProcedureDef, UploadedFileInfo } from './types-principal';
 
 export const ProceduresInventario:ProcedureDef[] = [
     {
@@ -131,6 +133,43 @@ export const ProceduresInventario:ProcedureDef[] = [
             .fetchUniqueRow();
             
             return {message: `Acción ${params.accion} ejecutada correctamente`};
+        }
+    },
+    {
+        action:'archivo_subir',
+        progress: true,
+        parameters:[
+            {name:'ficha', typeName:'text'},
+        ],
+        files:{count:1},
+        coreFunction: async function(context:ProcedureContext, parameters:any, files?:UploadedFileInfo[]){
+            const be = context.be;
+            const client = context.client;
+            context.informProgress({message: be.messages.fileUploaded});
+            const file = files![0];
+            const tipoAdjunto = is.object({archivo: is.string, numero_adjunto: is.number});
+            const originalFilename = file.originalFilename;
+            const filename = `${parameters.ficha}/${originalFilename}`;
+            const row = guarantee(tipoAdjunto, (await client.query(`
+                insert into adjuntos_bienes (ficha, usuario, archivo)
+                    values ($1, $2, $3)
+                    returning *
+            `,
+                [parameters.ficha, context.username, filename]
+            ).fetchUniqueRow()).row);
+            try {
+                await fs.move(file.path, `local-attachments/${row.archivo}`, {overwrite:true});
+            } catch(err) {
+                await client.query(`
+                    delete from adjuntos_bienes where ficha = $1 and numero_adjunto = $2
+                `, [parameters.ficha, row.numero_adjunto]).execute();
+                throw err;
+            }
+            return {
+                message: `el archivo ${row.archivo} se subió correctamente.`,
+                nombre: row.archivo,
+                row
+            };
         }
     }
 ];
