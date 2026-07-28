@@ -8,7 +8,8 @@
   "types": "dist/server/server-principal.d.ts",
   "files": [
     "dist",
-    "install"
+    "install",
+    "skins"
   ],
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -36,20 +37,23 @@
     "source-map-loader": "^5.0.0",
     "ts-loader": "^9.5.1",
     "types.d.ts": "^0.6.22",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "webpack": "^5.97.1"
   },
-  "mixin-patch": {},
+  "mixin-patch": {
+    "patch": false
+  },
   "scripts": {
     "prepare": "npm run build",
-    "build": "tsc -p tsconfig-client.json && tsc -p tsconfig-server.json && tsc -p tsconfig-unlogged.json && mixin-patch",
-    "build-ignore-error": "(tsc -p tsconfig-client.json || echo \"continue w/error\") && (tsc -p tsconfig-server.json  || echo \"continue w/error\") && (tsc -p tsconfig-unlogged.json || echo \"continue w/error\") && mixin-patch && npx webpack",
-    "build-cli": "(tsc -p tsconfig-client.json || echo \"continue w/error\") && (tsc -p tsconfig-unlogged.json || echo \"continue w/error\") && mixin-patch",
+    "build": "tsc -p tsconfig-client.json && tsc -p tsconfig-server.json && tsc -p tsconfig-unlogged.json && node node_modules/mixin-patch/bin/mixin-patch-cli.js && node scripts/build-client-bundle.cjs",
+    "build-ignore-error": "(tsc -p tsconfig-client.json || echo \"continue w/error\") && (tsc -p tsconfig-server.json  || echo \"continue w/error\") && (tsc -p tsconfig-unlogged.json || echo \"continue w/error\") && node node_modules/mixin-patch/bin/mixin-patch-cli.js && node scripts/build-client-bundle.cjs",
+    "build-cli": "(tsc -p tsconfig-client.json || echo \"continue w/error\") && (tsc -p tsconfig-unlogged.json || echo \"continue w/error\") && node node_modules/mixin-patch/bin/mixin-patch-cli.js && node scripts/build-client-bundle.cjs",
     "watch:buildC": "tsc -p tsconfig-client.json --watch",
     "watch:buildS": "tsc -p tsconfig-server.json --watch",
     "watch:buildU": "tsc -p tsconfig-unlogged.json --watch",
-    "test": "mocha --reporter spec --bail --check-leaks test/",
+    "test": "node --test test/*.test.js",
     "dump": "npm start -- --dump-db",
     "dumpb": "(tsc -p tsconfig-server.json  || echo \"continue w/error\") && npm run dump",
-    "start": "node dist/server/server-principal.js"
+    "start": "node dist/server/server/server-principal.js"
   }
 }

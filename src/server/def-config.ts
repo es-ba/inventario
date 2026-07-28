@@ -18,6 +18,7 @@ login:
   activeClausule: activo
   unloggedLandPage: false
   plus:
+    successRedirect: /menu#i=principal
     allowHttpLogin: true
     fileStore: true
     loginForm:
@@ -44,6 +45,7 @@ install:
       - ../node_modules/pg-triggers/lib/function-changes-trg.sql
       - ../node_modules/pg-triggers/lib/enance.sql    
       - ../install/generador_accion_cumple_condicion.sql
+      - ../install/movimientos_solicitudes_estado_trg.sql
 logo: 
   path: client/img
 `;

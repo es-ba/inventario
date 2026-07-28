@@ -53,6 +53,7 @@ import { declaraciones } from "./table-declaraciones";
 import { declaraciones_bienes } from "./table-declaraciones_bienes";
 import { jerarquias } from "./table-jerarquias";
 import { adjuntos_bienes } from "./table-adjuntos_bienes";
+import { adjuntos_solicitudes } from "./table-adjuntos_solicitudes";
 import { archivos_borrar } from "./table-archivos_borrar";
 
 import {staticConfigYaml} from './def-config';
@@ -108,6 +109,17 @@ export class AppInventario extends AppBackend{
                 const result = await client.query(
                     'SELECT ficha, numero_adjunto, archivo FROM adjuntos_bienes WHERE ficha = $1 AND numero_adjunto = $2',
                     [req.query.ficha, req.query.numero_adjunto]
+                ).fetchUniqueRow();
+                const path = `local-attachments/${result.row.archivo}`;
+                MiniTools.serveFile(path, {})(req, res);
+            });
+        });
+        mainApp.get(baseUrl+'/download/adjunto_solicitud', async function (req, res) {
+            // @ts-ignore
+            await be.inDbClient(req, async (client)=>{
+                const result = await client.query(
+                    'SELECT acta, numero_adjunto, archivo FROM adjuntos_solicitudes WHERE acta = $1 AND numero_adjunto = $2',
+                    [req.query.acta, req.query.numero_adjunto]
                 ).fetchUniqueRow();
                 const path = `local-attachments/${result.row.archivo}`;
                 MiniTools.serveFile(path, {})(req, res);
@@ -169,7 +181,7 @@ export class AppInventario extends AppBackend{
 
     override getMenu(context: Context): MenuDefinition {
         var menuContent: MenuInfoBase[] = [
-            {menuType:'prueba', name:'prueba'     },
+            {menuType:'principal', name:'principal', label:'principal'     },
             {menuType: 'menu', name: 'bienes' , label: 'inventario', menuContent: [
                 {menuType: 'table', name: 'bienes', label: 'todos', selectedByDefault: true},
                 {menuType: 'table', name: 'bienes_activos', table: 'bienes', label: 'bienes en alta', ff: {estado: 'ALTA'}},
@@ -177,8 +189,9 @@ export class AppInventario extends AppBackend{
             ]},            
             {menuType: 'menu', name: 'operaciones', label: 'operaciones', menuContent: [
                 {menuType: 'table', name: 'declaraciones', label: 'declaraciones'},
-                {menuType: 'table', name: 'movimientos_solicitudes', label: 'solicitudes de movimiento'},
-                {menuType: 'table', name: 'movimientos_solicitudes_acciones', label: 'acciones en solicitudes de movimiento'},
+                {menuType: 'solicitudes_movimiento', name: 'solicitudes_movimiento', label: 'solicitudes de movimiento'},
+                {menuType: 'table', name: 'movimientos_solicitudes', label: 'solicitudes (legacy)'},
+                {menuType: 'table', name: 'movimientos_solicitudes_acciones', label: 'acciones en solicitudes (legacy)'},
                 {menuType: 'table', name: 'historial', label: 'historial de cambios'},
             ]},
     
@@ -191,6 +204,10 @@ export class AppInventario extends AppBackend{
                 {menuType: 'table', name: 'marcas', label: 'marcas'},
                 {menuType: 'table', name: 'grupos', label: 'grupos'},
                 {menuType: 'table', name: 'sedes', label: 'sedes'},
+                {menuType: 'menu', name: 'atributos', label: 'atributos', menuContent: [
+                    {menuType: 'table', name: 'bienes_atributos', label: 'atributos de bienes'},
+                    {menuType: 'table', name: 'bienes_atributo_valores', label: 'valores posibles'},
+                ]},
             ]},
         ];
         
@@ -236,10 +253,12 @@ export class AppInventario extends AppBackend{
             
         ];
         var list: ClientModuleDefinition[] = [
-            ...super.clientIncludes(req, opts),
-            //{ type: 'css', file: 'inventario.css' },
-            { type: 'css', file: 'menu.css' },
-            ... menuedResources
+            { type: 'js', module: 'react', modPath: 'umd', fileDevelopment:'react.development.js', file:'react.production.min.js' },
+            { type: 'js', module: 'react-dom', modPath: 'umd', fileDevelopment:'react-dom.development.js', file:'react-dom.production.min.js' },
+              ...super.clientIncludes(req, opts),
+              { type: 'js', src: 'adapt.js' },
+              { type: 'js', file: 'client/ws-principal.js' },
+              ... menuedResources
         ] satisfies ClientModuleDefinition[];
         return list;
     }
@@ -292,6 +311,7 @@ export class AppInventario extends AppBackend{
             historial   ,
             proveedores ,
             adjuntos_bienes,
+            adjuntos_solicitudes,
             archivos_borrar
         }
     }

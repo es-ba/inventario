@@ -16,16 +16,28 @@ SELECT
     ult.sede,
     ult.responsable,
     ult.espacio,
-    ult.enusode
+    ult.enusode,
+    ult.nombre_area,
+    ult.sede_nombre,
+    ult.responsable_nombre,
+    ult.espacio_numero
     FROM bienes b
 LEFT JOIN LATERAL (
     SELECT 
         mb.area,
+        a.nombre_area,
         mb.sede,
+        s.descripcion AS sede_nombre,
         mb.responsable,
+        r.apellido || ', ' || r.nombre AS responsable_nombre,
         mb.espacio,
+        e.numero AS espacio_numero,
         mb.enusode
     FROM movimientos_bien mb
+    LEFT JOIN areas a ON a.area = mb.area
+    LEFT JOIN sedes s ON s.sede = mb.sede
+    LEFT JOIN responsables r ON r.responsable = mb.responsable
+    LEFT JOIN espacios e ON e.espacio = mb.espacio
     WHERE mb.ficha = b.ficha
     ORDER BY mb.orden DESC
     LIMIT 1
@@ -86,6 +98,10 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'sede'                        , typeName:'text'    , editable:false, inTable:false},
             {name:'responsable'                 , typeName:'text'    , editable:false, inTable:false},
             {name:'espacio'                     , typeName:'text'    , editable:false, inTable:false},
+            {name:'nombre_area'                 , typeName:'text'    , editable:false, inTable:false},
+            {name:'sede_nombre'                 , typeName:'text'    , editable:false, inTable:false},
+            {name:'responsable_nombre'          , typeName:'text'    , editable:false, inTable:false},
+            {name:'espacio_numero'              , typeName:'text'    , editable:false, inTable:false},
             //{name:'codigo_barra'                , typeName:'text'    , inTable:false, editable:false},
         ],  
         primaryKey:['ficha'],
@@ -113,6 +129,7 @@ export function bienes(context:TableContext):TableDefinition{
             {table:'bien_atributo', fields:['ficha'], abr:'Atr', label:'Atributos'},
             {table:'adjuntos_bienes', fields:['ficha'], abr:'Adj', label:'Adjuntos'}
         ],
+        hiddenColumns: ['entidad_prestadora', 'fecha_inicio', 'fecha_fin', 'renovable', 'condiciones', 'costo_mensual', 'fecha_solicitud', 'valor_residual', 'autorizado_por', 'documento_respaldo', 'estado_baja'],
         sql:{
             isTable: true,
             from: `(${sqlBienes})`,

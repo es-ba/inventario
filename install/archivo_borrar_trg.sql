@@ -24,3 +24,10 @@ CREATE TRIGGER archivo_borrar_trg
   ON adjuntos_bienes
   FOR EACH ROW
   EXECUTE PROCEDURE archivo_borrar_trg();
+
+DROP TRIGGER IF EXISTS archivo_borrar_trg ON adjuntos_solicitudes;
+CREATE TRIGGER archivo_borrar_trg
+  BEFORE DELETE OR UPDATE
+  ON adjuntos_solicitudes
+  FOR EACH ROW
+  EXECUTE PROCEDURE archivo_borrar_trg();

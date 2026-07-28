@@ -51,7 +51,8 @@ export function movimientos_solicitudes(context:TableContext):TableDefinition{
             {references:'estados', fields:['estado']},
         ],
         detailTables:[
-            {table:'movimientos_solicitud_bien', fields:['acta'], abr:'B'}
+            {table:'movimientos_solicitud_bien', fields:['acta'], abr:'B'},
+            {table:'adjuntos_solicitudes', fields:['acta'], abr:'Adj', label:'Adjuntos'}
         ],
         sql:{
             policies:getPolicies(be)
