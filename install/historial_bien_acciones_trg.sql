@@ -1,3 +1,44 @@
+CREATE OR REPLACE FUNCTION usuario_trazabilidad()
+RETURNS text
+STABLE
+LANGUAGE sql
+AS $SQL$
+  SELECT CASE
+    WHEN nullif(current_setting('backend_plus._user', true), '') IS NULL
+      THEN '!sistema'
+    ELSE get_app_user()
+  END
+$SQL$;
+
+CREATE OR REPLACE FUNCTION registrar_evento_bien(
+  p_ficha text,
+  p_accion text,
+  p_motivo text DEFAULT NULL
+)
+RETURNS bigint
+LANGUAGE plpgsql
+AS $BODY$
+DECLARE
+  v_orden bigint;
+BEGIN
+  INSERT INTO historial_evento_bien (
+    ficha, orden, fecha, usuario, accion, motivo, origen
+  )
+  VALUES (
+    p_ficha,
+    0,
+    now(),
+    usuario_trazabilidad(),
+    p_accion,
+    p_motivo,
+    'sistema'
+  )
+  RETURNING orden INTO v_orden;
+
+  RETURN v_orden;
+END;
+$BODY$;
+
 CREATE OR REPLACE FUNCTION bienes_auditar_trg()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -11,27 +52,15 @@ DECLARE
 BEGIN
   v_ficha := CASE WHEN TG_OP = 'DELETE' THEN OLD.ficha ELSE NEW.ficha END;
 
-  INSERT INTO historial_evento_bien (
-    ficha, orden, fecha, usuario, accion, origen
-  )
-  VALUES (
+  v_orden := registrar_evento_bien(
     v_ficha,
-    0,
-    now(),
-    current_user,
     CASE TG_OP
       WHEN 'INSERT' THEN 'alta'
       WHEN 'DELETE' THEN 'baja'
       ELSE 'edicion'
     END,
-    'sistema'
+    NULL
   );
-
-  -- obtener el orden recién asignado
-  SELECT max(orden)
-    INTO v_orden
-    FROM historial_evento_bien
-   WHERE ficha = v_ficha;
 
   -- INSERT / DELETE: evento global
   IF TG_OP IN ('INSERT','DELETE') THEN
@@ -47,7 +76,7 @@ BEGIN
       CASE WHEN TG_OP='DELETE' THEN 'EXISTENTE' ELSE NULL END,
       CASE WHEN TG_OP='INSERT' THEN 'CREADO' ELSE 'ELIMINADO' END,
       now(),
-      current_user,
+      usuario_trazabilidad(),
       CASE TG_OP WHEN 'INSERT' THEN 'alta' ELSE 'baja' END,
       'sistema'
     );
@@ -75,7 +104,7 @@ BEGIN
         v_old ->> v_key,
         v_new ->> v_key,
         now(),
-        current_user,
+        usuario_trazabilidad(),
         'edicion',
         'sistema'
       );

@@ -127,7 +127,8 @@ export function bienes(context:TableContext):TableDefinition{
             {table:'historial_evento_bien', fields:['ficha'], abr:'Au', label:'Auditoria'},
             {table:'movimientos_bien', fields:['ficha'], abr:'Mov', label:'Movimientos'},
             {table:'bien_atributo', fields:['ficha'], abr:'Atr', label:'Atributos'},
-            {table:'adjuntos_bienes', fields:['ficha'], abr:'Adj', label:'Adjuntos'}
+            {table:'adjuntos_bienes', fields:['ficha'], abr:'Adj', label:'Adjuntos'},
+            {table:'declaraciones_bienes', fields:['ficha'], abr:'Dec', label:'Declaraciones'}
         ],
         hiddenColumns: ['entidad_prestadora', 'fecha_inicio', 'fecha_fin', 'renovable', 'condiciones', 'costo_mensual', 'fecha_solicitud', 'valor_residual', 'autorizado_por', 'documento_respaldo', 'estado_baja'],
         sql:{

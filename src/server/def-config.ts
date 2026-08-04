@@ -46,6 +46,7 @@ install:
       - ../node_modules/pg-triggers/lib/enance.sql    
       - ../install/generador_accion_cumple_condicion.sql
       - ../install/movimientos_solicitudes_estado_trg.sql
+      - ../install/trazabilidad_atributos_documentacion_trg.sql
 logo: 
   path: client/img
 `;
