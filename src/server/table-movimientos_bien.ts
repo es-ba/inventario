@@ -32,8 +32,8 @@ export function movimientos_bien(context:TableContext):TableDefinition{
             {name:'espacio'                     , typeName:'text'    , nullable:true},
             {name:'enusode'                     , typeName:'text'    , nullable:true},
             {name:'detalle'                     , typeName:'text'    , nullable:true},
-            {name:'fecha_movimiento'            , typeName:'date'    , nullable:false, specialDefaultValue:'current_date', editable:false}, // Fecha real del movimiento
-            {name:'fecha_creacion'              , typeName:'date'    , nullable:false, specialDefaultValue:'current_date', editable:false},
+            {name:'fecha_movimiento'            , typeName:'date'    , nullable:false, defaultDbValue:'current_date', editable:false}, // Fecha real del movimiento
+            {name:'fecha_creacion'              , typeName:'date'    , nullable:false, defaultDbValue:'current_date', editable:false},
             {name:'fecha_modificacion'          , typeName:'date'    , nullable:true, editable:false},
             {name:'usuario_creacion'            , typeName:'text'    , nullable:true, editable:false},
             {name:'usuario_modificacion'        , typeName:'text'    , nullable:true, editable:false},

@@ -81,7 +81,6 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'enusode'                     , typeName:'text'    , editable:false, inTable:false},
             {name:'clasificacion'               , typeName:'text'    , nullable:true},
             {name:'orden_compra'                , typeName:'text'    , nullable:true},
-            {name:'fecha'                       , typeName:'date'    , specialDefaultValue:'current_date'},
             {name:'entidad_prestadora'          , typeName:'text'    , nullable:true},
             {name:'fecha_inicio'                , typeName:'date'    , nullable:true},
             {name:'fecha_fin'                   , typeName:'date'    , nullable:true},

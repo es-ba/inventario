@@ -31,7 +31,7 @@ export function movimientos_solicitudes(context:TableContext):TableDefinition{
             {name:'espacio'                     , typeName:'text'    , nullable:true},
             {name:'usuario_final'               , typeName:'text'    , nullable:true},
             {name:'detalle'                     , typeName:'text'    , nullable:true},
-            {name:'fecha_creacion'              , typeName:'date'    , nullable:false, specialDefaultValue:'current_date'},
+            {name:'fecha_creacion'              , typeName:'date'    , nullable:false, defaultDbValue:'current_date'},
             {name:'fecha_modificacion'          , typeName:'date'    , nullable:true},
             {name:'usuario_creacion'            , typeName:'text'    , nullable:true},
             {name:'usuario_modificacion'        , typeName:'text'    , nullable:true},

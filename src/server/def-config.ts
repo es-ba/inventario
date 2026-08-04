@@ -26,6 +26,7 @@ login:
       formImg: unlogged/tables-lock.png
     noLoggedUrlPath: /login
 client-setup:
+  skin: modern
   menu: true
   lang: es
   user-scalable: no

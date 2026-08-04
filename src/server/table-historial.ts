@@ -60,7 +60,7 @@ export function historial(context:TableContext):TableDefinition{
             {name:'observaciones'               , typeName:'text'    , nullable:true},
             {name:'sede'                        , typeName:'text'    , nullable:true},
             {name:'espacio'                     , typeName:'text'    , nullable:true},
-            {name:'fecha_creacion'              , typeName:'date'    , nullable:false, specialDefaultValue:'current_date'},
+            {name:'fecha_creacion'              , typeName:'date'    , nullable:false, defaultDbValue:'current_date'},
             {name:'fecha_modificacion'          , typeName:'date'    , nullable:true},
             {name:'usuario_modificacion'        , typeName:'text'    , nullable:true},
             {name:'solicitado_por'              , typeName:'text'    , nullable:true},

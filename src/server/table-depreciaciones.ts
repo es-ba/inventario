@@ -21,7 +21,7 @@ export function depreciaciones(context:TableContext):TableDefinition{
         fields:[
             {name:'depreciacion', typeName:'text', nullable:false},
             {name:'ficha', typeName:'text', nullable:false},
-            {name:'fecha_calculo', typeName:'date', nullable:false, specialDefaultValue:'current_date'},
+            {name:'fecha_calculo', typeName:'date', nullable:false, defaultDbValue:'current_date'},
             {name:'valor_anterior', typeName:'decimal', nullable:false},
             {name:'valor_actual', typeName:'decimal', nullable:false},
             {name:'metodo_aplicado', typeName:'text', options:['lineal', 'suma_digitos', 'unidades_producidas', 'otro']},
