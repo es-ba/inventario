@@ -2,7 +2,6 @@ export const staticConfigYaml=`
 server:
   port: 3021
   session-store: memory-saved
-  allowedHosts: [localhost]
   skins:
     modern:
       local-path: node_modules/backend-skins/dist
