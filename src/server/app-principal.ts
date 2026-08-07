@@ -130,28 +130,6 @@ export class AppInventario extends AppBackend{
         super.configStaticConfig();
         this.setStaticConfig(staticConfigYaml);
     }
-    // override addUnloggedServices(mainApp:ExpressPlus, baseUrl:string){
-    //     var be=this;
-    //     if(baseUrl=='/'){
-    //         baseUrl='';
-    //     }   
-    //     mainApp.get(baseUrl+'/bienes.js',async function(req,res,_next){
-    //         var bienes = await be.inDbClient(req as Request, async function(client){
-    //             var result = await client.query(`
-    //                 SELECT ficha, integrado, observacion
-    //                     FROM bienes
-    //                     ORDER BY fecha DESC
-    //             `).fetchAll();
-    //             console.log(result);
-    //             return result.rows;
-    //         });
-    //         console.log(bienes);
-    //         var bienes_js = 'var bienes = '+JSON.stringify(bienes);
-    //         console.log(bienes_js);
-    //         MiniTools.serveText(bienes_js,'text/javascript')(req, res);
-    //     });
-    //     super.addUnloggedServices(mainApp, baseUrl);
-    // }
     override async getProcedures(){
         var be = this;
         return [
@@ -248,9 +226,7 @@ export class AppInventario extends AppBackend{
     override clientIncludes(req:Request|null, opts:OptsClientPage):ClientModuleDefinition[]{
         var menuedResources:ClientModuleDefinition[]=req && opts && !opts.skipMenu ? [
             {type:'js' , src:'client/client.js' },
-        ]:[
-            {type:'js' , src:'unlogged.js' },
-            
+        ]:[ 
         ];
         var list: ClientModuleDefinition[] = [
             { type: 'js', module: 'react', modPath: 'umd', fileDevelopment:'react.development.js', file:'react.production.min.js' },
