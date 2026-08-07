@@ -6,8 +6,8 @@ import {
     Toolbar,
     Typography,
 } from '@mui/material';
+import {Menu as MenuIcon} from '@mui/icons-material';
 import type {Connector, FixedFields} from 'frontend-plus';
-import {ICON} from 'frontend-plus';
 import {BusquedaBienes} from './principal/busqueda-bienes';
 import {
     renderConnectedAppInventario,
@@ -35,7 +35,7 @@ function PantallaPrincipal({
                     }}
                     sx={{mr:2}}
                 >
-                    <ICON.Menu/>
+                    <MenuIcon/>
                 </IconButton>
                 <Typography variant="h6" component="h1">
                     Inventario - Principal
