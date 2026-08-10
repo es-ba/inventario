@@ -30,6 +30,10 @@ module.exports = {
                     },
                 },
             },
+            {
+                test:/\.png$/i,
+                type:'asset/inline',
+            },
         ],
     },
     resolve: {

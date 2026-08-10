@@ -15,6 +15,7 @@ import {
     KeyboardArrowDown,
     KeyboardArrowUp,
     OpenInNew,
+    Print,
     Refresh,
 } from '@mui/icons-material';
 import {
@@ -25,6 +26,7 @@ import {
     GridFilterOperator,
     GridPaginationModel,
     GridRenderCellParams,
+    GridRowSelectionModel,
     GridSortModel,
     GridToolbarColumnsButton,
     GridToolbarContainer,
@@ -58,12 +60,18 @@ import type {
 } from '../../common/contracts';
 import {selectBienesGridFields} from '../../common/bienes-busqueda';
 import {
+    filasSeleccionadasEnOrden,
+    prepararEtiquetasCodigosBarra,
+    sincronizarFilasSeleccionadas,
+} from '../../common/codigos-barra';
+import {
     BienesBusquedaFilterDraft,
     BienesBusquedaTarget,
     FiltrosCompuestos,
     isCompleteFilter,
 } from './filtros-compuestos';
 import {bienesGridLocaleText} from './localizacion-grid';
+import {imprimirEtiquetasCodigosBarra} from './imprimir-codigos-barra';
 import {unmountConnectedAppInventario} from './render-connected-app-inventario';
 
 declare module 'frontend-plus' {
@@ -251,7 +259,41 @@ export function BusquedaBienes({conn, fixedFields}:BusquedaBienesProps){
         React.useState<GridFilterModel>({items:[], quickFilterValues:[]});
     const [searchVersion, setSearchVersion] = React.useState(0);
     const [expandedRowIds, setExpandedRowIds] = React.useState<Set<string>>(new Set());
+    const [rowSelectionModel, setRowSelectionModel] =
+        React.useState<GridRowSelectionModel>([]);
+    const [selectedRows, setSelectedRows] =
+        React.useState<Map<string, BienesBusquedaRow>>(new Map());
     const requestSequence = React.useRef(0);
+
+    const clearSelection = React.useCallback(() => {
+        setRowSelectionModel([]);
+        setSelectedRows(new Map());
+    }, []);
+
+    const handleRowSelectionModelChange = React.useCallback((
+        selection:GridRowSelectionModel,
+    ) => {
+        setRowSelectionModel(selection);
+        setSelectedRows(previous => sincronizarFilasSeleccionadas(
+            previous,
+            selection,
+            rows,
+        ));
+    }, [rows]);
+
+    const printSelectedRows = React.useCallback(async () => {
+        setError(null);
+        try{
+            const selected = filasSeleccionadasEnOrden(
+                rowSelectionModel,
+                selectedRows,
+            );
+            const etiquetas = prepararEtiquetasCodigosBarra(selected);
+            await imprimirEtiquetasCodigosBarra(etiquetas);
+        }catch(err){
+            setError(err instanceof Error ? err.message : String(err));
+        }
+    }, [rowSelectionModel, selectedRows]);
 
     React.useEffect(() => {
         let cancelled = false;
@@ -499,7 +541,10 @@ export function BusquedaBienes({conn, fixedFields}:BusquedaBienesProps){
                 size="small"
                 startIcon={<Refresh/>}
                 disabled={loading}
-                onClick={() => setSearchVersion(version => version + 1)}
+                onClick={() => {
+                    clearSelection();
+                    setSearchVersion(version => version + 1);
+                }}
             >
                 Actualizar
             </Button>
@@ -511,10 +556,29 @@ export function BusquedaBienes({conn, fixedFields}:BusquedaBienesProps){
             >
                 Exportar CSV
             </Button>
+            <Typography variant="body2" sx={{ml:1}}>
+                {rowSelectionModel.length}{' '}
+                {rowSelectionModel.length === 1 ? 'bien seleccionado' : 'bienes seleccionados'}
+            </Typography>
+            <Button
+                size="small"
+                startIcon={<Print/>}
+                disabled={rowSelectionModel.length === 0}
+                onClick={() => void printSelectedRows()}
+            >
+                Imprimir códigos de barra
+            </Button>
             <Box sx={{flex:1}}/>
             <GridToolbarQuickFilter debounceMs={400}/>
         </GridToolbarContainer>,
-    [exportRows, hasSearched, loading]);
+    [
+        clearSelection,
+        exportRows,
+        hasSearched,
+        loading,
+        printSelectedRows,
+        rowSelectionModel.length,
+    ]);
 
     if(metadataLoading){
         return <Box sx={{display:'flex', justifyContent:'center', p:4}}>
@@ -531,6 +595,7 @@ export function BusquedaBienes({conn, fixedFields}:BusquedaBienesProps){
         <Tabs
             value={tab}
             onChange={(_event, value:number) => {
+                clearSelection();
                 setTab(value);
                 setPaginationModel(current => ({...current, page:0}));
             }}
@@ -556,6 +621,7 @@ export function BusquedaBienes({conn, fixedFields}:BusquedaBienesProps){
                     setShowValidation(true);
                     return;
                 }
+                clearSelection();
                 setShowValidation(false);
                 setAppliedFilters(filters.map(filter => ({
                     source:filter.source,
@@ -570,6 +636,7 @@ export function BusquedaBienes({conn, fixedFields}:BusquedaBienesProps){
                 setSearchVersion(version => version + 1);
             }}
             onClear={() => {
+                clearSelection();
                 setFilters([]);
                 setShowValidation(false);
             }}
@@ -599,12 +666,16 @@ export function BusquedaBienes({conn, fixedFields}:BusquedaBienesProps){
                     filterMode="server"
                     filterModel={filterModel}
                     onFilterModelChange={(model) => {
+                        clearSelection();
                         setFilterModel(model);
                         setPaginationModel(current => ({...current, page:0}));
                     }}
                     filterDebounceMs={400}
                     checkboxSelection
                     disableRowSelectionOnClick
+                    rowSelectionModel={rowSelectionModel}
+                    onRowSelectionModelChange={handleRowSelectionModelChange}
+                    keepNonExistentRowsSelected
                     slots={{toolbar:Toolbar}}
                     slotProps={{columnsManagement:{getTogglableColumns}}}
                     initialState={{
