@@ -47,19 +47,23 @@ import type {
     BienAtributoResumen,
     BienesAtributosOpcionesResponse,
     BienesAtributoValoresOpcionesResponse,
+    BienesBuscarAvanzadoParameters,
     BienesBusquedaExportResponse,
+    BienesBusquedaExportarParameters,
     BienesBusquedaFilter,
     BienesBusquedaOperator,
     BienesBusquedaRequest,
     BienesBusquedaResponse,
     BienesBusquedaRow,
-} from '../../common/bienes-busqueda';
+} from '../../common/contracts';
+import {selectBienesGridFields} from '../../common/bienes-busqueda';
 import {
     BienesBusquedaFilterDraft,
     BienesBusquedaTarget,
     FiltrosCompuestos,
     isCompleteFilter,
 } from './filtros-compuestos';
+import {bienesGridLocaleText} from './localizacion-grid';
 import {unmountConnectedAppInventario} from './render-connected-app-inventario';
 
 declare module 'frontend-plus' {
@@ -71,8 +75,10 @@ declare module 'frontend-plus' {
         hiddenColumns?:string[];
     }
     interface BEAPI {
-        bienes_buscar_avanzado:(params:{consulta:string}) => Promise<BienesBusquedaResponse>;
-        bienes_busqueda_exportar:(params:{consulta:string}) => Promise<BienesBusquedaExportResponse>;
+        bienes_buscar_avanzado:
+            (params:BienesBuscarAvanzadoParameters) => Promise<BienesBusquedaResponse>;
+        bienes_busqueda_exportar:
+            (params:BienesBusquedaExportarParameters) => Promise<BienesBusquedaExportResponse>;
         bienes_atributos_buscar:
             (params:{busqueda:string}) => Promise<BienesAtributosOpcionesResponse>;
         bienes_atributo_valores_buscar:
@@ -387,8 +393,7 @@ export function BusquedaBienes({conn, fixedFields}:BusquedaBienesProps){
         if(!tableDefinition){
             return [];
         }
-        const baseColumns = tableDefinition.fields
-            .filter(field => field.inTable !== false)
+        const baseColumns = selectBienesGridFields(tableDefinition.fields)
             .map((field:FieldDefinition):GridColDef<BienesBusquedaRow> => {
                 const type = gridColumnType(field.typeName);
                 return {
@@ -607,10 +612,7 @@ export function BusquedaBienes({conn, fixedFields}:BusquedaBienesProps){
                         columns:{columnVisibilityModel},
                     }}
                     getRowHeight={({id}) => expandedRowIds.has(String(id)) ? 'auto' : null}
-                    localeText={{
-                        noRowsLabel:'No se encontraron bienes',
-                        toolbarQuickFilterPlaceholder:'Buscar en resultados…',
-                    }}
+                    localeText={bienesGridLocaleText}
                 />
             </Box>
         }

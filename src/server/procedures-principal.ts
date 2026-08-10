@@ -6,13 +6,21 @@ import { ProcedureContext, ProcedureDef, UploadedFileInfo } from './types-princi
 import {
     BienesAtributosOpcionesResponse,
     BienesAtributoValoresOpcionesResponse,
-    BienesBusquedaRequest,
-} from '../common/bienes-busqueda';
+    BienesBuscarAvanzadoParameters,
+    BienesBusquedaExportarParameters,
+    BienesBusquedaResponse,
+    BienesBusquedaExportResponse,
+} from '../common/contracts';
+import {selectBienesGridFields} from '../common/bienes-busqueda';
 import {
     buildBienesBusquedaQueries,
     parseBienesBusquedaRequest,
     rowsToCsv,
 } from './bienes-busqueda-query';
+import {
+    normalizeBienesPresentationRows,
+    resolveBienesPresentationSqlFieldName,
+} from './bienes-presentacion';
 import {
     buildAtributosOpcionesQuery,
     buildAtributoValoresOpcionesQuery,
@@ -79,6 +87,7 @@ async function prepararBusquedaBienes(context:ProcedureContext, consulta:unknown
         baseSql:sqlBienes,
         visibilitySql:getPolicies(context.be).select.using,
         allowedFields,
+        resolveSqlFieldName:resolveBienesPresentationSqlFieldName,
         allowedAttributes,
         withoutPagination,
     });
@@ -274,7 +283,10 @@ export const ProceduresInventario:ProcedureDef[] = [
         parameters:[
             {name:'consulta', typeName:'text'},
         ],
-        coreFunction:async function(context:ProcedureContext, params:{consulta:BienesBusquedaRequest|string}){
+        coreFunction:async function(
+            context:ProcedureContext,
+            params:BienesBuscarAvanzadoParameters,
+        ):Promise<BienesBusquedaResponse>{
             const {queries} = await prepararBusquedaBienes(context, params.consulta);
             const countResult = await context.client.query(
                 queries.countSql,
@@ -285,7 +297,7 @@ export const ProceduresInventario:ProcedureDef[] = [
                 queries.dataValues
             ).fetchAll();
             return {
-                rows:dataResult.rows,
+                rows:normalizeBienesPresentationRows(dataResult.rows),
                 total:Number(countResult.rows[0]?.total ?? 0),
             };
         }
@@ -295,18 +307,21 @@ export const ProceduresInventario:ProcedureDef[] = [
         parameters:[
             {name:'consulta', typeName:'text'},
         ],
-        coreFunction:async function(context:ProcedureContext, params:{consulta:BienesBusquedaRequest|string}){
+        coreFunction:async function(
+            context:ProcedureContext,
+            params:BienesBusquedaExportarParameters,
+        ):Promise<BienesBusquedaExportResponse>{
             const {tableDef, queries} = await prepararBusquedaBienes(context, params.consulta, true);
             const dataResult = await context.client.query(
                 queries.dataSql,
                 queries.dataValues
             ).fetchAll();
-            const fields = tableDef.fields
-                .filter(field => field.inTable !== false)
+            const fields = selectBienesGridFields(tableDef.fields)
                 .map(field => field.name);
+            const rows = normalizeBienesPresentationRows(dataResult.rows);
             return {
                 fileName:`bienes-${new Date().toISOString().slice(0, 10)}.csv`,
-                csv:rowsToCsv(dataResult.rows, fields),
+                csv:rowsToCsv(rows, fields),
             };
         }
     },

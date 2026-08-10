@@ -18,7 +18,7 @@ import type {
     BienesBusquedaLogicOperator,
     BienesBusquedaOperator,
     BienesBusquedaSource,
-} from '../../common/bienes-busqueda';
+} from '../../common/contracts';
 
 export type BienesBusquedaTarget = {
     source: BienesBusquedaSource;

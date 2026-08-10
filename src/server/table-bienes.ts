@@ -9,19 +9,50 @@ export function getPolicies(be:AppBackend){
     }
 }
 
+function codigoTextoSql(codigo:string, texto:string):string{
+    return `CASE
+        WHEN nullif(btrim(${codigo}), '') IS NULL THEN NULL
+        WHEN nullif(btrim(coalesce(${texto}, '')), '') IS NULL THEN btrim(${codigo})
+        ELSE btrim(${codigo}) || ' — ' || btrim(${texto})
+    END`;
+}
+
 export const sqlBienes = `
 SELECT 
-      b.*,
+    b.*,
+    ${codigoTextoSql('b.grupo', 'g.descripcion')} AS grupo_texto,
+    ${codigoTextoSql('b.marca', 'ma.descripcion')} AS marca_texto,
+    ${codigoTextoSql('b.rubro', 'ru.nombre')} AS rubro_texto,
+    ${codigoTextoSql('b.clase', 'cla.nombre')} AS clase_texto,
+    ${codigoTextoSql('b.cuenta', 'cue.nombre')} AS cuenta_texto,
     ult.area,
     ult.sede,
     ult.responsable,
     ult.espacio,
+    ult.tipo_asignacion,
+    ult.modalidad_uso,
     ult.enusode,
     ult.nombre_area,
     ult.sede_nombre,
     ult.responsable_nombre,
-    ult.espacio_numero
+    ult.espacio_numero,
+    ult.responsable_texto,
+    ult.area_texto,
+    ult.sede_texto,
+    ult.espacio_texto,
+    ult.tipo_asignacion_texto,
+    ult.modalidad_uso_texto
     FROM bienes b
+LEFT JOIN grupos g ON g.grupo = b.grupo
+LEFT JOIN marcas ma ON ma.marca = b.marca
+LEFT JOIN rubros ru ON ru.rubro = b.rubro
+LEFT JOIN clases cla
+       ON cla.rubro = b.rubro
+      AND cla.clase = b.clase
+LEFT JOIN cuentas cue
+       ON cue.rubro = b.rubro
+      AND cue.clase = b.clase
+      AND cue.cuenta = b.cuenta
 LEFT JOIN LATERAL (
     SELECT 
         mb.area,
@@ -29,15 +60,34 @@ LEFT JOIN LATERAL (
         mb.sede,
         s.descripcion AS sede_nombre,
         mb.responsable,
-        r.apellido || ', ' || r.nombre AS responsable_nombre,
+        concat_ws(', ',
+            nullif(btrim(r.apellido), ''),
+            nullif(btrim(r.nombre), '')
+        ) AS responsable_nombre,
         mb.espacio,
         e.numero AS espacio_numero,
-        mb.enusode
+        mb.tipo_asignacion,
+        mb.modalidad_uso,
+        mb.enusode,
+        ${codigoTextoSql(
+            'mb.responsable',
+            "concat_ws(', ', nullif(btrim(r.apellido), ''), nullif(btrim(r.nombre), ''))",
+        )} AS responsable_texto,
+        ${codigoTextoSql('mb.area', 'a.nombre_area')} AS area_texto,
+        ${codigoTextoSql('mb.sede', 's.descripcion')} AS sede_texto,
+        ${codigoTextoSql(
+            'mb.espacio',
+            "concat_ws(' — ', nullif(btrim(e.numero), ''), nullif(btrim(e.denominacion), ''))",
+        )} AS espacio_texto,
+        ${codigoTextoSql('mb.tipo_asignacion', 'ta.descripcion')} AS tipo_asignacion_texto,
+        ${codigoTextoSql('mb.modalidad_uso', 'mu.descripcion')} AS modalidad_uso_texto
     FROM movimientos_bien mb
     LEFT JOIN areas a ON a.area = mb.area
     LEFT JOIN sedes s ON s.sede = mb.sede
     LEFT JOIN responsables r ON r.responsable = mb.responsable
     LEFT JOIN espacios e ON e.espacio = mb.espacio
+    LEFT JOIN tipo_asignacion ta ON ta.tipo_asignacion = mb.tipo_asignacion
+    LEFT JOIN modalidad_uso mu ON mu.modalidad_uso = mb.modalidad_uso
     WHERE mb.ficha = b.ficha
     ORDER BY mb.orden DESC
     LIMIT 1

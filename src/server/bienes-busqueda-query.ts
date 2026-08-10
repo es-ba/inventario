@@ -3,7 +3,7 @@ import {
     BienesBusquedaFilter,
     BienesBusquedaOperator,
     BienesBusquedaRequest,
-} from '../common/bienes-busqueda';
+} from '../common/contracts';
 
 export type BienesBusquedaFieldInfo = {
     typeName: string;
@@ -13,6 +13,7 @@ export type BienesBusquedaQueryOptions = {
     baseSql: string;
     visibilitySql: string;
     allowedFields: Record<string, BienesBusquedaFieldInfo>;
+    resolveSqlFieldName?: (publicName:string) => string;
     allowedAttributes?: Record<string, BienesBusquedaFieldInfo>;
     withoutPagination?: boolean;
 };
@@ -142,6 +143,10 @@ export function parseBienesBusquedaRequest(value: unknown): BienesBusquedaReques
 
 function quoteIdentifier(identifier: string): string {
     return `"${identifier.replace(/"/g, '""')}"`;
+}
+
+function sqlFieldName(publicName:string, options:BienesBusquedaQueryOptions):string{
+    return options.resolveSqlFieldName?.(publicName) ?? publicName;
 }
 
 function normalizedType(typeName: string): 'text' | 'number' | 'date' | 'boolean' {
@@ -284,7 +289,8 @@ function buildCondition(
         if (!field) {
             throw new Error(`Campo no permitido: ${filter.target}`);
         }
-        return compareSql(`b.${quoteIdentifier(filter.target)}`, field.typeName, filter, addValue);
+        const internalName = sqlFieldName(filter.target, options);
+        return compareSql(`b.${quoteIdentifier(internalName)}`, field.typeName, filter, addValue);
     }
     const attribute = options.allowedAttributes?.[filter.target];
     if (options.allowedAttributes && !attribute) {
@@ -315,13 +321,20 @@ function quickSearchSql(
         'numero_integrado',
         'detalle',
         'observacion',
-        'marca',
         'serie',
         'modelo',
+        'grupo',
+        'marca',
+        'rubro',
+        'clase',
+        'cuenta',
         'responsable',
         'area',
         'sede',
         'espacio',
+        'tipo_asignacion',
+        'modalidad_uso',
+        'enusode',
     ].filter((field) => options.allowedFields[field]);
     if (!candidates.length) {
         return null;
@@ -330,7 +343,7 @@ function quickSearchSql(
     return `(${terms.map((term) => {
         const parameter = addValue(term);
         return `(${candidates.map((field) =>
-            `coalesce(b.${quoteIdentifier(field)}::text, '') ILIKE '%' || ${parameter} || '%'`
+            `coalesce(b.${quoteIdentifier(sqlFieldName(field, options))}::text, '') ILIKE '%' || ${parameter} || '%'`
         ).join(' OR ')})`;
     }).join(' AND ')})`;
 }
@@ -376,7 +389,7 @@ export function buildBienesBusquedaQueries(
         if (!options.allowedFields[field]) {
             throw new Error(`Campo de orden no permitido: ${field}`);
         }
-        return `bf.${quoteIdentifier(field)} ${sort.toUpperCase()}`;
+        return `bf.${quoteIdentifier(sqlFieldName(field, options))} ${sort.toUpperCase()}`;
     }).join(', ');
     const cte = `WITH bienes_filtrados AS (
         SELECT b.*
