@@ -189,7 +189,7 @@ export class AppInventario extends AppBackend{
             ]},
         ];
         
-        if(context.user && context.es.administrativo){
+        if(context.user && context.es.admin){
             menuContent.push(
                 {menuType: 'menu', name: 'configuracion', label: 'configuración', menuContent: [
                     {menuType: 'menu', name: 'referenciales', label: 'tablas referenciales', menuContent: [
