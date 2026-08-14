@@ -51,6 +51,8 @@ import { bien_atributo } from "./table-bien_atributo";
 import { bienes_atributo_valores } from "./table-bienes_atributo_valores";
 import { declaraciones } from "./table-declaraciones";
 import { declaraciones_bienes } from "./table-declaraciones_bienes";
+import { declaraciones_documentos } from "./table-declaraciones_documentos";
+import { estados_declaracion } from "./table-estados_declaracion";
 import { jerarquias } from "./table-jerarquias";
 import { adjuntos_bienes } from "./table-adjuntos_bienes";
 import { adjuntos_solicitudes } from "./table-adjuntos_solicitudes";
@@ -114,6 +116,18 @@ export class AppInventario extends AppBackend{
                 MiniTools.serveFile(path, {})(req, res);
             });
         });
+        mainApp.get(baseUrl+'/download/declaracion_documento', async function (req, res) {
+            // @ts-ignore
+            await be.inDbClient(req, async (client)=>{
+                const result = await client.query(
+                    `SELECT archivo FROM declaraciones_documentos
+                        WHERE declaracion = $1 AND version = $2 AND tipo = $3`,
+                    [req.query.declaracion, req.query.version, req.query.tipo]
+                ).fetchUniqueRow();
+                const path = `local-attachments/${result.row.archivo}`;
+                MiniTools.serveFile(path, {})(req, res);
+            });
+        });
         mainApp.get(baseUrl+'/download/adjunto_solicitud', async function (req, res) {
             // @ts-ignore
             await be.inDbClient(req, async (client)=>{
@@ -167,9 +181,8 @@ export class AppInventario extends AppBackend{
             ]},            
             {menuType: 'menu', name: 'operaciones', label: 'operaciones', menuContent: [
                 {menuType: 'table', name: 'declaraciones', label: 'declaraciones'},
-                {menuType: 'solicitudes_movimiento', name: 'solicitudes_movimiento', label: 'solicitudes de movimiento'},
-                {menuType: 'table', name: 'movimientos_solicitudes', label: 'solicitudes (legacy)'},
-                {menuType: 'table', name: 'movimientos_solicitudes_acciones', label: 'acciones en solicitudes (legacy)'},
+                {menuType: 'table', name: 'movimientos_solicitudes', label: 'solicitudes'},
+                {menuType: 'table', name: 'movimientos_solicitudes_acciones', label: 'acciones en solicitudes'},
                 {menuType: 'table', name: 'historial', label: 'historial de cambios'},
             ]},
     
@@ -213,6 +226,7 @@ export class AppInventario extends AppBackend{
                           {menuType: 'table', name: 'estados', label: 'estados de movimientos'},
                           {menuType: 'table', name: 'motivos_baja', label: 'motivos de baja'},
                           {menuType: 'table', name: 'estados_acciones', label: 'estados de acciones'},
+                      {menuType: 'table', name: 'estados_declaracion', label: 'estados de declaración'},
                       ]},                    
                     {menuType: 'menu', name: 'sistema', label: 'sistema y seguridad', menuContent: [
                         {menuType: 'table', name: 'usuarios', label: 'gestión de usuarios'},
@@ -258,6 +272,8 @@ export class AppInventario extends AppBackend{
             estados_acciones,
             declaraciones,
             declaraciones_bienes,
+            declaraciones_documentos,
+            estados_declaracion,
             tipo_asignacion,
             modalidad_uso,
             motivos_baja,

@@ -26,6 +26,9 @@ import {
     buildAtributoValoresOpcionesQuery,
 } from './atributos-opciones-query';
 import { bienes, getPolicies, sqlBienes } from './table-bienes';
+import { generarDeclaracionPdf } from './declaracion-pdf-render';
+import { DocumentoEmitido, verificarDeclaracionFirmada } from './declaracion-verificacion';
+import { createHash } from 'node:crypto';
 
 type BienAtributoFiltro = {
     atributo?: unknown,
@@ -495,6 +498,350 @@ export const ProceduresInventario:ProcedureDef[] = [
                 message: `el archivo ${row.archivo} se subió correctamente.`,
                 nombre: row.archivo,
                 row
+            };
+        }
+    },
+    {
+        action:'declaracion_emitir',
+        parameters:[
+            {name:'declaracion', typeName:'bigint'},
+        ],
+        proceedLabel:'emitir',
+        coreFunction: async function(context:ProcedureContext, params:any){
+            const client = context.client;
+            const declaracion = params.declaracion;
+
+            if(context.user.rol === 'lectura'){
+                throw new Error('No tiene permisos para emitir declaraciones');
+            }
+
+            // Se toma el lock de la declaración antes de leer nada, para que dos emisiones
+            // simultáneas no generen la misma versión.
+            const bloqueo = await client.query(`
+                SELECT estado FROM declaraciones WHERE declaracion = $1 FOR UPDATE
+            `, [declaracion]).fetchAll();
+            if(!bloqueo.rows.length){
+                throw new Error(`No existe la declaración ${declaracion}`);
+            }
+            const estadoActual = bloqueo.rows[0].estado;
+            if(estadoActual !== 'BORRADOR'){
+                throw new Error(
+                    `La declaración ${declaracion} está en estado ${estadoActual}.`
+                    + ` Sólo se puede emitir una declaración en BORRADOR.`
+                );
+            }
+
+            const cabeceraResult = await client.query(`
+                SELECT
+                    d.declaracion,
+                    d.fecha,
+                    d.responsable,
+                    d.area,
+                    d.observaciones,
+                    r.nombre AS responsable_nombre,
+                    r.apellido AS responsable_apellido,
+                    a.nombre_area AS area_nombre
+                FROM declaraciones d
+                LEFT JOIN responsables r ON r.responsable = d.responsable
+                LEFT JOIN areas a ON a.area = d.area
+                WHERE d.declaracion = $1
+            `, [declaracion]).fetchUniqueRow();
+
+            // Las descripciones se resuelven acá y no se guardan en declaraciones_bienes:
+            // el documento queda congelado como archivo, así que alcanza con leerlas al
+            // momento de emitir.
+            const bienesResult = await client.query(`
+                SELECT
+                    db.ficha,
+                    db.detalle,
+                    db.observacion,
+                    db.rubro,
+                    db.clase,
+                    db.cuenta,
+                    cue.nombre AS cuenta_nombre,
+                    db.marca,
+                    ma.descripcion AS marca_descripcion
+                FROM declaraciones_bienes db
+                LEFT JOIN cuentas cue
+                       ON cue.rubro = db.rubro
+                      AND cue.clase = db.clase
+                      AND cue.cuenta = db.cuenta
+                LEFT JOIN marcas ma ON ma.marca = db.marca
+                WHERE db.declaracion = $1
+                ORDER BY db.ficha
+            `, [declaracion]).fetchAll();
+
+            if(!bienesResult.rows.length){
+                throw new Error(`La declaración ${declaracion} no tiene bienes y no puede emitirse`);
+            }
+
+            const versionResult = await client.query(`
+                SELECT coalesce(max(version), 0) + 1 AS version
+                    FROM declaraciones_documentos
+                    WHERE declaracion = $1
+            `, [declaracion]).fetchUniqueRow();
+            const version = Number(versionResult.row.version);
+
+            const fechaEmision = new Date();
+            const generado = await generarDeclaracionPdf({
+                cabecera: cabeceraResult.row as any,
+                bienes: bienesResult.rows as any,
+                emision: {version, fecha: fechaEmision, usuario: context.username},
+            });
+
+            const archivo = `declaraciones/${declaracion}/v${version}-emitido.pdf`;
+            // El archivo se escribe antes que la fila: si falla el disco no queda un
+            // documento registrado que no existe, y un PDF huérfano es inocuo (la próxima
+            // emisión de la misma versión lo pisa).
+            await fs.outputFile(`local-attachments/${archivo}`, generado.buffer);
+            try{
+                await client.query(`
+                    insert into declaraciones_documentos
+                        (declaracion, version, tipo, archivo, hash_sha256, codigo_contenido, usuario)
+                        values ($1, $2, 'emitido', $3, $4, $5, $6)
+                `, [
+                    declaracion,
+                    version,
+                    archivo,
+                    generado.hashSha256,
+                    generado.codigoContenido,
+                    context.username,
+                ]).execute();
+                await client.query(`
+                    update declaraciones set estado = 'EMITIDA' where declaracion = $1
+                `, [declaracion]).execute();
+            }catch(err){
+                await fs.remove(`local-attachments/${archivo}`);
+                throw err;
+            }
+
+            return {
+                message: `Se emitió la versión ${version} de la declaración ${declaracion}`
+                    + ` con ${generado.cantidadBienes} bienes (código ${generado.codigoContenido}).`
+                    + ` La lista de bienes queda bloqueada hasta que se observe la declaración.`,
+                declaracion,
+                version,
+                archivo,
+                hash_sha256: generado.hashSha256,
+                codigo_contenido: generado.codigoContenido,
+                cantidad_bienes: generado.cantidadBienes,
+            };
+        }
+    },
+    {
+        action:'declaracion_firmada_subir',
+        progress: true,
+        parameters:[
+            {name:'declaracion', typeName:'bigint'},
+        ],
+        files:{count:1},
+        coreFunction: async function(context:ProcedureContext, params:any, files?:UploadedFileInfo[]){
+            const be = context.be;
+            const client = context.client;
+            const declaracion = params.declaracion;
+            const file = files![0];
+
+            if(context.user.rol === 'lectura'){
+                await fs.remove(file.path);
+                throw new Error('No tiene permisos para cargar documentos firmados');
+            }
+            context.informProgress({message: be.messages.fileUploaded});
+
+            const rechazar = async (mensaje:string) => {
+                await fs.remove(file.path);
+                throw new Error(mensaje);
+            };
+
+            const bloqueo = await client.query(`
+                SELECT estado, responsable FROM declaraciones WHERE declaracion = $1 FOR UPDATE
+            `, [declaracion]).fetchAll();
+            if(!bloqueo.rows.length){
+                await rechazar(`No existe la declaración ${declaracion}`);
+            }
+            const {estado, responsable} = bloqueo.rows[0];
+            if(estado !== 'EMITIDA'){
+                await rechazar(
+                    `La declaración ${declaracion} está en estado ${estado}.`
+                    + ` Sólo se puede cargar la firma de una declaración EMITIDA.`
+                );
+            }
+
+            const emitidosResult = await client.query(`
+                SELECT version, archivo
+                    FROM declaraciones_documentos
+                    WHERE declaracion = $1 AND tipo = 'emitido'
+                    ORDER BY version
+            `, [declaracion]).fetchAll();
+            if(!emitidosResult.rows.length){
+                await rechazar(`La declaración ${declaracion} no tiene ningún documento emitido`);
+            }
+
+            const emitidos:DocumentoEmitido[] = [];
+            for(const fila of emitidosResult.rows){
+                const ruta = `local-attachments/${fila.archivo}`;
+                if(!await fs.pathExists(ruta)){
+                    await rechazar(
+                        `Falta en el servidor el archivo emitido ${fila.archivo}.`
+                        + ` Sin él no se puede verificar la firma.`
+                    );
+                }
+                emitidos.push({
+                    version: Number(fila.version),
+                    contenido: await fs.readFile(ruta),
+                });
+            }
+            const versionVigente = Math.max(...emitidos.map(emitido => emitido.version));
+
+            const yaFirmado = await client.query(`
+                SELECT 1 FROM declaraciones_documentos
+                    WHERE declaracion = $1 AND version = $2 AND tipo = 'firmado'
+            `, [declaracion, versionVigente]).fetchAll();
+            if(yaFirmado.rows.length){
+                await rechazar(
+                    `La versión ${versionVigente} de la declaración ${declaracion}`
+                    + ` ya tiene cargado su documento firmado.`
+                );
+            }
+
+            const subido = await fs.readFile(file.path);
+            const verificacion = verificarDeclaracionFirmada({subido, emitidos, versionVigente});
+            if(!verificacion.ok){
+                await rechazar(verificacion.mensaje);
+            }
+
+            const archivo = `declaraciones/${declaracion}/v${versionVigente}-firmado.pdf`;
+            await fs.move(file.path, `local-attachments/${archivo}`, {overwrite:true});
+            try{
+                await client.query(`
+                    insert into declaraciones_documentos
+                        (declaracion, version, tipo, archivo, hash_sha256, usuario,
+                         firmante_declarado, resultado_verificacion)
+                        values ($1, $2, 'firmado', $3, $4, $5, $6, $7)
+                `, [
+                    declaracion,
+                    versionVigente,
+                    archivo,
+                    createHash('sha256').update(subido).digest('hex'),
+                    context.username,
+                    verificacion.firmanteDeclarado,
+                    verificacion.codigo,
+                ]).execute();
+                await client.query(`
+                    update declaraciones
+                        set estado = 'FIRMADA',
+                            fecha_firma = current_date,
+                            firmado_por = coalesce(firmado_por, $2)
+                        where declaracion = $1
+                `, [declaracion, responsable]).execute();
+            }catch(err){
+                await fs.remove(`local-attachments/${archivo}`);
+                throw err;
+            }
+
+            return {
+                message: `${verificacion.mensaje}`
+                    + (verificacion.firmanteDeclarado
+                        ? ` El PDF declara como firmante a "${verificacion.firmanteDeclarado}"`
+                            + ` (dato informativo, no validado criptográficamente).`
+                        : '')
+                    + ` La declaración ${declaracion} queda FIRMADA.`,
+                declaracion,
+                version: versionVigente,
+                archivo,
+                firmante_declarado: verificacion.firmanteDeclarado,
+            };
+        }
+    },
+    {
+        action:'declaracion_observar',
+        parameters:[
+            {name:'declaracion', typeName:'bigint'},
+            {name:'motivo', typeName:'text'},
+        ],
+        proceedLabel:'observar',
+        coreFunction: async function(context:ProcedureContext, params:any){
+            const client = context.client;
+            const declaracion = params.declaracion;
+            const motivo = String(params.motivo ?? '').trim();
+
+            if(context.user.rol === 'lectura'){
+                throw new Error('No tiene permisos para observar declaraciones');
+            }
+            if(motivo === ''){
+                throw new Error('Hay que indicar el motivo de la observación');
+            }
+
+            const bloqueo = await client.query(`
+                SELECT estado FROM declaraciones WHERE declaracion = $1 FOR UPDATE
+            `, [declaracion]).fetchAll();
+            if(!bloqueo.rows.length){
+                throw new Error(`No existe la declaración ${declaracion}`);
+            }
+            const estado = bloqueo.rows[0].estado;
+            if(estado !== 'EMITIDA' && estado !== 'FIRMADA'){
+                throw new Error(
+                    `La declaración ${declaracion} está en estado ${estado}`
+                    + ` y no se puede observar.`
+                );
+            }
+
+            await client.query(`
+                update declaraciones
+                    set estado = 'OBSERVADA', motivo_observacion = $2
+                    where declaracion = $1
+            `, [declaracion, motivo]).execute();
+
+            return {
+                message: `La declaración ${declaracion} quedó OBSERVADA.`
+                    + ` Los documentos de la versión anterior se conservan como antecedente.`
+                    + ` Para corregirla hay que reabrirla.`,
+                declaracion,
+            };
+        }
+    },
+    {
+        action:'declaracion_reabrir',
+        parameters:[
+            {name:'declaracion', typeName:'bigint'},
+        ],
+        proceedLabel:'reabrir',
+        coreFunction: async function(context:ProcedureContext, params:any){
+            const client = context.client;
+            const declaracion = params.declaracion;
+
+            if(context.user.rol === 'lectura'){
+                throw new Error('No tiene permisos para reabrir declaraciones');
+            }
+
+            const bloqueo = await client.query(`
+                SELECT estado FROM declaraciones WHERE declaracion = $1 FOR UPDATE
+            `, [declaracion]).fetchAll();
+            if(!bloqueo.rows.length){
+                throw new Error(`No existe la declaración ${declaracion}`);
+            }
+            const estado = bloqueo.rows[0].estado;
+            if(estado !== 'OBSERVADA'){
+                throw new Error(
+                    `La declaración ${declaracion} está en estado ${estado}.`
+                    + ` Sólo se puede reabrir una declaración OBSERVADA.`
+                );
+            }
+
+            await client.query(`
+                update declaraciones set estado = 'BORRADOR' where declaracion = $1
+            `, [declaracion]).execute();
+
+            const proximaVersion = await client.query(`
+                SELECT coalesce(max(version), 0) + 1 AS version
+                    FROM declaraciones_documentos
+                    WHERE declaracion = $1
+            `, [declaracion]).fetchUniqueRow();
+
+            return {
+                message: `La declaración ${declaracion} volvió a BORRADOR y su lista de bienes`
+                    + ` se puede editar de nuevo. Al emitirla otra vez se genera la versión`
+                    + ` ${proximaVersion.row.version}.`,
+                declaracion,
             };
         }
     }

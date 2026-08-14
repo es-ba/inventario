@@ -1,0 +1,6 @@
+estado_declaracion|descripcion|orden
+BORRADOR|En preparación, la lista de bienes se puede editar|1
+EMITIDA|Documento emitido, pendiente de firma|2
+FIRMADA|Documento firmado y verificado|3
+OBSERVADA|Observada, requiere corrección y nueva emisión|4
+ANULADA|Anulada, sin efecto|5

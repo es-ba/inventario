@@ -1,6 +1,6 @@
 # inventario
 
-Sistema de inventario para la DGESYC. Backend basado en `backend-plus` + PostgreSQL.
+Sistema de inventario para el IDECBA (Instituto de Estadística y Censos de la Ciudad Autónoma de Buenos Aires). Backend basado en `backend-plus` + PostgreSQL.
 
 ## Estructura del proyecto
 
