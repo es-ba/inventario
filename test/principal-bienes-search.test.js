@@ -16,7 +16,7 @@ test('registers principal with the SIPER connector pattern', () => {
 
     assert.match(source, /Connector/);
     assert.match(source, /FixedFields/);
-    assert.match(source, /ICON\.Menu/);
+    assert.match(source, /MenuIcon/);
     assert.match(source, /renderConnectedAppInventario/);
     assert.match(source, /myOwn\.wScreens\.principal/);
     assert.doesNotMatch(source, /frontend-plus-react/);

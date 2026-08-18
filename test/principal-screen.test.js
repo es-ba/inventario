@@ -24,7 +24,7 @@ test('defines the embedded React principal wScreen', () => {
     assert.match(source, /Inventario - Principal/);
     assert.match(source, /aria-label="volver al menú"/);
     assert.match(source, /@mui\/material/);
-    assert.match(source, /ICON\.Menu/);
+    assert.match(source, /MenuIcon/);
     assert.match(source, /frontend-plus/);
     assert.doesNotMatch(source, /frontend-plus-react/);
 });

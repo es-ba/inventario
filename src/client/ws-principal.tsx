@@ -9,10 +9,23 @@ import {
 import {Menu as MenuIcon} from '@mui/icons-material';
 import type {Connector, FixedFields} from 'frontend-plus';
 import {BusquedaBienes} from './principal/busqueda-bienes';
+import {BienFormulario} from './principal/bien/bien-formulario';
 import {
     renderConnectedAppInventario,
     unmountConnectedAppInventario,
 } from './principal/render-connected-app-inventario';
+
+/*
+    Navegación de la pantalla principal.
+
+    Por ahora vive en estado local y no en la URL: el hash ya lo administra el menú de
+    backend-plus, y compartirlo requiere validarlo con la aplicación corriendo. Está
+    concentrada en este componente justamente para que mudarla al hash más adelante sea
+    un cambio de un solo lugar.
+*/
+type Vista =
+    {nombre:'busqueda'}
+    | {nombre:'bien', ficha?:string};
 
 function PantallaPrincipal({
     conn,
@@ -21,6 +34,13 @@ function PantallaPrincipal({
     conn:Connector;
     fixedFields:FixedFields;
 }){
+    const [vista, setVista] = React.useState<Vista>({nombre:'busqueda'});
+
+    const volverAlMenu = () => {
+        unmountConnectedAppInventario();
+        location.hash = '';
+    };
+
     return <Paper square elevation={0} sx={{minHeight:'100vh'}}>
         <AppBar position="static">
             <Toolbar>
@@ -29,20 +49,29 @@ function PantallaPrincipal({
                     edge="start"
                     aria-label="volver al menú"
                     title="Volver al menú"
-                    onClick={() => {
-                        unmountConnectedAppInventario();
-                        location.hash = '';
-                    }}
+                    onClick={volverAlMenu}
                     sx={{mr:2}}
                 >
                     <MenuIcon/>
                 </IconButton>
                 <Typography variant="h6" component="h1">
-                    Inventario - Principal
+                    {vista.nombre === 'bien'
+                        ? `Inventario - Bien ${vista.ficha ?? 'nuevo'}`
+                        : 'Inventario - Principal'}
                 </Typography>
             </Toolbar>
         </AppBar>
-        <BusquedaBienes conn={conn} fixedFields={fixedFields}/>
+        {vista.nombre === 'bien'
+            ? <BienFormulario
+                ficha={vista.ficha}
+                onVolver={() => setVista({nombre:'busqueda'})}
+            />
+            : <BusquedaBienes
+                conn={conn}
+                fixedFields={fixedFields}
+                onAbrirBien={ficha => setVista({nombre:'bien', ficha})}
+            />
+        }
     </Paper>;
 }
 

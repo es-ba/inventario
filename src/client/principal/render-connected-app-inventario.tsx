@@ -2,6 +2,8 @@ import * as React from 'react';
 import {createRoot, Root} from 'react-dom/client';
 import type {Connector, FixedFields} from 'frontend-plus';
 
+import {BaseInventarioProvider} from './base/contexto-base';
+
 type AddrParamsInventario = {
     table?: string;
     ff?: Record<string, unknown> | FixedFields;
@@ -67,10 +69,12 @@ export function renderConnectedAppInventario(
     });
     layoutObserver.observe(layout, {childList:true});
     connectedRoot.render(
-        <ConnectedApp
-            table={addrParams.table ?? ''}
-            fixedFields={normalizeFixedFields(addrParams.ff)}
-            conn={conn}
-        />
+        <BaseInventarioProvider conn={conn}>
+            <ConnectedApp
+                table={addrParams.table ?? ''}
+                fixedFields={normalizeFixedFields(addrParams.ff)}
+                conn={conn}
+            />
+        </BaseInventarioProvider>
     );
 }

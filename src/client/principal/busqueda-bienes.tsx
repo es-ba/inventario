@@ -98,6 +98,8 @@ declare module 'frontend-plus' {
 type BusquedaBienesProps = {
     conn:Connector;
     fixedFields:FixedFields;
+    /** Si se provee, "Abrir" muestra el formulario React en vez de saltar a la grilla legacy. */
+    onAbrirBien?:(ficha:string) => void;
 };
 
 const operatorMap:Record<string, BienesBusquedaOperator> = {
@@ -234,7 +236,7 @@ function AtributosDetalle({row}:{row:BienesBusquedaRow}){
     </Box>;
 }
 
-export function BusquedaBienes({conn, fixedFields}:BusquedaBienesProps){
+export function BusquedaBienes({conn, fixedFields, onAbrirBien}:BusquedaBienesProps){
     const [tableDefinition, setTableDefinition] = React.useState<TableDefinition|null>(null);
     const [metadataLoading, setMetadataLoading] = React.useState(true);
     const [metadataError, setMetadataError] = React.useState<string|null>(null);
@@ -511,10 +513,16 @@ export function BusquedaBienes({conn, fixedFields}:BusquedaBienesProps){
                     startIcon={<OpenInNew/>}
                     onClick={(event) => {
                         event.stopPropagation();
+                        const ficha = String(params.row.ficha);
+                        if(onAbrirBien){
+                            onAbrirBien(ficha);
+                            return;
+                        }
+                        // Sin pantalla React disponible se cae a la grilla legacy.
                         unmountConnectedAppInventario();
                         (myOwn.gotoAddrParams as (params:any) => void)({
                             i:['bienes', 'bienes'],
-                            ff:{ficha:String(params.row.ficha)},
+                            ff:{ficha},
                         });
                     }}
                 >
@@ -522,7 +530,7 @@ export function BusquedaBienes({conn, fixedFields}:BusquedaBienesProps){
                 </Button>,
         };
         return [...baseColumns, attributesColumn, actionsColumn];
-    }, [expandedRowIds, tableDefinition]);
+    }, [expandedRowIds, onAbrirBien, tableDefinition]);
 
     const columnVisibilityModel = React.useMemo(() => {
         const model:Record<string, boolean> = {};
