@@ -17,6 +17,14 @@ export function responsables(context:TableContext):TableDefinition{
             {name:'nombre'                  , typeName:'text'       },  
             {name:'apellido'                , typeName:'text'       , isName:true}, 
             {name:'mail'                    , typeName:'text'       },
+            // Datos personales que pide el comodato (F-SA-12). Sin ellos el documento sale
+            // con líneas de puntos para completar a mano.
+            {name:'dni'                     , typeName:'text'    , nullable:true},
+            {name:'domicilio'               , typeName:'text'    , nullable:true},
+            {name:'telefono'                , typeName:'text'    , nullable:true},
+            // El cargo con el que la persona firma: "Director Ejecutivo", "agente", etc.
+            {name:'caracter'                , typeName:'text'    , nullable:true},
+            {name:'situacion_revista'       , typeName:'text'    , nullable:true},
             {name:'externo'                 , typeName:'boolean'    , defaultValue:false},
             {name:'usuario'                 , typeName:'text'       , nullable:true},
             {name:'activo'                  , typeName:'boolean'    , defaultValue:true},

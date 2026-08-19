@@ -360,9 +360,9 @@ export function buildBienesBusquedaQueries(
     };
     const where: string[] = [`(${options.visibilitySql})`];
     if (request.estado === 'activo') {
-        where.push(`lower(coalesce(b.estado, '')) <> 'baja'`);
+        where.push(`lower(coalesce(b.activo, '')) <> 'baja'`);
     } else if (request.estado === 'baja') {
-        where.push(`lower(coalesce(b.estado, '')) = 'baja'`);
+        where.push(`lower(coalesce(b.activo, '')) = 'baja'`);
     }
     if (request.filters.length) {
         const separator = request.logicOperator === 'or' ? ' OR ' : ' AND ';

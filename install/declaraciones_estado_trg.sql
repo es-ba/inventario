@@ -132,7 +132,7 @@ BEGIN
     rubro, clase, cuenta, marca, grupo,
     detalle, observacion,
     area, responsable, sede, espacio,
-    estado_bien
+    activo
   )
   SELECT
     new.declaracion,
@@ -141,7 +141,7 @@ BEGIN
     b.rubro, b.clase, b.cuenta, b.marca, b.grupo,
     b.detalle, b.observacion,
     ult.area, ult.responsable, ult.sede, ult.espacio,
-    b.estado
+    b.activo
   FROM bienes b
   JOIN LATERAL (
     SELECT mb.responsable, mb.area, mb.sede, mb.espacio
@@ -151,7 +151,7 @@ BEGIN
       LIMIT 1
   ) ult ON true
   WHERE ult.responsable = new.responsable
-    AND coalesce(upper(btrim(b.estado)), '') <> 'BAJA';
+    AND coalesce(upper(btrim(b.activo)), '') <> 'BAJA';
 
   RETURN new;
 END;

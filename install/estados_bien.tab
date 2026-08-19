@@ -1,4 +1,11 @@
-estado|descripcion|identificador
-ALTA|Bien en estado activo|
-BAJA|Bien dado de baja|
-ENDESUSO|Bien en desuso|
+estado_bien
+EN DESUSO
+PRORATEO
+NORMAL
+TRANSFERENCIA
+PRESTAMO
+EN PROCESO DE SALIDA
+BAJA
+ESCASA SIGNIFICATIVA
+TRABAJO REMOTO
+REMITO

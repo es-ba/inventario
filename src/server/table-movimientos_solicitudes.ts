@@ -39,16 +39,24 @@ export function movimientos_solicitudes(context:TableContext):TableDefinition{
             {name:'firmado_por'                 , typeName:'text'    , nullable:true},
         ],
         primaryKey:['acta'],
+        /*
+            displayFields explícito en cada referencia. Sin esto backend-plus usa los
+            nameFields de la tabla apuntada, y ahí hay dos problemas: estados no tiene
+            ninguno —así que el estado viajaba sólo como código— y areas tiene nombre_area,
+            que viene vacío del origen. El área se identifica por su sigla.
+
+            El código sigue en su columna y la descripción va aparte, sin concatenar.
+        */
         foreignKeys:[
-            {references:'responsables', fields:['responsable']},
+            {references:'responsables', fields:['responsable'], displayFields:['apellido', 'nombre']},
             {references:'usuarios', fields:[{source:'usuario_creacion' , target:'usuario'}], alias: 'usuario_creacion'},
             {references:'usuarios', fields:[{source:'usuario_modificacion' , target:'usuario'}], alias: 'usuario_modificacion'},
-            {references:'areas', fields:['area']},
-            {references:'sedes', fields:['sede']},
-            {references:'espacios', fields:['espacio']},
-            {references:'tipo_asignacion', fields:['tipo_asignacion']},
-            {references:'modalidad_uso', fields:['modalidad_uso']},
-            {references:'estados', fields:['estado']},
+            {references:'areas', fields:['area'], displayFields:['sigla']},
+            {references:'sedes', fields:['sede'], displayFields:['descripcion']},
+            {references:'espacios', fields:['espacio'], displayFields:['numero', 'denominacion']},
+            {references:'tipo_asignacion', fields:['tipo_asignacion'], displayFields:['descripcion']},
+            {references:'modalidad_uso', fields:['modalidad_uso'], displayFields:['descripcion']},
+            {references:'estados', fields:['estado'], displayFields:['desc_estado']},
         ],
         detailTables:[
             {table:'movimientos_solicitud_bien', fields:['acta'], abr:'B'},

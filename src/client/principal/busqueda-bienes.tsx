@@ -12,9 +12,12 @@ import {
 } from '@mui/material';
 import {
     Download,
+    EditNote,
     KeyboardArrowDown,
+    LocalShipping,
     KeyboardArrowUp,
     OpenInNew,
+    PlaylistAdd,
     Print,
     Refresh,
 } from '@mui/icons-material';
@@ -73,6 +76,8 @@ import {
 import {bienesGridLocaleText} from './localizacion-grid';
 import {imprimirEtiquetasCodigosBarra} from './imprimir-codigos-barra';
 import {unmountConnectedAppInventario} from './render-connected-app-inventario';
+import {EdicionMasivaBienes} from './edicion-masiva-bienes';
+import {MoverBienes} from './mover-bienes';
 
 declare module 'frontend-plus' {
     interface FieldDefinition {
@@ -95,11 +100,26 @@ declare module 'frontend-plus' {
     }
 }
 
+/*
+    Acción que reemplaza a las masivas propias de la pantalla suelta (editar, mover,
+    imprimir) cuando la búsqueda está embebida en otro circuito y la selección se usa para
+    otra cosa: hoy, cargar bienes en una solicitud.
+
+    Devuelve el mensaje a mostrar; la pantalla se encarga de soltar la selección y refrescar.
+*/
+export type AccionSeleccionBienes = {
+    etiqueta:string;
+    ejecutar:(fichas:string[]) => Promise<string>;
+};
+
 type BusquedaBienesProps = {
     conn:Connector;
     fixedFields:FixedFields;
     /** Si se provee, "Abrir" muestra el formulario React en vez de saltar a la grilla legacy. */
     onAbrirBien?:(ficha:string) => void;
+    accionSeleccion?:AccionSeleccionBienes;
+    /** Fichas que no se pueden elegir —ya están en la solicitud—: se ven, pero apagadas. */
+    fichasExcluidas?:ReadonlySet<string>;
 };
 
 const operatorMap:Record<string, BienesBusquedaOperator> = {
@@ -236,7 +256,13 @@ function AtributosDetalle({row}:{row:BienesBusquedaRow}){
     </Box>;
 }
 
-export function BusquedaBienes({conn, fixedFields, onAbrirBien}:BusquedaBienesProps){
+export function BusquedaBienes({
+    conn,
+    fixedFields,
+    onAbrirBien,
+    accionSeleccion,
+    fichasExcluidas,
+}:BusquedaBienesProps){
     const [tableDefinition, setTableDefinition] = React.useState<TableDefinition|null>(null);
     const [metadataLoading, setMetadataLoading] = React.useState(true);
     const [metadataError, setMetadataError] = React.useState<string|null>(null);
@@ -265,6 +291,9 @@ export function BusquedaBienes({conn, fixedFields, onAbrirBien}:BusquedaBienesPr
         React.useState<GridRowSelectionModel>([]);
     const [selectedRows, setSelectedRows] =
         React.useState<Map<string, BienesBusquedaRow>>(new Map());
+    const [edicionMasivaAbierta, setEdicionMasivaAbierta] = React.useState(false);
+    const [moverAbierto, setMoverAbierto] = React.useState(false);
+    const [avisoMasivo, setAvisoMasivo] = React.useState<string|null>(null);
     const requestSequence = React.useRef(0);
 
     const clearSelection = React.useCallback(() => {
@@ -540,6 +569,29 @@ export function BusquedaBienes({conn, fixedFields, onAbrirBien}:BusquedaBienesPr
         return model;
     }, [tableDefinition]);
 
+    const [ejecutandoAccion, setEjecutandoAccion] = React.useState(false);
+
+    const ejecutarAccionSeleccion = React.useCallback(async () => {
+        if(!accionSeleccion){
+            return;
+        }
+        const fichas = filasSeleccionadasEnOrden(rowSelectionModel, selectedRows)
+            .map(fila => String(fila.ficha));
+        if(fichas.length === 0){
+            return;
+        }
+        setEjecutandoAccion(true);
+        try{
+            const mensaje = await accionSeleccion.ejecutar(fichas);
+            setAvisoMasivo(mensaje);
+            clearSelection();
+        }catch(err){
+            setError(err instanceof Error ? err.message : String(err));
+        }finally{
+            setEjecutandoAccion(false);
+        }
+    }, [accionSeleccion, clearSelection, rowSelectionModel, selectedRows]);
+
     const Toolbar = React.useCallback(() =>
         <GridToolbarContainer>
             <GridToolbarColumnsButton/>
@@ -568,19 +620,54 @@ export function BusquedaBienes({conn, fixedFields, onAbrirBien}:BusquedaBienesPr
                 {rowSelectionModel.length}{' '}
                 {rowSelectionModel.length === 1 ? 'bien seleccionado' : 'bienes seleccionados'}
             </Typography>
-            <Button
-                size="small"
-                startIcon={<Print/>}
-                disabled={rowSelectionModel.length === 0}
-                onClick={() => void printSelectedRows()}
-            >
-                Imprimir códigos de barra
-            </Button>
+            {/*
+                Embebida en otro circuito, las masivas propias sobran: editar o mover desde
+                acá es justo lo que la solicitud viene a evitar.
+            */}
+            {accionSeleccion
+                ? <Button
+                    size="small"
+                    variant="contained"
+                    startIcon={ejecutandoAccion ? <CircularProgress size={14}/> : <PlaylistAdd/>}
+                    disabled={rowSelectionModel.length === 0 || ejecutandoAccion}
+                    onClick={() => void ejecutarAccionSeleccion()}
+                >
+                    {accionSeleccion.etiqueta}
+                </Button>
+                : <>
+                    <Button
+                        size="small"
+                        startIcon={<Print/>}
+                        disabled={rowSelectionModel.length === 0}
+                        onClick={() => void printSelectedRows()}
+                    >
+                        Imprimir códigos de barra
+                    </Button>
+                    <Button
+                        size="small"
+                        startIcon={<EditNote/>}
+                        disabled={rowSelectionModel.length === 0}
+                        onClick={() => setEdicionMasivaAbierta(true)}
+                    >
+                        Editar seleccionados
+                    </Button>
+                    <Button
+                        size="small"
+                        startIcon={<LocalShipping/>}
+                        disabled={rowSelectionModel.length === 0}
+                        onClick={() => setMoverAbierto(true)}
+                    >
+                        Mover seleccionados
+                    </Button>
+                </>}
             <Box sx={{flex:1}}/>
             <GridToolbarQuickFilter debounceMs={400}/>
         </GridToolbarContainer>,
     [
+        accionSeleccion,
         clearSelection,
+        ejecutandoAccion,
+        ejecutarAccionSeleccion,
         exportRows,
         hasSearched,
         loading,
@@ -651,12 +738,24 @@ export function BusquedaBienes({conn, fixedFields, onAbrirBien}:BusquedaBienesPr
         />
 
         {error && <Alert severity="error" sx={{mb:2}}>{error}</Alert>}
+        {avisoMasivo && <Alert
+            severity="success"
+            sx={{mb:2}}
+            onClose={() => setAvisoMasivo(null)}
+        >
+            {avisoMasivo}
+        </Alert>}
 
         {!hasSearched
             ? <Alert severity="info">
                 Configurá los filtros y pulsá Buscar para consultar bienes.
             </Alert>
-            : <Box sx={{height:'calc(100vh - 330px)', minHeight:480, width:'100%'}}>
+            : <Box sx={{
+                height:'calc(100vh - 330px)',
+                minHeight:480,
+                width:'100%',
+                '& .fila-ya-asignada':{opacity:0.5},
+            }}>
                 <DataGrid
                     rows={rows}
                     columns={columns}
@@ -680,6 +779,9 @@ export function BusquedaBienes({conn, fixedFields, onAbrirBien}:BusquedaBienesPr
                     }}
                     filterDebounceMs={400}
                     checkboxSelection
+                    isRowSelectable={({id}) => !fichasExcluidas?.has(String(id))}
+                    getRowClassName={({id}) =>
+                        fichasExcluidas?.has(String(id)) ? 'fila-ya-asignada' : ''}
                     disableRowSelectionOnClick
                     rowSelectionModel={rowSelectionModel}
                     onRowSelectionModelChange={handleRowSelectionModelChange}
@@ -696,5 +798,30 @@ export function BusquedaBienes({conn, fixedFields, onAbrirBien}:BusquedaBienesPr
             </Box>
         }
         {fixedFields.length > 0 && <Box sx={{display:'none'}} data-fixed-fields={fixedFields.length}/>}
+        <EdicionMasivaBienes
+            abierto={edicionMasivaAbierta}
+            conn={conn}
+            definicion={tableDefinition}
+            fichas={filasSeleccionadasEnOrden(rowSelectionModel, selectedRows)
+                .map(fila => String(fila.ficha))}
+            onCerrar={() => setEdicionMasivaAbierta(false)}
+            onAplicado={(mensaje) => {
+                setAvisoMasivo(mensaje);
+                // Los datos en pantalla quedaron viejos: se recarga y se suelta la selección.
+                clearSelection();
+                setSearchVersion(version => version + 1);
+            }}
+        />
+        <MoverBienes
+            abierto={moverAbierto}
+            conn={conn}
+            fichas={filasSeleccionadasEnOrden(rowSelectionModel, selectedRows)
+                .map(fila => String(fila.ficha))}
+            onCerrar={() => setMoverAbierto(false)}
+            onCreada={(mensaje) => {
+                setAvisoMasivo(mensaje);
+                clearSelection();
+            }}
+        />
     </Box>;
 }

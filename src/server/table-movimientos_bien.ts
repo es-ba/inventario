@@ -45,14 +45,21 @@ export function movimientos_bien(context:TableContext):TableDefinition{
         foreignKeys:[
             {references:'bienes', fields:['ficha']},
             {references:'movimientos_solicitud_bien', fields:['acta', 'ficha']},
-            {references:'responsables', fields:['responsable']},
+            /*
+                displayFields explícito: sin esto se usan los nameFields de la tabla
+                apuntada, y ahí el área sale por nombre_area, que viene vacío del origen.
+                Al área la identifica su sigla.
+
+                El código queda en su columna y la descripción va aparte, sin concatenar.
+            */
+            {references:'responsables', fields:['responsable'], displayFields:['apellido', 'nombre']},
             {references:'usuarios', fields:[{source:'usuario_creacion' , target:'usuario'}], alias: 'usuario_creacion'},
             {references:'usuarios', fields:[{source:'usuario_modificacion' , target:'usuario'}], alias: 'usuario_modificacion'},
-            {references:'areas', fields:['area']},
-            {references:'sedes', fields:['sede']},
-            {references:'espacios', fields:['espacio']},
-            {references:'tipo_asignacion', fields:['tipo_asignacion']},
-            {references:'modalidad_uso', fields:['modalidad_uso']},
+            {references:'areas', fields:['area'], displayFields:['sigla']},
+            {references:'sedes', fields:['sede'], displayFields:['descripcion']},
+            {references:'espacios', fields:['espacio'], displayFields:['numero', 'denominacion']},
+            {references:'tipo_asignacion', fields:['tipo_asignacion'], displayFields:['descripcion']},
+            {references:'modalidad_uso', fields:['modalidad_uso'], displayFields:['descripcion']},
         ],
         sql:{
             policies:getPolicies(be)

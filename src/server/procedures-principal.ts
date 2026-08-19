@@ -27,7 +27,12 @@ import {
 } from './atributos-opciones-query';
 import { bienes, getPolicies, sqlBienes } from './table-bienes';
 import { generarDeclaracionPdf } from './declaracion-pdf-render';
-import { DocumentoEmitido, verificarDeclaracionFirmada } from './declaracion-verificacion';
+import { DocumentoEmitido, analizarFirmaPdf, verificarDeclaracionFirmada } from './declaracion-verificacion';
+import { setAtributosDeBienes } from './reportes-bienes';
+import { describirPlan, planificarEdicionMasiva } from './bienes-edicion-masiva';
+import { generarDocumentoSolicitud } from './solicitud-documento-render';
+import { operacionDeActa } from './solicitud-documento';
+import type { TipoDocumentoSolicitud } from './solicitud-documento';
 import { createHash } from 'node:crypto';
 
 type BienAtributoFiltro = {
@@ -131,55 +136,53 @@ export const ProceduresInventario:ProcedureDef[] = [
         }
     },
     {
-        action:'bienes_solicitud_buscar',
+        action:'solicitud_bienes_agregar',
         parameters:[
-            {name:'busqueda', typeName:'text'},
+            {name:'acta', typeName:'text'},
             {name:'fichas', typeName:'text'},
         ],
         coreFunction:async function(context:ProcedureContext, params:any){
-            const busqueda = String(params.busqueda ?? '').trim();
-            const fichas = String(params.fichas ?? '')
-                .split(',')
-                .map(ficha => ficha.trim())
-                .filter(ficha => ficha !== '');
+            /*
+                Alta de varios bienes de una vez. Un insert por bien desde el cliente deja
+                la solicitud a medio cargar si alguno falla; acá entran todos o ninguno.
 
-            if(!busqueda && fichas.length === 0){
-                return [];
+                Los que ya estaban no son un error: se ignoran y se informan aparte.
+            */
+            const acta = String(params.acta ?? '').trim();
+            const fichas = JSON.parse(String(params.fichas ?? '[]'));
+            if(!Array.isArray(fichas) || fichas.length === 0){
+                throw new Error('No se indicó ningún bien');
+            }
+            const lista = fichas.map(ficha => String(ficha).trim()).filter(ficha => ficha !== '');
+            if(lista.length === 0){
+                throw new Error('No se indicó ningún bien');
+            }
+
+            const existe = await context.client.query(
+                `SELECT acta FROM movimientos_solicitudes WHERE acta = $1`,
+                [acta]
+            ).fetchAll();
+            if(!existe.rows.length){
+                throw new Error(`No existe la solicitud ${acta}`);
             }
 
             const result = await context.client.query(`
-                SELECT
-                    b.ficha,
-                    b.detalle,
-                    b.observacion,
-                    b.modelo,
-                    b.serie,
-                    b.estado
-                FROM bienes b
-                WHERE coalesce(upper(b.estado), '') <> 'BAJA'
-                    AND (
-                        ($2 <> '' AND position(',' || b.ficha || ',' in ',' || $2 || ',') > 0)
-                        OR (
-                            $1 <> ''
-                            AND (
-                                b.ficha ILIKE '%' || $1 || '%'
-                                OR coalesce(b.detalle, '') ILIKE '%' || $1 || '%'
-                                OR coalesce(b.observacion, '') ILIKE '%' || $1 || '%'
-                                OR coalesce(b.modelo, '') ILIKE '%' || $1 || '%'
-                                OR coalesce(b.serie, '') ILIKE '%' || $1 || '%'
-                            )
-                        )
-                    )
-                ORDER BY
-                    CASE
-                        WHEN b.ficha = $1 THEN 0
-                        WHEN b.ficha ILIKE $1 || '%' THEN 1
-                        ELSE 2
-                    END,
-                    b.ficha
-                LIMIT 50
-            `, [busqueda, fichas.join(',')]).fetchAll();
-            return result.rows;
+                INSERT INTO movimientos_solicitud_bien (acta, ficha, usuario_creacion)
+                    SELECT $1, f.ficha, $3
+                        FROM unnest($2::text[]) AS f(ficha)
+                        WHERE EXISTS (SELECT 1 FROM bienes b WHERE b.ficha = f.ficha)
+                    ON CONFLICT (acta, ficha) DO NOTHING
+                    RETURNING ficha
+            `, [acta, lista, context.username]).fetchAll();
+
+            const agregados = result.rows.length;
+            const repetidos = lista.length - agregados;
+            return {
+                agregados,
+                repetidos,
+                message:`Se agregaron ${agregados} ${agregados === 1 ? 'bien' : 'bienes'}`
+                    + (repetidos ? `; ${repetidos} ya estaban en la solicitud.` : '.'),
+            };
         }
     },
     {
@@ -195,8 +198,8 @@ export const ProceduresInventario:ProcedureDef[] = [
             const where:string[] = [`
                 (
                     $1 = ''
-                    OR ($1 = 'baja' AND lower(coalesce(b.estado, '')) = 'baja')
-                    OR ($1 = 'activo' AND lower(coalesce(b.estado, '')) <> 'baja')
+                    OR ($1 = 'baja' AND lower(coalesce(b.activo, '')) = 'baja')
+                    OR ($1 = 'activo' AND lower(coalesce(b.activo, '')) <> 'baja')
                 )
             `];
 
@@ -359,7 +362,7 @@ export const ProceduresInventario:ProcedureDef[] = [
             const grilla = {
             tableName: 'bienes',
             fixedFields: [
-                { fieldName: 'estado', value: 'alta' },
+                { fieldName: 'activo', value: 'alta' },
             ],
             tableDef: {
                 title: 'Declaracion de Bienes',
@@ -540,7 +543,7 @@ export const ProceduresInventario:ProcedureDef[] = [
                     d.observaciones,
                     r.nombre AS responsable_nombre,
                     r.apellido AS responsable_apellido,
-                    a.nombre_area AS area_nombre
+                    a.sigla AS area_nombre
                 FROM declaraciones d
                 LEFT JOIN responsables r ON r.responsable = d.responsable
                 LEFT JOIN areas a ON a.area = d.area
@@ -625,6 +628,599 @@ export const ProceduresInventario:ProcedureDef[] = [
                 hash_sha256: generado.hashSha256,
                 codigo_contenido: generado.codigoContenido,
                 cantidad_bienes: generado.cantidadBienes,
+            };
+        }
+    },
+    {
+        action:'bienes_edicion_masiva',
+        parameters:[
+            {name:'fichas', typeName:'text'},
+            {name:'cambios', typeName:'text'},
+            {name:'dryRun', typeName:'boolean'},
+        ],
+        proceedLabel:'aplicar',
+        coreFunction: async function(context:ProcedureContext, params:any){
+            const client = context.client;
+            if(context.user.rol === 'lectura'){
+                throw new Error('No tiene permisos para modificar bienes');
+            }
+            const parsear = (valor:unknown, nombre:string) => {
+                if(valor == null || valor === ''){
+                    return [];
+                }
+                if(typeof valor !== 'string'){
+                    return valor;
+                }
+                try{
+                    return JSON.parse(valor);
+                }catch(_err){
+                    throw new Error(`No se pudo leer el parámetro ${nombre}`);
+                }
+            };
+
+            const definicion = bienes(context as never);
+            const plan = planificarEdicionMasiva({
+                fichas: parsear(params.fichas, 'fichas'),
+                cambios: parsear(params.cambios, 'cambios'),
+            }, definicion);
+
+            // Siempre se cuenta primero: el usuario confirma sobre números concretos y no
+            // sobre una intención. Las filas que la RLS no deja ver quedan afuera del
+            // conteo, y por eso se informa la diferencia.
+            const previo = await client.query(plan.sqlPrevio, plan.valores).fetchUniqueRow();
+            const alcanzados = Number(previo.row.alcanzados);
+            const cambianPorCampo:Record<string, number> = {};
+            plan.cambios.forEach(cambio => {
+                cambianPorCampo[cambio.campo] = Number(previo.row[`cambian_${cambio.campo}`] ?? 0);
+            });
+            const resumen = describirPlan(plan, alcanzados, cambianPorCampo);
+
+            if(params.dryRun){
+                return {
+                    message:`Previsualización. ${resumen}`,
+                    dryRun:true,
+                    alcanzados,
+                    seleccionados:plan.fichas.length,
+                    cambian:cambianPorCampo,
+                };
+            }
+
+            const resultado = await client.query(plan.sqlUpdate, plan.valores).fetchAll();
+            return {
+                message:`Se modificaron ${resultado.rows.length} bienes. ${resumen}`
+                    + ` El detalle campo por campo quedó en el historial de cada bien.`,
+                modificados:resultado.rows.length,
+                alcanzados,
+                seleccionados:plan.fichas.length,
+                cambian:cambianPorCampo,
+            };
+        }
+    },
+    {
+        action:'solicitud_documento_emitir',
+        parameters:[
+            {name:'acta', typeName:'text'},
+            {name:'tipo', typeName:'text'},
+            {name:'representante', typeName:'text'},
+            {name:'caracter_representante', typeName:'text'},
+            {name:'entrega_representa', typeName:'text'},
+            {name:'recibe_representa', typeName:'text'},
+            {name:'operacion', typeName:'text'},
+        ],
+        proceedLabel:'emitir',
+        coreFunction: async function(context:ProcedureContext, params:any){
+            const client = context.client;
+            if(context.user.rol === 'lectura'){
+                throw new Error('No tiene permisos para emitir documentos');
+            }
+            const acta = String(params.acta ?? '').trim();
+            const tipo = String(params.tipo ?? '').trim() as TipoDocumentoSolicitud;
+            if(tipo !== 'comodato' && tipo !== 'acta'){
+                throw new Error(`Tipo de documento no válido: ${params.tipo}`);
+            }
+
+            // Lock antes de leer: dos emisiones simultáneas no pueden generar la misma versión.
+            const bloqueo = await client.query(
+                `SELECT acta, fecha_creacion, responsable, area, detalle
+                    FROM movimientos_solicitudes WHERE acta = $1 FOR UPDATE`,
+                [acta]
+            ).fetchAll();
+            if(!bloqueo.rows.length){
+                throw new Error(`No existe la solicitud ${acta}`);
+            }
+            const solicitud = bloqueo.rows[0];
+
+            /*
+                Los datos de una persona salen siempre de responsables. El representante del
+                IDECBA se elige entre los responsables, y su "carácter de dicha repartición"
+                se completa con el área del organigrama que tiene a cargo — si no tiene
+                ninguna, con el carácter cargado en su ficha.
+            */
+            const datosPersona = async (codigo:unknown) => {
+                if(codigo == null || String(codigo).trim() === ''){
+                    return null;
+                }
+                const {rows} = await client.query(`
+                    SELECT
+                        nullif(btrim(concat_ws(' ',
+                            nullif(btrim(r.nombre), ''),
+                            nullif(btrim(r.apellido), '')
+                        )), '') AS nombre,
+                        nullif(btrim(r.mail), '')              AS mail,
+                        nullif(btrim(r.dni), '')               AS dni,
+                        nullif(btrim(r.domicilio), '')         AS domicilio,
+                        nullif(btrim(r.telefono), '')          AS telefono,
+                        nullif(btrim(r.caracter), '')          AS caracter,
+                        nullif(btrim(r.situacion_revista), '') AS situacion_revista,
+                        -- El área del organigrama que encabeza. Si tiene más de una a cargo
+                        -- se toma la más alta: la que no depende de otra.
+                        (SELECT coalesce(nullif(btrim(a.sigla), ''), nullif(btrim(a.nombre_area), ''))
+                            FROM areas a
+                            WHERE a.responsable = r.responsable AND a.activo
+                            ORDER BY (a.pertenece_a IS NOT NULL), a.area
+                            LIMIT 1)                           AS area_a_cargo
+                    FROM responsables r WHERE r.responsable = $1
+                `, [String(codigo).trim()]).fetchAll();
+                return rows[0] ?? null;
+            };
+
+            const comodatario = await datosPersona(solicitud.responsable);
+            const firmante = await datosPersona(params.representante);
+
+            const items = await client.query(`
+                SELECT
+                    b.ficha,
+                    nullif(btrim(b.tipo_bien), '')  AS tipo_bien,
+                    nullif(btrim(b.detalle), '')    AS detalle,
+                    nullif(btrim(ma.descripcion), '') AS marca,
+                    nullif(btrim(b.modelo), '')     AS modelo,
+                    nullif(btrim(b.serie), '')      AS serie,
+                    nullif(btrim(b.imei), '')       AS imei
+                FROM movimientos_solicitud_bien msb
+                JOIN bienes b ON b.ficha = msb.ficha
+                LEFT JOIN marcas ma ON ma.marca = b.marca
+                WHERE msb.acta = $1
+                ORDER BY b.ficha
+            `, [acta]).fetchAll();
+            if(!items.rows.length){
+                throw new Error(`La solicitud ${acta} no tiene bienes y no puede emitir documentos`);
+            }
+
+            const versionResult = await client.query(`
+                SELECT coalesce(max(version), 0) + 1 AS version
+                    FROM solicitudes_documentos WHERE acta = $1 AND tipo = $2
+            `, [acta, tipo]).fetchUniqueRow();
+            const version = Number(versionResult.row.version);
+
+            const texto = (v:unknown) => {
+                const t = String(v ?? '').trim();
+                return t === '' ? null : t;
+            };
+            /*
+                El diálogo manda el código del referencial, no el texto que va impreso: el
+                carácter es una jerarquía, o sea el cargo. Si el código no está en la tabla
+                se imprime tal cual, así el documento sale igual en vez de fallar.
+            */
+            const descripcionDe = async (tabla:string, campo:string, codigo:unknown) => {
+                const valor = texto(codigo);
+                if(valor == null){
+                    return null;
+                }
+                const {rows} = await client.query(
+                    `SELECT nullif(btrim(descripcion), '') AS descripcion
+                        FROM ${tabla} WHERE ${campo} = $1`,
+                    [valor]
+                ).fetchAll();
+                return rows[0]?.descripcion ?? valor;
+            };
+
+            /*
+                El carácter con el que firma el representante sale del organigrama: el área
+                que tiene a cargo. Si no encabeza ninguna, se usa el carácter de su ficha.
+                La jerarquía elegida al emitir tiene prioridad sobre las dos cosas.
+            */
+            const caracterDelFirmante =
+                await descripcionDe('jerarquias', 'jerarquia', params.caracter_representante)
+                ?? firmante?.caracter
+                ?? (firmante?.area_a_cargo ? `Responsable de ${firmante.area_a_cargo}` : null);
+
+
+            const generado = await generarDocumentoSolicitud({
+                tipo,
+                cabecera:{
+                    acta,
+                    fecha:solicitud.fecha_creacion,
+                    representante:firmante?.nombre ?? texto(params.representante),
+                    caracterRepresentante:caracterDelFirmante,
+                    entregaRepresenta:texto(params.entrega_representa) ?? firmante?.area_a_cargo ?? null,
+                    recibeRepresenta:texto(params.recibe_representa),
+                    operacion:operacionDeActa(params.operacion),
+                    persona:{
+                        nombre:comodatario?.nombre ?? null,
+                        mail:comodatario?.mail ?? null,
+                        dni:comodatario?.dni ?? null,
+                        domicilio:comodatario?.domicilio ?? null,
+                        telefono:comodatario?.telefono ?? null,
+                        caracter:comodatario?.caracter ?? null,
+                        situacionRevista:comodatario?.situacion_revista ?? null,
+                    },
+                },
+                items:items.rows as never,
+                emision:{version, fecha:new Date(), usuario:context.username},
+            });
+
+            const archivo = `solicitudes/${acta}/${tipo}-v${version}.pdf`;
+            await fs.outputFile(`local-attachments/${archivo}`, generado.buffer);
+            try{
+                await client.query(`
+                    insert into solicitudes_documentos
+                        (acta, tipo, version, archivo, hash_sha256, codigo_contenido, usuario)
+                        values ($1, $2, $3, $4, $5, $6, $7)
+                `, [acta, tipo, version, archivo, generado.hashSha256,
+                    generado.codigoContenido, context.username]).execute();
+            }catch(err){
+                await fs.remove(`local-attachments/${archivo}`);
+                throw err;
+            }
+
+            return {
+                message:`Se emitió el ${tipo} de la solicitud ${acta}, versión ${version},`
+                    + ` con ${generado.cantidadItems} bienes (código ${generado.codigoContenido}).`,
+                acta, tipo, version, archivo,
+                codigo_contenido:generado.codigoContenido,
+            };
+        }
+    },
+    {
+        action:'solicitud_documento_firmado_subir',
+        progress: true,
+        parameters:[
+            {name:'acta', typeName:'text'},
+            {name:'tipo', typeName:'text'},
+            {name:'version', typeName:'bigint'},
+        ],
+        files:{count:1},
+        coreFunction: async function(context:ProcedureContext, params:any, files?:UploadedFileInfo[]){
+            /*
+                Recarga del documento firmado.
+
+                Se verifica que el archivo venga firmado (nivel 1), igual que en las
+                declaraciones: es lo que detecta el error más común, subir el PDF tal como
+                se descargó. Lo que no se controla acá es que sea byte a byte el mismo
+                archivo que se emitió (nivel 2). Se guarda el hash de lo recargado.
+            */
+            const client = context.client;
+            const file = files![0];
+            if(context.user.rol === 'lectura'){
+                await fs.remove(file.path);
+                throw new Error('No tiene permisos para cargar documentos');
+            }
+            const acta = String(params.acta ?? '').trim();
+            const tipo = String(params.tipo ?? '').trim();
+            const version = Number(params.version);
+
+            const existente = await client.query(`
+                SELECT archivo_firmado FROM solicitudes_documentos
+                    WHERE acta = $1 AND tipo = $2 AND version = $3 FOR UPDATE
+            `, [acta, tipo, version]).fetchAll();
+            if(!existente.rows.length){
+                await fs.remove(file.path);
+                throw new Error(`No existe el documento ${tipo} v${version} de la solicitud ${acta}`);
+            }
+
+            const subido = await fs.readFile(file.path);
+            const analisis = analizarFirmaPdf(subido);
+            if(!analisis.esPdf){
+                await fs.remove(file.path);
+                throw new Error('El archivo no es un PDF.');
+            }
+            if(!analisis.firmaDetectada){
+                await fs.remove(file.path);
+                throw new Error(
+                    'El PDF no tiene una firma digital.'
+                    + ' Puede que se haya subido el documento tal como se descargó, sin firmar.'
+                );
+            }
+
+            const extension = (file.originalFilename ?? '').split('.').pop() ?? 'pdf';
+            const archivo = `solicitudes/${acta}/${tipo}-v${version}-firmado.${extension}`;
+            await fs.move(file.path, `local-attachments/${archivo}`, {overwrite:true});
+            try{
+                await client.query(`
+                    update solicitudes_documentos
+                        set archivo_firmado = $4,
+                            hash_firmado = $5,
+                            fecha_firmado = current_timestamp,
+                            usuario_firmado = $6,
+                            firmante_declarado = $7
+                        where acta = $1 AND tipo = $2 AND version = $3
+                `, [acta, tipo, version, archivo,
+                    createHash('sha256').update(subido).digest('hex'), context.username,
+                    analisis.firmanteDeclarado]).execute();
+            }catch(err){
+                await fs.remove(`local-attachments/${archivo}`);
+                throw err;
+            }
+
+            const reemplazo = existente.rows[0].archivo_firmado
+                ? ' Reemplaza al archivo que ya estaba cargado.'
+                : '';
+            return {
+                message:`Se cargó el ${tipo} firmado de la solicitud ${acta}.${reemplazo}`,
+                acta, tipo, version, archivo,
+            };
+        }
+    },
+    {
+        action:'bienes_mover_directo',
+        parameters:[
+            {name:'fichas', typeName:'text'},
+            {name:'tipo_asignacion', typeName:'text'},
+            {name:'modalidad_uso', typeName:'text'},
+            {name:'responsable', typeName:'text'},
+            {name:'area', typeName:'text'},
+            {name:'sede', typeName:'text'},
+            {name:'espacio', typeName:'text'},
+            {name:'accion', typeName:'text'},
+            {name:'detalle', typeName:'text'},
+        ],
+        proceedLabel:'mover',
+        coreFunction: async function(context:ProcedureContext, params:any){
+            /*
+                Movimiento directo, sin acta.
+
+                Registra un movimiento por bien apuntando al destino indicado. No pasa por
+                el circuito de solicitudes: queda asentado en el momento.
+
+                El acta va en NULL a propósito. movimientos_bien tiene una FK compuesta
+                (acta, ficha) contra movimientos_solicitud_bien: con acta en NULL la FK no
+                se evalúa, pero si se pusiera un acta tendría que existir esa fila. O sea
+                que el modelo no admite "actas sueltas": o hay solicitud, o no hay acta.
+
+                El orden lo asigna movimientos_bien_pk_trg cuando llega en 0.
+            */
+            const client = context.client;
+            const rol = String(context.user.rol ?? '');
+            const permiso = await client.query(
+                `SELECT coalesce(puede_mover, false) AS puede FROM roles WHERE rol = $1`,
+                [rol]
+            ).fetchAll();
+            if(!permiso.rows.length || permiso.rows[0].puede !== true){
+                throw new Error(`El rol ${rol} no tiene permiso para mover bienes`);
+            }
+
+            const texto = (valor:unknown) => {
+                const t = String(valor ?? '').trim();
+                return t === '' ? null : t;
+            };
+            let fichas:string[];
+            try{
+                const crudo = params.fichas;
+                fichas = (typeof crudo === 'string' ? JSON.parse(crudo) : crudo) ?? [];
+            }catch(_err){
+                throw new Error('No se pudo leer la lista de bienes');
+            }
+            const unicas = [...new Set(
+                (Array.isArray(fichas) ? fichas : [])
+                    .map(f => String(f ?? '').trim())
+                    .filter(f => f !== '')
+            )];
+            if(unicas.length === 0){
+                throw new Error('No hay bienes seleccionados');
+            }
+
+            const destino = {
+                tipo_asignacion:texto(params.tipo_asignacion),
+                modalidad_uso:texto(params.modalidad_uso),
+                responsable:texto(params.responsable),
+                area:texto(params.area),
+                sede:texto(params.sede),
+                espacio:texto(params.espacio),
+            };
+            if(Object.keys(destino).every(k => (destino as any)[k] == null)){
+                throw new Error('Hay que indicar al menos un dato de destino');
+            }
+
+            const insertados = await client.query(`
+                insert into movimientos_bien
+                    (ficha, orden, acta, tipo_asignacion, modalidad_uso, responsable,
+                     area, sede, espacio, accion, detalle, usuario_creacion)
+                    select f.ficha, 0, null, $2, $3, $4, $5, $6, $7, $8, $9, $10
+                        from unnest($1::text[]) AS f(ficha)
+                        where exists (select 1 from bienes b where b.ficha = f.ficha)
+                    returning ficha
+            `, [
+                unicas,
+                destino.tipo_asignacion,
+                destino.modalidad_uso,
+                destino.responsable,
+                destino.area,
+                destino.sede,
+                destino.espacio,
+                texto(params.accion),
+                texto(params.detalle),
+                context.username,
+            ]).fetchAll();
+
+            const noEncontrados = unicas.length - insertados.rows.length;
+            return {
+                message: `Se registraron ${insertados.rows.length} movimientos sin acta`
+                    + (noEncontrados > 0 ? ` (${noEncontrados} bienes no se encontraron)` : '')
+                    + `. Quedan asentados de inmediato en el historial de cada bien.`,
+                movimientos:insertados.rows.length,
+                no_encontrados:noEncontrados,
+            };
+        }
+    },
+    {
+        action:'solicitud_crear_desde_bienes',
+        parameters:[
+            {name:'acta', typeName:'text'},
+            {name:'fichas', typeName:'text'},
+            {name:'tipo_asignacion', typeName:'text'},
+            {name:'modalidad_uso', typeName:'text'},
+            {name:'responsable', typeName:'text'},
+            {name:'area', typeName:'text'},
+            {name:'sede', typeName:'text'},
+            {name:'espacio', typeName:'text'},
+            {name:'detalle', typeName:'text'},
+        ],
+        proceedLabel:'crear',
+        coreFunction: async function(context:ProcedureContext, params:any){
+            /*
+                Crea una solicitud de movimiento con los bienes seleccionados.
+
+                No genera los movimientos: los genera el circuito existente cuando la
+                solicitud llega al estado Pr, con el trigger movimientos_solicitudes_estado_trg.
+                Acá sólo se arma la cabecera y el detalle, y la solicitud nace en el estado
+                inicial que define la máquina de estados (el default de la tabla, B).
+            */
+            const client = context.client;
+            if(context.user.rol === 'lectura'){
+                throw new Error('No tiene permisos para crear solicitudes');
+            }
+
+            const acta = String(params.acta ?? '').trim();
+            if(acta === ''){
+                throw new Error('Hay que indicar el número de acta');
+            }
+            const texto = (valor:unknown) => {
+                const t = String(valor ?? '').trim();
+                return t === '' ? null : t;
+            };
+
+            let fichas:string[];
+            try{
+                const crudo = params.fichas;
+                fichas = (typeof crudo === 'string' ? JSON.parse(crudo) : crudo) ?? [];
+            }catch(_err){
+                throw new Error('No se pudo leer la lista de bienes');
+            }
+            const unicas = [...new Set(
+                (Array.isArray(fichas) ? fichas : [])
+                    .map(f => String(f ?? '').trim())
+                    .filter(f => f !== '')
+            )];
+            if(unicas.length === 0){
+                throw new Error('No hay bienes seleccionados');
+            }
+
+            const yaExiste = await client.query(
+                `SELECT 1 FROM movimientos_solicitudes WHERE acta = $1`, [acta]
+            ).fetchAll();
+            if(yaExiste.rows.length){
+                throw new Error(`Ya existe una solicitud con el acta ${acta}`);
+            }
+
+            const cabecera = await client.query(`
+                insert into movimientos_solicitudes
+                    (acta, tipo_asignacion, modalidad_uso, responsable, area, sede, espacio,
+                     detalle, usuario_creacion)
+                    values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                    returning acta, estado
+            `, [
+                acta,
+                texto(params.tipo_asignacion),
+                texto(params.modalidad_uso),
+                texto(params.responsable),
+                texto(params.area),
+                texto(params.sede),
+                texto(params.espacio),
+                texto(params.detalle),
+                context.username,
+            ]).fetchUniqueRow();
+
+            const detalle = await client.query(`
+                insert into movimientos_solicitud_bien (acta, ficha, usuario_creacion)
+                    select $1, f.ficha, $3
+                        from unnest($2::text[]) AS f(ficha)
+                        where exists (select 1 from bienes b where b.ficha = f.ficha)
+                    returning ficha
+            `, [acta, unicas, context.username]).fetchAll();
+
+            const noEncontrados = unicas.length - detalle.rows.length;
+            return {
+                message: `Se creó la solicitud ${acta} con ${detalle.rows.length} bienes`
+                    + (noEncontrados > 0 ? ` (${noEncontrados} no se encontraron)` : '')
+                    + `, en estado ${cabecera.row.estado}.`
+                    + ` Los movimientos se generan cuando la solicitud llegue al final del circuito.`,
+                acta,
+                estado:cabecera.row.estado,
+                bienes:detalle.rows.length,
+                no_encontrados:noEncontrados,
+            };
+        }
+    },
+    {
+        action:'bien_resumen',
+        parameters:[
+            {name:'ficha', typeName:'text'},
+        ],
+        coreFunction: async function(context:ProcedureContext, params:any){
+            // Lo que el encabezado del bien necesita mostrar sin obligar a abrir solapas.
+            const ficha = String(params.ficha ?? '').trim();
+            if(ficha === ''){
+                throw new Error('Falta la ficha');
+            }
+            const {row} = await context.client.query(`
+                SELECT
+                    (SELECT count(*) FROM movimientos_bien mb WHERE mb.ficha = $1)
+                        AS movimientos,
+                    (SELECT count(*) FROM adjuntos_bienes ab WHERE ab.ficha = $1)
+                        AS adjuntos,
+                    ult.fecha_movimiento           AS ultimo_movimiento_fecha,
+                    ult.accion                     AS ultimo_movimiento_accion,
+                    nullif(btrim(concat_ws(', ',
+                        nullif(btrim(r.apellido), ''),
+                        nullif(btrim(r.nombre), '')
+                    )), '')                        AS ultimo_movimiento_responsable,
+                    dec.declaracion                AS ultima_declaracion,
+                    dec.fecha                      AS ultima_declaracion_fecha,
+                    dec.estado                     AS ultima_declaracion_estado
+                FROM (SELECT $1::text AS ficha) base
+                LEFT JOIN LATERAL (
+                    SELECT mb.fecha_movimiento, mb.accion, mb.responsable
+                        FROM movimientos_bien mb
+                        WHERE mb.ficha = base.ficha
+                        ORDER BY mb.orden DESC LIMIT 1
+                ) ult ON true
+                LEFT JOIN responsables r ON r.responsable = ult.responsable
+                LEFT JOIN LATERAL (
+                    SELECT d.declaracion, d.fecha, d.estado
+                        FROM declaraciones_bienes db
+                        JOIN declaraciones d ON d.declaracion = db.declaracion
+                        WHERE db.ficha = base.ficha
+                        ORDER BY d.fecha DESC NULLS LAST, d.declaracion DESC
+                        LIMIT 1
+                ) dec ON true
+            `, [ficha]).fetchUniqueRow();
+            return row;
+        }
+    },
+    {
+        action:'atributos_recargar',
+        parameters:[],
+        proceedLabel:'recargar',
+        coreFunction: async function(context:ProcedureContext){
+            // Las columnas de atributo de la grilla del parque tecnológico se arman con la
+            // lista que se lee al arrancar, porque las definiciones de tabla de
+            // backend-plus son sincrónicas. Esto la refresca sin reiniciar el servidor.
+            if(context.user.rol !== 'admin'){
+                throw new Error('Sólo un administrador puede recargar los atributos');
+            }
+            const {rows} = await context.client.query(
+                `SELECT atributo, nombre FROM bienes_atributos ORDER BY atributo`
+            ).fetchAll();
+            const lista = rows.map((fila:any) => ({
+                atributo:String(fila.atributo),
+                nombre:String(fila.nombre ?? fila.atributo),
+            }));
+            setAtributosDeBienes(lista);
+            return {
+                message: `Se recargaron ${lista.length} atributos.`
+                    + ` La grilla del parque tecnológico ya muestra sus columnas`
+                    + ` (puede hacer falta volver a abrirla).`,
+                atributos: lista.map(a => a.atributo),
             };
         }
     },

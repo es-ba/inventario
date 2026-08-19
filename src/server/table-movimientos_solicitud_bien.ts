@@ -24,7 +24,15 @@ export function movimientos_solicitud_bien(context:TableContext):TableDefinition
         primaryKey:['acta','ficha'],
         foreignKeys:[
             {references:'movimientos_solicitudes', fields:['acta']},
-            {references:'bienes', fields:['ficha']},
+            /*
+                displayFields trae la descripción del bien junto a la ficha. Son los mismos
+                datos con los que se lo busca al agregarlo: una lista de fichas peladas no
+                deja controlar qué se está por mover.
+
+                No cuesta una consulta extra: el join con bienes ya lo hace la foreign key,
+                displayFields sólo agrega columnas al select.
+            */
+            {references:'bienes', fields:['ficha'], displayFields:['detalle', 'modelo', 'serie']},
             {references:'usuarios', fields:[{source:'usuario_creacion' , target:'usuario'}], alias: 'usuario_creacion'},
             {references:'usuarios', fields:[{source:'usuario_modificacion' , target:'usuario'}], alias: 'usuario_modificacion'},
         ],

@@ -51,6 +51,7 @@ install:
       - ../install/movimientos_solicitudes_estado_trg.sql
       - ../install/trazabilidad_atributos_documentacion_trg.sql
       - ../install/declaraciones_estado_trg.sql
+      - ../install/solicitudes_documentos_trg.sql
 logo: 
   path: client/img
 `;

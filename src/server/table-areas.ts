@@ -14,8 +14,11 @@ export function areas(context:TableContext):TableDefinition{
         editable:admin,
         fields:[
             area,
-            {name:'nombre_area'        , typeName:'text'        , isName:true}, 
-            {name:'sigla'              , typeName:'text'        },  
+            {name:'nombre_area'        , typeName:'text'        , isName:true},
+            // La sigla es como se nombra al área en el organismo, y hoy es lo único
+            // cargado: nombre_area viene vacío del origen. Marcarla como isName hace que
+            // los selectores y las FK la muestren en vez de dejar sólo el código.
+            {name:'sigla'              , typeName:'text'        , isName:true},
             {name:'descripcion'        , typeName:'text'        }, 
             {name:'jerarquia'          , typeName:'text'        , nullable:true}, 
             {name:'pertenece_a'        , typeName:area.typeName , nullable:true, defaultValue:null },

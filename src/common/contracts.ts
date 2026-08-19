@@ -15,6 +15,9 @@ export type EstadoAccion = {
     nombre_wscreen: string
     desactiva_boton: boolean
     confirma: boolean
+    /** Cómo se llama la acción para el usuario; el código eaccion es el nombre interno. */
+    abr_eaccion?: string | null
+    desc_eaccion?: string | null
 }
 
 export type BienesBusquedaEstado = 'activo' | 'baja' | 'todos';

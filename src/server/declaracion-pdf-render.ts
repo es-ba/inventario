@@ -20,7 +20,7 @@ import {agregarCampoDeFirma} from './declaracion-firma-campo';
 */
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const pdfmake = require('pdfmake');
+export const pdfmake = require('pdfmake');
 
 const RUTA_LOGO = 'src/client/principal/assets/logoIdecba.png';
 
@@ -30,7 +30,7 @@ function rutaFuentes():string{
     return path.join(path.dirname(require.resolve('pdfmake/package.json')), 'fonts', 'Roboto');
 }
 
-function configurarPdfmake(){
+export function configurarPdfmake(){
     if(configurado){
         return;
     }

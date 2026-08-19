@@ -11,7 +11,19 @@ import {
 import type {FieldDefinition} from 'frontend-plus';
 
 import {useDatosReferencial, useEstructuraTabla} from './cache-tablas';
+import {aValorFechaInput, formatearValor} from './formato-valores';
 import {Fila, nombreDeTipo} from './tipos-tabla';
+
+/**
+ * Texto para un input. Los strings se dejan intactos —reformatearlos rompería la
+ * edición— y sólo los valores tipados que manda el backend se convierten.
+ */
+function comoTextoEditable(value:unknown):string{
+    if(value == null){
+        return '';
+    }
+    return typeof value === 'object' ? formatearValor(value) : String(value);
+}
 
 /*
     Renderiza un campo de formulario a partir de su FieldDefinition.
@@ -29,32 +41,8 @@ export type FormFieldRendererProps = {
     error?:string|null,
     multiline?:boolean,
     minRows?:number,
+    size?:'small'|'medium',
 };
-
-/** Los valores de fecha llegan como Date, como texto ISO o como objetos de best-globals. */
-export function aValorFecha(value:unknown):string{
-    if(value == null || value === ''){
-        return '';
-    }
-    if(value instanceof Date){
-        return Number.isNaN(value.getTime())
-            ? ''
-            : [
-                String(value.getFullYear()),
-                String(value.getMonth() + 1).padStart(2, '0'),
-                String(value.getDate()).padStart(2, '0'),
-            ].join('-');
-    }
-    if(typeof value === 'object'){
-        const posible = value as {toYmd?:()=>string};
-        if(typeof posible.toYmd === 'function'){
-            return posible.toYmd();
-        }
-    }
-    const texto = String(value).trim();
-    const iso = /^(\d{4}-\d{2}-\d{2})/.exec(texto);
-    return iso ? iso[1] : texto;
-}
 
 /** Pares (campo local, campo referenciado) de la FK; por defecto el campo consigo mismo. */
 function paresDeReferencia(field:FieldDefinition):{source:string, target:string}[]{
@@ -62,7 +50,7 @@ function paresDeReferencia(field:FieldDefinition):{source:string, target:string}
     return declarados.length ? declarados : [{source:field.name, target:field.name}];
 }
 
-function CampoReferencia({field, row, setField, disabled, error}:FormFieldRendererProps){
+function CampoReferencia({field, row, setField, disabled, error, size}:FormFieldRendererProps){
     const {filas, cargando} = useDatosReferencial(field.references);
     const {definicion} = useEstructuraTabla(field.references);
 
@@ -79,7 +67,7 @@ function CampoReferencia({field, row, setField, disabled, error}:FormFieldRender
 
     const etiquetaDe = React.useCallback(
         (fila:Fila) => camposVisibles
-            .map(nombre => String(fila[nombre] ?? ''))
+            .map(nombre => formatearValor(fila[nombre]))
             .filter(parte => parte !== '')
             .join(' - '),
         [camposVisibles],
@@ -90,6 +78,7 @@ function CampoReferencia({field, row, setField, disabled, error}:FormFieldRender
     ) ?? null;
 
     return <Autocomplete
+        size={size}
         options={filas}
         value={seleccionada}
         loading={cargando}
@@ -118,7 +107,7 @@ function CampoReferencia({field, row, setField, disabled, error}:FormFieldRender
 }
 
 export function FormFieldRenderer(props:FormFieldRendererProps){
-    const {field, row, setField, disabled = false, error = null, multiline = false, minRows} = props;
+    const {field, row, setField, disabled = false, error = null, multiline = false, minRows, size} = props;
     const value = row[field.name];
     const etiqueta = field.label ?? field.title ?? field.name;
     const deshabilitado = disabled || field.editable === false;
@@ -132,13 +121,14 @@ export function FormFieldRenderer(props:FormFieldRendererProps){
         return <TextField
             select
             label={etiqueta}
-            value={value == null ? '' : String(value)}
+            value={comoTextoEditable(value)}
             onChange={evento => setField(field.name, evento.target.value || null)}
             disabled={deshabilitado}
             required={field.nullable === false}
             error={Boolean(error)}
             helperText={error ?? undefined}
             fullWidth
+            size={size}
         >
             <MenuItem value=""><em>sin valor</em></MenuItem>
             {field.options.map(opcion =>
@@ -165,13 +155,14 @@ export function FormFieldRenderer(props:FormFieldRendererProps){
         return <TextField
             type="date"
             label={etiqueta}
-            value={aValorFecha(value)}
+            value={aValorFechaInput(value)}
             onChange={evento => setField(field.name, evento.target.value || null)}
             disabled={deshabilitado}
             required={field.nullable === false}
             error={Boolean(error)}
             helperText={error ?? undefined}
             fullWidth
+            size={size}
             InputLabelProps={{shrink:true}}
         />;
     }
@@ -181,13 +172,14 @@ export function FormFieldRenderer(props:FormFieldRendererProps){
     return <TextField
         type={esNumero ? 'number' : 'text'}
         label={etiqueta}
-        value={value == null ? '' : String(value)}
+        value={comoTextoEditable(value)}
         onChange={evento => setField(field.name, evento.target.value)}
         disabled={deshabilitado}
         required={field.nullable === false}
         error={Boolean(error)}
         helperText={error ?? undefined}
         fullWidth
+        size={size}
         multiline={multiline}
         minRows={multiline ? minRows : undefined}
     />;

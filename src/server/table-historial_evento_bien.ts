@@ -24,9 +24,8 @@ export function historial_evento_bien(context: TableContext): TableDefinition {
         foreignKeys: [
             { references: 'bienes', fields: ['ficha'] },
         ],
-        detailTables:[
-            {table:'historial_bienes', fields:['ficha', 'orden'], abr:'His', label:'Historial'},
-        ],
+        // Sin detalle: historial_bienes se sigue llenando pero no se muestra en la
+        // aplicación. Acá quedan los eventos —qué se hizo, quién y cuándo—.
         constraints: [
             {
                 constraintType: 'unique',

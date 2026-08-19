@@ -9,6 +9,16 @@ export function getPolicies(be:AppBackend){
     }
 }
 
+/*
+    El validador de la grilla rechaza el string vacío en los campos de texto: sólo acepta
+    NULL o contenido. Las columnas que la vista calcula pueden salir vacías —el caso claro
+    es responsable_nombre, que sale de un concat_ws, y concat_ws devuelve '' y no NULL
+    cuando todos sus argumentos son nulos—, así que pasan por acá antes de salir.
+*/
+export function textoONuloSql(expresion:string):string{
+    return `nullif(btrim(${expresion}), '')`;
+}
+
 function codigoTextoSql(codigo:string, texto:string):string{
     return `CASE
         WHEN nullif(btrim(${codigo}), '') IS NULL THEN NULL
@@ -33,6 +43,7 @@ SELECT
     ult.modalidad_uso,
     ult.enusode,
     ult.nombre_area,
+    ult.area_sigla,
     ult.sede_nombre,
     ult.responsable_nombre,
     ult.espacio_numero,
@@ -56,24 +67,26 @@ LEFT JOIN cuentas cue
 LEFT JOIN LATERAL (
     SELECT 
         mb.area,
-        a.nombre_area,
+        ${textoONuloSql('a.nombre_area')} AS nombre_area,
+        ${textoONuloSql('a.sigla')} AS area_sigla,
         mb.sede,
-        s.descripcion AS sede_nombre,
+        ${textoONuloSql('s.descripcion')} AS sede_nombre,
         mb.responsable,
-        concat_ws(', ',
+        ${textoONuloSql(`concat_ws(', ',
             nullif(btrim(r.apellido), ''),
             nullif(btrim(r.nombre), '')
-        ) AS responsable_nombre,
+        )`)} AS responsable_nombre,
         mb.espacio,
-        e.numero AS espacio_numero,
+        ${textoONuloSql('e.numero')} AS espacio_numero,
         mb.tipo_asignacion,
         mb.modalidad_uso,
-        mb.enusode,
+        ${textoONuloSql('mb.enusode')} AS enusode,
         ${codigoTextoSql(
             'mb.responsable',
             "concat_ws(', ', nullif(btrim(r.apellido), ''), nullif(btrim(r.nombre), ''))",
         )} AS responsable_texto,
-        ${codigoTextoSql('mb.area', 'a.nombre_area')} AS area_texto,
+        ${/* el área se identifica por su sigla, que es como se la nombra en el organismo */''}
+        ${codigoTextoSql('mb.area', 'a.sigla')} AS area_texto,
         ${codigoTextoSql('mb.sede', 's.descripcion')} AS sede_texto,
         ${codigoTextoSql(
             'mb.espacio',
@@ -114,8 +127,11 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'importe'                     , typeName:'text'    , nullable:true},
             {name:'importetotal'                , typeName:'text'    , nullable:true},
             {name:'tipo_bien'                   , typeName:'text'    , nullable:true},
+            // activo: la situación patrimonial (ALTA / BAJA / ENDESUSO).
+            // estado: la condición del bien (NORMAL, BAJA, PRESTAMO...); antes se llamaba
+            // estado_bien_viejo y su referencial es estados_bien.
+            {name:'activo'                      , typeName:'text'    , nullable:true},
             {name:'estado'                      , typeName:'text'    , nullable:true},
-            {name:'estado_bien_viejo'           , typeName:'text'    , nullable:true},
             {name:'categoria'                   , typeName:'text'    , nullable:true},
             {name:'rubro'                       , typeName:'text'    , nullable:true},
             {name:'clase'                       , typeName:'text'    , nullable:true},
@@ -124,6 +140,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'marca'                       , typeName:'text'    , nullable:true},
             {name:'serie'                       , typeName:'text'    , nullable:true},
             {name:'imei'                        , typeName:'text'    , nullable:true},
+            {name:'linea'                       , typeName:'text'    , nullable:true},
             {name:'modelo'                      , typeName:'text'    , nullable:true},
             {name:'annio'                       , typeName:'text'    , nullable:true},
             {name:'prd'                         , typeName:'text'    , nullable:true},
@@ -148,6 +165,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'responsable'                 , typeName:'text'    , editable:false, inTable:false},
             {name:'espacio'                     , typeName:'text'    , editable:false, inTable:false},
             {name:'nombre_area'                 , typeName:'text'    , editable:false, inTable:false},
+            {name:'area_sigla'                  , typeName:'text'    , editable:false, inTable:false},
             {name:'sede_nombre'                 , typeName:'text'    , editable:false, inTable:false},
             {name:'responsable_nombre'          , typeName:'text'    , editable:false, inTable:false},
             {name:'espacio_numero'              , typeName:'text'    , editable:false, inTable:false},
@@ -162,8 +180,10 @@ export function bienes(context:TableContext):TableDefinition{
             {references:'grupos', fields:['grupo']},
             {references:'motivos_baja', fields:['motivo_baja']},
             {references:'categoria_bien', fields:['categoria']},
-            {references:'estados_bien', fields:['estado']},
-            {references:'estado_bien_viejo', fields:['estado_bien_viejo']},
+            {references:'estados_activo', fields:['activo']},
+            // displayFields vacío: sin esto backend-plus agregaría estados_bien__estado_bien,
+            // que repetiría el mismo texto que ya trae la columna estado.
+            {references:'estados_bien', fields:[{source:'estado', target:'estado_bien'}], displayFields:[]},
             {references:'estados_baja', fields:['estado_baja']},
             {references:'marcas', fields:['marca']},
             {references:'ordenes_compra', fields:['orden_compra']},
@@ -172,14 +192,26 @@ export function bienes(context:TableContext):TableDefinition{
             {constraintType:'unique', fields:['ficha']}
         ],
         detailTables:[
-            {table:'historial', fields:['ficha'], abr:'His', label:'Historial'},
             {table:'historial_evento_bien', fields:['ficha'], abr:'Au', label:'Auditoria'},
             {table:'movimientos_bien', fields:['ficha'], abr:'Mov', label:'Movimientos'},
             {table:'bien_atributo', fields:['ficha'], abr:'Atr', label:'Atributos'},
             {table:'adjuntos_bienes', fields:['ficha'], abr:'Adj', label:'Adjuntos'},
             {table:'declaraciones_bienes', fields:['ficha'], abr:'Dec', label:'Declaraciones'}
         ],
-        hiddenColumns: ['entidad_prestadora', 'fecha_inicio', 'fecha_fin', 'renovable', 'condiciones', 'costo_mensual', 'fecha_solicitud', 'valor_residual', 'autorizado_por', 'documento_respaldo', 'estado_baja'],
+        // Ocultas por defecto: datos secundarios, de contrato, de baja y del sistema
+        // anterior. Se pueden mostrar desde el selector de columnas de la grilla.
+        //
+        // Las columnas <tabla>__<campo> las agrega backend-plus solo, por cada foreign key
+        // que apunta a una tabla con un campo isName. Ocultar el código no alcanza: hay que
+        // ocultar también la descripción que trae la FK.
+        hiddenColumns: [
+            'entidad_prestadora', 'fecha_inicio', 'fecha_fin', 'renovable', 'condiciones',
+            'costo_mensual', 'fecha_solicitud', 'valor_residual', 'autorizado_por',
+            'documento_respaldo', 'estado_baja',
+            'caracteridentificador', 'clasificacion', 'orden_compra', 'motivo_baja',
+            'importe', 'importetotal', 'numero_integrado', 'ubicacion',
+            'ordenes_compra__codigo',
+        ],
         sql:{
             isTable: true,
             from: `(${sqlBienes})`,

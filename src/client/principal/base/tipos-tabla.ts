@@ -19,7 +19,16 @@ declare module 'frontend-plus' {
         clientSide?:string;
         options?:string[];
         defaultValue?:unknown;
+        defaultDbValue?:string;
+        sequence?:{name?:string, firstValue?:number};
         referencesFields?:{source:string, target:string}[];
+        /*
+            Las columnas <alias>__<campo> que backend-plus agrega por cada foreign key
+            vienen con estas dos marcas. Son la única forma de distinguirlas de un campo
+            calculado: las dos llegan con inTable:false.
+        */
+        referencedName?:string;
+        referencedAlias?:string;
     }
     interface TableDefinition {
         name?:string;
@@ -28,12 +37,20 @@ declare module 'frontend-plus' {
         hiddenColumns?:string[];
         nameFields?:string[];
     }
+    interface BEAPI {
+        /*
+            Borrar es una acción propia, no un table_record_save con status 'delete':
+            table_record_save no contempla ese estado y termina leyendo result.command
+            sobre un result sin asignar ("Cannot read properties of undefined").
+        */
+        table_record_delete:(params:{
+            table:string,
+            primaryKeyValues:unknown[],
+        }) => Promise<Record<string, unknown>>;
+    }
 }
 
 export type Fila = Record<string, unknown>;
-
-/** El estado 'delete' existe en el backend pero no está en el RecordStatus de frontend-plus. */
-export type EstadoRegistro = 'new' | 'update' | 'delete';
 
 /** typeName llega con más variantes de las que declara frontend-plus. */
 export function nombreDeTipo(typeName:unknown):string{
@@ -47,6 +64,17 @@ export function esObligatorio(field:FieldDefinition, primaryKey:string[]):boolea
 
 export function esEditable(field:FieldDefinition):boolean{
     return field.editable !== false;
+}
+
+/**
+ * Campos que completa la base: no tiene sentido exigírselos al usuario aunque sean
+ * obligatorios. Es el caso de fecha_creacion (current_date), estado (default) o una PK
+ * con secuencia: pedirlos deja el botón de guardar apagado sin forma de destrabarlo.
+ */
+export function loCompletaLaBase(field:FieldDefinition):boolean{
+    return field.defaultDbValue != null
+        || field.defaultValue !== undefined
+        || field.sequence != null;
 }
 
 export function estaVacio(value:unknown):boolean{

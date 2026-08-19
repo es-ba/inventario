@@ -25,7 +25,9 @@ export function declaraciones_bienes(context:TableContext):TableDefinition{
             {name:'responsable'           , typeName:'text'},
             {name:'sede'                  , typeName:'text'},
             {name:'espacio'               , typeName:'text'},
-            {name:'estado_bien'           , typeName:'text'},
+            // Copia de bienes.activo al momento de armar la declaración. Se llamaba
+            // estado_bien, nombre que ahora es el de la condición del bien: otra cosa.
+            {name:'activo'                , typeName:'text'},
         ],
         primaryKey:['declaracion', 'ficha'],
         foreignKeys:[
@@ -40,7 +42,7 @@ export function declaraciones_bienes(context:TableContext):TableDefinition{
             {references:'responsables', fields:['responsable']},
             {references:'sedes', fields:['sede']},
             {references:'espacios', fields:['espacio']},
-            {references:'estados_bien', fields:[{source:'estado_bien', target:'estado'}]},
+            {references:'estados_activo', fields:['activo']},
         ],
         sortColumns:[{column:'declaracion', order:1}, {column:'ficha', order:1}]
     };

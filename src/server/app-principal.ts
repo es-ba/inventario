@@ -12,7 +12,6 @@ import { roles } from "./table-roles";
 import { bienes } from './table-bienes';
 import { usuarios   } from './table-usuarios';
 import { grupos } from './table-grupos';
-import { historial } from "./table-historial";
 import { tipo_espacio } from "./table-tipo_espacio";
 import { espacios } from "./table-espacios";
 import { ordenes_compra } from "./table-ordenes_compra";
@@ -25,6 +24,7 @@ import { areas } from './table-areas';
 import { categoria_bien } from "./table-categoria_bien";
 import { estados_baja } from "./table-estados_baja";
 import { estados_bien } from "./table-estados_bien";
+import { estados_activo } from "./table-estados_activo";
 import { marcas } from "./table-marcas";
 import { modalidad_uso } from "./table-modalidad_uso";
 import { motivos_baja } from "./table-motivos_baja";
@@ -37,7 +37,6 @@ import { tipo_ordencompra } from "./table-tipo_ordencompra";
 import { estado_ordencompra } from "./table-estado_ordencompra";
 import { proveedores } from "./table-proveedores";
 import { estados_movimiento } from "./table-estados_movimiento";
-import { estado_bien_viejo } from "./table-estado_bien_viejo";
 import { movimientos_solicitudes } from "./table-movimientos_solicitudes";
 import { movimientos_solicitud_bien } from "./table-movimientos_solicitud_bien";
 import { acciones } from "./table-acciones";
@@ -52,7 +51,13 @@ import { bienes_atributo_valores } from "./table-bienes_atributo_valores";
 import { declaraciones } from "./table-declaraciones";
 import { declaraciones_bienes } from "./table-declaraciones_bienes";
 import { declaraciones_documentos } from "./table-declaraciones_documentos";
+import { solicitudes_documentos } from "./table-solicitudes_documentos";
 import { estados_declaracion } from "./table-estados_declaracion";
+import { reporte_bienes_por_area } from "./table-reporte_bienes_por_area";
+import { reporte_bienes_por_responsable } from "./table-reporte_bienes_por_responsable";
+import { reporte_bienes_listado } from "./table-reporte_bienes_listado";
+import { parque_tecnologico } from "./table-parque_tecnologico";
+import { setAtributosDeBienes } from "./reportes-bienes";
 import { jerarquias } from "./table-jerarquias";
 import { adjuntos_bienes } from "./table-adjuntos_bienes";
 import { adjuntos_solicitudes } from "./table-adjuntos_solicitudes";
@@ -94,12 +99,40 @@ const cronMantenimiento = (be:AppBackend) => {
     });
 }
 
+/*
+    Los atributos de bienes son datos, no código: la grilla del parque tecnológico abre una
+    columna por cada uno. Se leen una vez al arrancar porque las definiciones de tabla de
+    backend-plus son sincrónicas y no pueden consultar la base.
+
+    Si falla —por ejemplo en el primer dump, cuando la tabla todavía no existe— el servidor
+    arranca igual y la grilla queda sin columnas de atributo.
+*/
+const cargarAtributosDeBienes = async (be:AppBackend) => {
+    try{
+        const lista = await be.inTransaction(null, async (client)=>{
+            const {rows} = await client.query(
+                `SELECT atributo, nombre FROM bienes_atributos ORDER BY atributo`
+            ).fetchAll();
+            return rows.map((fila:any) => ({
+                atributo:String(fila.atributo),
+                nombre:String(fila.nombre ?? fila.atributo),
+            }));
+        });
+        setAtributosDeBienes(lista);
+        console.info(`Atributos de bienes cargados para la grilla: ${lista.length}`);
+    }catch(err){
+        console.warn(`No se pudieron leer los atributos de bienes: ${err}`);
+        setAtributosDeBienes([]);
+    }
+}
+
 export class AppInventario extends AppBackend{
     constructor(){
         super();
     }
     override async postConfig(){
         cronMantenimiento(this);
+        await cargarAtributosDeBienes(this);
         await super.postConfig();
     }
     override addSchrödingerServices(mainApp:ExpressPlus, baseUrl:string){
@@ -126,6 +159,24 @@ export class AppInventario extends AppBackend{
                 ).fetchUniqueRow();
                 const path = `local-attachments/${result.row.archivo}`;
                 MiniTools.serveFile(path, {})(req, res);
+            });
+        });
+        mainApp.get(baseUrl+'/download/solicitud_documento', async function (req, res) {
+            // @ts-ignore
+            await be.inDbClient(req, async (client)=>{
+                const result = await client.query(
+                    `SELECT archivo, archivo_firmado FROM solicitudes_documentos
+                        WHERE acta = $1 AND tipo = $2 AND version = $3`,
+                    [req.query.acta, req.query.tipo, req.query.version]
+                ).fetchUniqueRow();
+                const cual = req.query.firmado === 'true'
+                    ? result.row.archivo_firmado
+                    : result.row.archivo;
+                if(cual == null){
+                    res.status(404).send('El documento pedido no está cargado');
+                    return;
+                }
+                MiniTools.serveFile(`local-attachments/${cual}`, {})(req, res);
             });
         });
         mainApp.get(baseUrl+'/download/adjunto_solicitud', async function (req, res) {
@@ -176,14 +227,20 @@ export class AppInventario extends AppBackend{
             {menuType:'principal', name:'principal', label:'principal'     },
             {menuType: 'menu', name: 'bienes' , label: 'inventario', menuContent: [
                 {menuType: 'table', name: 'bienes', label: 'todos', selectedByDefault: true},
-                {menuType: 'table', name: 'bienes_activos', table: 'bienes', label: 'bienes en alta', ff: {estado: 'ALTA'}},
-                {menuType: 'table', name: 'bienes_inactivos', table: 'bienes', label: 'bienes en baja', ff: {estado: 'BAJA'}},
+                {menuType: 'table', name: 'bienes_activos', table: 'bienes', label: 'bienes en alta', ff: {activo: 'ALTA'}},
+                {menuType: 'table', name: 'bienes_inactivos', table: 'bienes', label: 'bienes en baja', ff: {activo: 'BAJA'}},
             ]},            
             {menuType: 'menu', name: 'operaciones', label: 'operaciones', menuContent: [
                 {menuType: 'table', name: 'declaraciones', label: 'declaraciones'},
-                {menuType: 'table', name: 'movimientos_solicitudes', label: 'solicitudes'},
+                {menuType: 'solicitudes', name: 'solicitudes_movimiento', label: 'solicitudes de movimiento'},
+                {menuType: 'table', name: 'movimientos_solicitudes', label: 'solicitudes (grilla)'},
                 {menuType: 'table', name: 'movimientos_solicitudes_acciones', label: 'acciones en solicitudes'},
-                {menuType: 'table', name: 'historial', label: 'historial de cambios'},
+            ]},
+
+            {menuType: 'menu', name: 'reportes', label: 'reportes', menuContent: [
+                {menuType: 'table', name: 'reporte_bienes_por_area', label: 'bienes por área'},
+                {menuType: 'table', name: 'reporte_bienes_por_responsable', label: 'bienes por responsable'},
+                {menuType: 'table', name: 'parque_tecnologico', label: 'parque tecnológico'},
             ]},
     
             {menuType: 'menu', name: 'gestion', label: 'gestion de datos', menuContent: [
@@ -222,6 +279,7 @@ export class AppInventario extends AppBackend{
                     ]},
                       {menuType: 'menu', name: 'definiciones_estados', label: 'estados y flujos', menuContent: [
                           {menuType: 'table', name: 'estados_bien', label: 'estados del bien'},
+                          {menuType: 'table', name: 'estados_activo', label: 'activo'},
                           {menuType: 'table', name: 'estado_ordencompra', label: 'estados de OC'},
                           {menuType: 'table', name: 'estados', label: 'estados de movimientos'},
                           {menuType: 'table', name: 'motivos_baja', label: 'motivos de baja'},
@@ -266,14 +324,19 @@ export class AppInventario extends AppBackend{
             estados_baja,
             estados_movimiento,
             estados_bien,
-            estado_bien_viejo,
+            estados_activo,
             acciones,
             estados,
             estados_acciones,
             declaraciones,
             declaraciones_bienes,
             declaraciones_documentos,
+            solicitudes_documentos,
             estados_declaracion,
+            reporte_bienes_por_area,
+            reporte_bienes_por_responsable,
+            reporte_bienes_listado,
+            parque_tecnologico,
             tipo_asignacion,
             modalidad_uso,
             motivos_baja,
@@ -296,7 +359,6 @@ export class AppInventario extends AppBackend{
             marcas,
             tipo_bien   ,
             bienes      ,
-            historial   ,
             proveedores ,
             movimientos_solicitudes,
             movimientos_solicitud_bien,

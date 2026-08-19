@@ -32,7 +32,8 @@ export function movimientos_solicitudes_acciones(context:TableContext):TableDefi
         , LATERAL (
             SELECT jsonb_agg(z.*) as acciones
                 FROM (
-                    SELECT ea.*, ac.path_icono_svg, ac.desactiva_boton, ac.confirma
+                    SELECT ea.*, ac.path_icono_svg, ac.desactiva_boton, ac.confirma,
+                            ac.abr_eaccion, ac.desc_eaccion
                         FROM estados_acciones ea 
                         JOIN acciones ac USING (eaccion)
                         WHERE ea.estado = aux.estado

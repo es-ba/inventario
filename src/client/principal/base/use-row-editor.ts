@@ -7,6 +7,7 @@ import {
     esEditable,
     esObligatorio,
     estaVacio,
+    loCompletaLaBase,
     normalizarValor,
 } from './tipos-tabla';
 
@@ -85,7 +86,9 @@ export function useRowEditor({
         definicion.fields.forEach(field => {
             // Un campo obligatorio que el usuario no puede completar no es su problema:
             // lo resuelve el backend con su default o su secuencia.
-            const debeTenerValor = esObligatorio(field, primaryKey) && esEditable(field);
+            const debeTenerValor = esObligatorio(field, primaryKey)
+                && esEditable(field)
+                && !loCompletaLaBase(field);
             resultado[field.name] = debeTenerValor && estaVacio(row[field.name])
                 ? 'Campo obligatorio'
                 : null;

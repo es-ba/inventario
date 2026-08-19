@@ -12,18 +12,19 @@ import {
     Tabs,
     Typography,
 } from '@mui/material';
-import {ExpandMore} from '@mui/icons-material';
+import {Edit, ExpandMore} from '@mui/icons-material';
 import type {FieldDefinition, FixedFields, TableDefinition} from 'frontend-plus';
 
 import {useAvisos, useConexion} from '../base/contexto-base';
 import {useEstructuraTabla} from '../base/cache-tablas';
 import {DetailTable} from '../base/detail-table';
 import {FormFieldRenderer} from '../base/form-field-renderer';
+import {formatearValor} from '../base/formato-valores';
 import {TabPanel, propsDeSolapa} from '../base/tab-panel';
 import {useRowEditor} from '../base/use-row-editor';
 import type {Fila} from '../base/tipos-tabla';
 import {AdjuntosBien} from './adjuntos-bien';
-import {BienHeader} from './bien-header';
+import {BienHeader, ResumenDelBien} from './bien-header';
 import {prepararEtiquetasCodigosBarra} from '../../../common/codigos-barra';
 import {imprimirEtiquetasCodigosBarra} from '../imprimir-codigos-barra';
 
@@ -38,7 +39,7 @@ import {imprimirEtiquetasCodigosBarra} from '../imprimir-codigos-barra';
 const SECCIONES:{titulo:string, campos:string[], abiertaPorDefecto?:boolean}[] = [
     {
         titulo:'Datos generales',
-        campos:['ficha', 'numero_integrado', 'prd', 'clasificacion', 'tipo_bien', 'categoria', 'estado'],
+        campos:['ficha', 'numero_integrado', 'prd', 'clasificacion', 'tipo_bien', 'categoria', 'activo'],
         abiertaPorDefecto:true,
     },
     {
@@ -47,7 +48,7 @@ const SECCIONES:{titulo:string, campos:string[], abiertaPorDefecto?:boolean}[] =
     },
     {
         titulo:'Identificación',
-        campos:['marca', 'modelo', 'annio', 'serie', 'imei', 'caracteridentificador', 'estado_bien_viejo'],
+        campos:['marca', 'modelo', 'annio', 'serie', 'imei', 'caracteridentificador', 'estado'],
     },
     {
         titulo:'Compra',
@@ -69,6 +70,12 @@ const SECCIONES:{titulo:string, campos:string[], abiertaPorDefecto?:boolean}[] =
 
 const CAMPOS_MULTILINEA = new Set(['observacion', 'detalle', 'aclaracion', 'condiciones']);
 
+declare module 'frontend-plus' {
+    interface BEAPI {
+        bien_resumen:(params:{ficha:string}) => Promise<ResumenDelBien>;
+    }
+}
+
 /**
  * Campos que no van al formulario: los que la vista deriva del último movimiento
  * —se muestran en el encabezado— y los alias de texto que arma el SQL.
@@ -83,6 +90,91 @@ function esCampoDelFormulario(field:FieldDefinition):boolean{
     return field.editable !== false;
 }
 
+/*
+    En modo lectura el valor de una clave foránea se muestra por su descripción, que
+    backend-plus ya trae como columna aparte (<tabla>__<campo>) por cada displayFields.
+    El código queda como dato secundario: sirve para identificar, no para leer.
+*/
+function valorLegible(field:FieldDefinition, row:Fila):{texto:string, codigo:string} {
+    const codigo = formatearValor(row[field.name]);
+    if(!field.references){
+        return {texto:codigo, codigo:''};
+    }
+    const prefijo = `${field.references}__`;
+    const descripcion = Object.keys(row)
+        .filter(clave => clave.indexOf(prefijo) === 0)
+        .map(clave => formatearValor(row[clave]))
+        .filter(parte => parte !== '')
+        .join(' ');
+    return descripcion !== ''
+        ? {texto:descripcion, codigo}
+        : {texto:codigo, codigo:''};
+}
+
+/** Un dato en modo lectura. Los campos sin valor no se muestran. */
+function DatoLeido({field, row}:{field:FieldDefinition, row:Fila}){
+    const {texto, codigo} = valorLegible(field, row);
+    if(texto === ''){
+        return null;
+    }
+    return <Box sx={{minWidth:0, py:0.5}}>
+        <Typography variant="caption" color="text.secondary" display="block" lineHeight={1.3}>
+            {field.label ?? field.title ?? field.name}
+        </Typography>
+        <Typography variant="body2" sx={{wordBreak:'break-word'}}>
+            {texto}
+            {codigo !== ''
+                ? <Typography component="span" variant="caption" color="text.disabled" sx={{ml:0.75}}>
+                    {codigo}
+                </Typography>
+                : null}
+        </Typography>
+    </Box>;
+}
+
+/*
+    Vista de lectura: densa, en tres columnas, y sin los campos vacíos.
+
+    De los ~40 campos de un bien la mayoría suele estar sin cargar; mostrarlos todos como
+    inputs vacíos es lo que hace que la ficha se sienta un formulario interminable. Acá se
+    muestran sólo los que tienen dato, y las secciones que quedan sin nada no se dibujan.
+*/
+function VistaDatos({definicion, row}:{definicion:TableDefinition, row:Fila}){
+    const secciones = SECCIONES.map(seccion => {
+        const campos = seccion.campos
+            .map(nombre => definicion.fields.find(f => f.name === nombre))
+            .filter((f):f is FieldDefinition => Boolean(f))
+            .filter(f => valorLegible(f, row).texto !== '');
+        return {titulo:seccion.titulo, campos};
+    }).filter(seccion => seccion.campos.length > 0);
+
+    if(secciones.length === 0){
+        return <Alert severity="info" sx={{mt:2}}>El bien no tiene datos cargados todavía.</Alert>;
+    }
+
+    return <Stack spacing={2.5} sx={{mt:1}}>
+        {secciones.map(seccion => <Box key={seccion.titulo}>
+            <Typography
+                variant="overline"
+                color="text.secondary"
+                sx={{display:'block', borderBottom:1, borderColor:'divider', mb:1}}
+            >
+                {seccion.titulo}
+            </Typography>
+            <Box sx={{
+                display:'grid',
+                gridTemplateColumns:{xs:'1fr', sm:'1fr 1fr', lg:'repeat(3, 1fr)'},
+                columnGap:3,
+                rowGap:0.5,
+            }}>
+                {seccion.campos.map(field =>
+                    <DatoLeido key={field.name} field={field} row={row}/>
+                )}
+            </Box>
+        </Box>)}
+    </Stack>;
+}
+
 function SeccionDeCampos({
     definicion,
     campos,
@@ -94,14 +186,21 @@ function SeccionDeCampos({
     editor:ReturnType<typeof useRowEditor>,
     fichaBloqueada:boolean,
 }){
-    return <Box sx={{display:'grid', gridTemplateColumns:{xs:'1fr', md:'1fr 1fr'}, gap:2}}>
+    return <Box sx={{
+        display:'grid',
+        gridTemplateColumns:{xs:'1fr', sm:'1fr 1fr', lg:'repeat(3, 1fr)'},
+        gap:2,
+    }}>
         {campos.map(nombre => {
             const field = definicion.fields.find(candidato => candidato.name === nombre);
             if(!field){
                 return null;
             }
             const esMultilinea = CAMPOS_MULTILINEA.has(nombre);
-            return <Box key={nombre} sx={esMultilinea ? {gridColumn:{md:'span 2'}} : undefined}>
+            return <Box
+                key={nombre}
+                sx={esMultilinea ? {gridColumn:{sm:'span 2', lg:'span 3'}} : undefined}
+            >
                 <FormFieldRenderer
                     field={field}
                     row={editor.row}
@@ -130,8 +229,11 @@ export function BienFormulario({
     const [filaInicial, setFilaInicial] = React.useState<Fila|undefined>(undefined);
     const [cargando, setCargando] = React.useState(Boolean(ficha));
     const [noEncontrado, setNoEncontrado] = React.useState(false);
+    const [resumen, setResumen] = React.useState<ResumenDelBien|null>(null);
     const [solapa, setSolapa] = React.useState(0);
     const [seccionAbierta, setSeccionAbierta] = React.useState<string>(SECCIONES[0].titulo);
+    // Un bien existente se abre para leer; uno nuevo, directo en edición.
+    const [editando, setEditando] = React.useState(!ficha);
 
     React.useEffect(() => {
         if(!ficha){
@@ -166,6 +268,20 @@ export function BienFormulario({
             });
         return () => { cancelado = true; };
     }, [conn, ficha, mostrarError]);
+
+    // El resumen del encabezado va aparte del bien: es un agregado de otras tablas y no
+    // tiene que demorar la carga del formulario. Si falla, el encabezado se muestra igual.
+    React.useEffect(() => {
+        if(!ficha){
+            setResumen(null);
+            return;
+        }
+        let cancelado = false;
+        conn.ajax.bien_resumen({ficha})
+            .then(datos => { if(!cancelado){ setResumen(datos); } })
+            .catch(err => { console.warn('[inventario] no se pudo leer el resumen del bien', err); });
+        return () => { cancelado = true; };
+    }, [conn, ficha]);
 
     const definicionSegura = definicion ?? {fields:[], primaryKey:['ficha']};
     const editor = useRowEditor({
@@ -222,10 +338,6 @@ export function BienFormulario({
             contenido:<AdjuntosBien ficha={fichaActual}/>,
         },
         {
-            etiqueta:'Historial',
-            contenido:<DetailTable tabla="historial" camposFijos={{ficha:fichaActual}} titulo="Historial de cambios" soloLectura/>,
-        },
-        {
             etiqueta:'Auditoría',
             contenido:<DetailTable tabla="historial_evento_bien" camposFijos={{ficha:fichaActual}} titulo="Eventos" soloLectura/>,
         },
@@ -238,6 +350,7 @@ export function BienFormulario({
     return <Box sx={{height:'100%', overflow:'auto', p:2, pb:6}}>
         <BienHeader
             row={editor.row}
+            resumen={guardado ? resumen : null}
             onVolver={onVolver}
             onImprimirEtiqueta={guardado ? () => void imprimirEtiqueta() : undefined}
         />
@@ -256,6 +369,16 @@ export function BienFormulario({
         </Tabs>
 
         <TabPanel value={solapa} index={0} sinRelleno>
+            {!editando
+                ? <>
+                    <Stack direction="row" justifyContent="flex-end" sx={{mb:1}}>
+                        <Button variant="outlined" startIcon={<Edit/>} onClick={() => setEditando(true)}>
+                            editar
+                        </Button>
+                    </Stack>
+                    <VistaDatos definicion={definicion} row={editor.row}/>
+                </>
+                : <>
             {SECCIONES.map(seccion => <Accordion
                 key={seccion.titulo}
                 expanded={seccionAbierta === seccion.titulo}
@@ -294,19 +417,24 @@ export function BienFormulario({
                 : null}
 
             <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{mt:3}}>
-                <Button onClick={onVolver}>cancelar</Button>
+                <Button onClick={() => { if(guardado){ setEditando(false); } else { onVolver(); } }}>
+                    cancelar
+                </Button>
                 <Button
                     variant="contained"
                     disabled={!editor.puedeGuardar}
                     onClick={async () => {
                         if(await editor.guardar()){
                             mostrarMensaje(`Se guardó el bien ${fichaActual || editor.row.ficha}`);
+                            setEditando(false);
                         }
                     }}
                 >
                     guardar
                 </Button>
             </Stack>
+                </>
+            }
         </TabPanel>
 
         {solapasDeDetalle.map((solapaDetalle, i) =>

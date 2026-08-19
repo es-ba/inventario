@@ -10,6 +10,8 @@ import {Menu as MenuIcon} from '@mui/icons-material';
 import type {Connector, FixedFields} from 'frontend-plus';
 import {BusquedaBienes} from './principal/busqueda-bienes';
 import {BienFormulario} from './principal/bien/bien-formulario';
+// Registra myOwn.wScreens.solicitudes; el bundle tiene una sola entrada.
+import './ws-solicitudes';
 import {
     renderConnectedAppInventario,
     unmountConnectedAppInventario,
