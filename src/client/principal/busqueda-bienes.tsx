@@ -820,7 +820,15 @@ export function BusquedaBienes({
             onCerrar={() => setMoverAbierto(false)}
             onCreada={(mensaje) => {
                 setAvisoMasivo(mensaje);
+                /*
+                    Se recarga igual que después de la edición masiva. En el movimiento
+                    directo el área, la sede, el espacio y el responsable salen del último
+                    movimiento del bien: apenas se registra el nuevo, lo que hay en pantalla
+                    es lo de antes. Por acta todavía no cambió nada, pero recargar no cuesta
+                    y evita tener dos comportamientos según el modo.
+                */
                 clearSelection();
+                setSearchVersion(version => version + 1);
             }}
         />
     </Box>;

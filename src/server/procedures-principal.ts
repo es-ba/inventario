@@ -884,10 +884,11 @@ export const ProceduresInventario:ProcedureDef[] = [
             /*
                 Recarga del documento firmado.
 
-                Se verifica que el archivo venga firmado (nivel 1), igual que en las
-                declaraciones: es lo que detecta el error más común, subir el PDF tal como
-                se descargó. Lo que no se controla acá es que sea byte a byte el mismo
-                archivo que se emitió (nivel 2). Se guarda el hash de lo recargado.
+                Lo único que se exige es que sea un PDF. No se pide que traiga firma digital
+                —vale el firmado a mano y escaneado— ni que sea byte a byte el que se emitió.
+
+                Igual se analiza y se guarda lo que se pueda saber: el hash de lo recargado y
+                el firmante que el PDF declare, si es que viene firmado.
             */
             const client = context.client;
             const file = files![0];
@@ -914,13 +915,14 @@ export const ProceduresInventario:ProcedureDef[] = [
                 await fs.remove(file.path);
                 throw new Error('El archivo no es un PDF.');
             }
-            if(!analisis.firmaDetectada){
-                await fs.remove(file.path);
-                throw new Error(
-                    'El PDF no tiene una firma digital.'
-                    + ' Puede que se haya subido el documento tal como se descargó, sin firmar.'
-                );
-            }
+            /*
+                No se exige que el PDF traiga firma digital: también vale el documento
+                firmado a mano y escaneado, que es como se resuelve cuando el firmante no
+                tiene certificado.
+
+                El análisis se sigue haciendo para dejar registro de si venía firmado y de
+                quién declara ser el firmante, pero no frena la carga.
+            */
 
             const extension = (file.originalFilename ?? '').split('.').pop() ?? 'pdf';
             const archivo = `solicitudes/${acta}/${tipo}-v${version}-firmado.${extension}`;

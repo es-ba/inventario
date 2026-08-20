@@ -118,7 +118,12 @@ export function bienes(context:TableContext):TableDefinition{
         editable:admin || responsable,
         allow:{ delete:false, deleteAll:false },
         fields:[
-            {name:'ficha'                       , typeName:'text'    }, 
+            {name:'ficha'                       , typeName:'text'    },
+            {name:'responsable'                 , typeName:'text'    , editable:false, inTable:false},
+            {name:'responsable_nombre'          , typeName:'text'    , editable:false, inTable:false},
+            {name:'area'                        , typeName:'text'    , editable:false, inTable:false},
+            {name:'area_sigla'                  , typeName:'text'    , editable:false, inTable:false},
+            {name:'nombre_area'                 , typeName:'text'    , editable:false, inTable:false},
             {name:'numero_integrado'            , typeName:'text'    , nullable:true}, 
             {name:'ubicacion'                   , typeName:'text'    , nullable:true},
             {name:'observacion'                 , typeName:'text'    , nullable:true},
@@ -127,9 +132,6 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'importe'                     , typeName:'text'    , nullable:true},
             {name:'importetotal'                , typeName:'text'    , nullable:true},
             {name:'tipo_bien'                   , typeName:'text'    , nullable:true},
-            // activo: la situación patrimonial (ALTA / BAJA / ENDESUSO).
-            // estado: la condición del bien (NORMAL, BAJA, PRESTAMO...); antes se llamaba
-            // estado_bien_viejo y su referencial es estados_bien.
             {name:'activo'                      , typeName:'text'    , nullable:true},
             {name:'estado'                      , typeName:'text'    , nullable:true},
             {name:'categoria'                   , typeName:'text'    , nullable:true},
@@ -160,14 +162,9 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'autorizado_por'              , typeName:'text'    , nullable:true},
             {name:'documento_respaldo'          , typeName:'text'    , nullable:true},
             {name:'estado_baja'                 , typeName:'text'    , nullable:true},
-            {name:'area'                        , typeName:'text'    , editable:false, inTable:false},
             {name:'sede'                        , typeName:'text'    , editable:false, inTable:false},
-            {name:'responsable'                 , typeName:'text'    , editable:false, inTable:false},
-            {name:'espacio'                     , typeName:'text'    , editable:false, inTable:false},
-            {name:'nombre_area'                 , typeName:'text'    , editable:false, inTable:false},
-            {name:'area_sigla'                  , typeName:'text'    , editable:false, inTable:false},
             {name:'sede_nombre'                 , typeName:'text'    , editable:false, inTable:false},
-            {name:'responsable_nombre'          , typeName:'text'    , editable:false, inTable:false},
+            {name:'espacio'                     , typeName:'text'    , editable:false, inTable:false},
             {name:'espacio_numero'              , typeName:'text'    , editable:false, inTable:false},
             //{name:'codigo_barra'                , typeName:'text'    , inTable:false, editable:false},
         ],  
@@ -181,8 +178,6 @@ export function bienes(context:TableContext):TableDefinition{
             {references:'motivos_baja', fields:['motivo_baja']},
             {references:'categoria_bien', fields:['categoria']},
             {references:'estados_activo', fields:['activo']},
-            // displayFields vacío: sin esto backend-plus agregaría estados_bien__estado_bien,
-            // que repetiría el mismo texto que ya trae la columna estado.
             {references:'estados_bien', fields:[{source:'estado', target:'estado_bien'}], displayFields:[]},
             {references:'estados_baja', fields:['estado_baja']},
             {references:'marcas', fields:['marca']},
@@ -198,12 +193,6 @@ export function bienes(context:TableContext):TableDefinition{
             {table:'adjuntos_bienes', fields:['ficha'], abr:'Adj', label:'Adjuntos'},
             {table:'declaraciones_bienes', fields:['ficha'], abr:'Dec', label:'Declaraciones'}
         ],
-        // Ocultas por defecto: datos secundarios, de contrato, de baja y del sistema
-        // anterior. Se pueden mostrar desde el selector de columnas de la grilla.
-        //
-        // Las columnas <tabla>__<campo> las agrega backend-plus solo, por cada foreign key
-        // que apunta a una tabla con un campo isName. Ocultar el código no alcanza: hay que
-        // ocultar también la descripción que trae la FK.
         hiddenColumns: [
             'entidad_prestadora', 'fecha_inicio', 'fecha_fin', 'renovable', 'condiciones',
             'costo_mensual', 'fecha_solicitud', 'valor_residual', 'autorizado_por',
@@ -211,6 +200,8 @@ export function bienes(context:TableContext):TableDefinition{
             'caracteridentificador', 'clasificacion', 'orden_compra', 'motivo_baja',
             'importe', 'importetotal', 'numero_integrado', 'ubicacion',
             'ordenes_compra__codigo',
+            'prd', 'imei', 'linea', 'categoria', 'annio',
+            'sede', 'sede_nombre',
         ],
         sql:{
             isTable: true,

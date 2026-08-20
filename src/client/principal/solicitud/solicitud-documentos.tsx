@@ -34,8 +34,8 @@ import type {Fila} from '../base/tipos-tabla';
     Se emiten desde acá con los bienes de la solicitud —con el mismo campo de firma que las
     declaraciones—, se descargan para firmar, y el firmado se vuelve a cargar.
 
-    Al recargarlo se verifica que venga firmado, pero no que sea byte a byte el mismo
-    archivo que se emitió.
+    Al recargarlo sólo se pide que sea un PDF: vale tanto el firmado digitalmente como el
+    firmado a mano y escaneado. Tampoco se controla que sea byte a byte el que se emitió.
 
     Una emisión equivocada se puede borrar; el archivo en disco lo saca después el cron.
 */

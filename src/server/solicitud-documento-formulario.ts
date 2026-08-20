@@ -130,6 +130,54 @@ function extraerHuecos(doc:PDFDocument):HuecoDetectado[]{
     return huecos;
 }
 
+/** Dos rectángulos están en el mismo renglón si sus alturas se pisan. */
+function mismaLinea(a:[number, number, number, number], b:[number, number, number, number]):boolean{
+    return a[1] < b[3] && b[1] < a[3];
+}
+
+function unir(
+    a:[number, number, number, number],
+    b:[number, number, number, number],
+):[number, number, number, number]{
+    return [
+        Math.min(a[0], b[0]),
+        Math.min(a[1], b[1]),
+        Math.max(a[2], b[2]),
+        Math.max(a[3], b[3]),
+    ];
+}
+
+/**
+ * Junta los pedazos de un mismo hueco.
+ *
+ * pdfmake parte el texto en un fragmento por palabra y pdfkit deja una anotación por
+ * fragmento. Así, "Bolivar 1 piso 5" llegaba como cuatro huecos y terminaba en cuatro
+ * campos —domicilio, domicilio_2, domicilio_3 y domicilio_4— en vez de uno solo.
+ *
+ * Se unen los consecutivos del mismo nombre que estén en la misma página y en el mismo
+ * renglón, tomando el rectángulo que los abarca. Si el valor cortó de renglón, la segunda
+ * parte queda como un campo aparte: un campo no puede ocupar dos líneas.
+ *
+ * El valor no hace falta reconstruirlo: la marca lo lleva entero en cada pedazo, porque el
+ * link se define una vez para todo el fragmento de texto.
+ */
+function fusionarHuecos(huecos:HuecoDetectado[]):HuecoDetectado[]{
+    const juntos:HuecoDetectado[] = [];
+    for(const hueco of huecos){
+        const previo = juntos[juntos.length - 1];
+        if(previo
+            && previo.nombre === hueco.nombre
+            && previo.pagina === hueco.pagina
+            && mismaLinea(previo.rect, hueco.rect)
+        ){
+            previo.rect = unir(previo.rect, hueco.rect);
+            continue;
+        }
+        juntos.push({...hueco});
+    }
+    return juntos;
+}
+
 /**
  * Reemplaza los huecos marcados por campos de texto AcroForm.
  *
@@ -165,7 +213,9 @@ export async function convertirEnFormulario(pdf:Buffer):Promise<ResultadoFormula
 
     let firma:UbicacionFirma|null = null;
 
-    for(const hueco of huecos){
+    // Se recorre la lista ya fusionada: la de arriba tenía un pedazo por palabra, y sirvió
+    // para dar de baja todas las anotaciones.
+    for(const hueco of fusionarHuecos(huecos)){
         // La línea de firma no es un campo de texto: sólo marca dónde va la firma digital.
         if(hueco.nombre === NOMBRE_HUECO_FIRMA){
             const [x1, y1, x2] = hueco.rect;

@@ -63,6 +63,7 @@ import { adjuntos_bienes } from "./table-adjuntos_bienes";
 import { adjuntos_solicitudes } from "./table-adjuntos_solicitudes";
 import { archivos_borrar } from "./table-archivos_borrar";
 
+import {contentDisposition, fechaParaNombre, nombreDeArchivo} from './nombre-archivo';
 import {staticConfigYaml} from './def-config';
 
 const cronMantenimiento = (be:AppBackend) => {
@@ -152,30 +153,63 @@ export class AppInventario extends AppBackend{
         mainApp.get(baseUrl+'/download/declaracion_documento', async function (req, res) {
             // @ts-ignore
             await be.inDbClient(req, async (client)=>{
+                /*
+                    Se traen además la fecha y el responsable para poder nombrar el archivo:
+                    el nombre en disco es la clave técnica y en la carpeta de descargas
+                    quedan todos iguales.
+                */
                 const result = await client.query(
-                    `SELECT archivo FROM declaraciones_documentos
-                        WHERE declaracion = $1 AND version = $2 AND tipo = $3`,
+                    `SELECT dd.archivo, d.fecha,
+                            upper(coalesce(nullif(btrim(concat_ws(', ',
+                                nullif(btrim(r.apellido), ''),
+                                nullif(btrim(r.nombre), '')
+                            )), ''), coalesce(d.responsable, ''))) AS responsable_nombre
+                        FROM declaraciones_documentos dd
+                        JOIN declaraciones d ON d.declaracion = dd.declaracion
+                        LEFT JOIN responsables r ON r.responsable = d.responsable
+                        WHERE dd.declaracion = $1 AND dd.version = $2 AND dd.tipo = $3`,
                     [req.query.declaracion, req.query.version, req.query.tipo]
                 ).fetchUniqueRow();
                 const path = `local-attachments/${result.row.archivo}`;
+                res.setHeader('Content-Disposition', contentDisposition(nombreDeArchivo([
+                    `declaracion ${req.query.declaracion}`,
+                    fechaParaNombre(result.row.fecha),
+                    result.row.responsable_nombre,
+                    `v${req.query.version}`,
+                    req.query.tipo === 'firmado' ? 'firmado' : '',
+                ])));
                 MiniTools.serveFile(path, {})(req, res);
             });
         });
         mainApp.get(baseUrl+'/download/solicitud_documento', async function (req, res) {
             // @ts-ignore
             await be.inDbClient(req, async (client)=>{
+                /*
+                    La acción sale de la solicitud, que ya la tiene: no hace falta guardarla
+                    de nuevo en cada documento emitido.
+                */
                 const result = await client.query(
-                    `SELECT archivo, archivo_firmado FROM solicitudes_documentos
-                        WHERE acta = $1 AND tipo = $2 AND version = $3`,
+                    `SELECT sd.archivo, sd.archivo_firmado, sd.tipo,
+                            nullif(btrim(ms.accion), '') AS accion
+                        FROM solicitudes_documentos sd
+                        JOIN movimientos_solicitudes ms ON ms.acta = sd.acta
+                        WHERE sd.acta = $1 AND sd.tipo = $2 AND sd.version = $3`,
                     [req.query.acta, req.query.tipo, req.query.version]
                 ).fetchUniqueRow();
-                const cual = req.query.firmado === 'true'
-                    ? result.row.archivo_firmado
-                    : result.row.archivo;
+                const firmado = req.query.firmado === 'true';
+                const cual = firmado ? result.row.archivo_firmado : result.row.archivo;
                 if(cual == null){
                     res.status(404).send('El documento pedido no está cargado');
                     return;
                 }
+                // Sin acción cargada en la solicitud queda el tipo, que igual identifica.
+                const accion = result.row.accion ?? result.row.tipo;
+                res.setHeader('Content-Disposition', contentDisposition(nombreDeArchivo([
+                    accion,
+                    `acta ${req.query.acta}`,
+                    `v${req.query.version}`,
+                    firmado ? 'firmado' : '',
+                ])));
                 MiniTools.serveFile(`local-attachments/${cual}`, {})(req, res);
             });
         });
