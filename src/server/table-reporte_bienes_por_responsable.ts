@@ -6,6 +6,10 @@ import {sqlBienesPorResponsable} from "./reportes-bienes";
 /*
     Reporte: bienes por responsable.
 
+    Cuenta sólo los bienes en alta: es el patrimonio vigente. Un bien dado de baja
+    conserva el área y el responsable que tuvo, y contarlo ahí infla el inventario de un
+    sector con cosas que ya no están.
+
     Un responsable puede tener bienes en más de un área, así que se agrupa sólo por
     responsable y las áreas se cuentan como distintas en vez de abrir una fila por
     combinación.
@@ -20,8 +24,6 @@ export function reporte_bienes_por_responsable(_context:TableContext):TableDefin
         fields:[
             {name:'responsable'        , typeName:'text'   , title:'responsable'},
             {name:'cantidad'           , typeName:'bigint' , title:'bienes'},
-            {name:'cantidad_alta'      , typeName:'bigint' , title:'en alta'},
-            {name:'cantidad_baja'      , typeName:'bigint' , title:'en baja'},
             {name:'areas'              , typeName:'bigint' , title:'áreas'},
             {name:'sedes'              , typeName:'bigint' , title:'sedes'},
         ],

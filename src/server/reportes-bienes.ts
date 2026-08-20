@@ -23,11 +23,27 @@ const ESTADO = `upper(btrim(coalesce(v.activo, '')))`;
 /** Mismo criterio que la vista de bienes: vacío es NULL, nunca ''. */
 const textoONulo = textoONuloSql;
 
-/** Columnas de medición comunes a todos los reportes de bienes. */
+/*
+    Todos los reportes son del patrimonio vigente: sólo los bienes en alta.
+
+    Está en una sola constante para que no se desincronicen entre sí. Un bien dado de baja
+    sigue teniendo área y responsable —el último que tuvo—, y contarlo ahí infla el
+    inventario de un sector con cosas que ya no están.
+
+    Los bienes en baja se consultan desde la grilla de bienes, que tiene su propia vista
+    filtrada, y desde la búsqueda de React, que tiene la solapa "Bienes en baja".
+*/
+const SOLO_ALTA = `${ESTADO} = 'ALTA'`;
+
+/*
+    Columnas de medición comunes a los reportes agrupados.
+
+    No hay cantidad_alta ni cantidad_baja: con el reporte filtrado por alta, la primera
+    sería igual a cantidad y la segunda siempre cero. Una columna que siempre dice lo mismo
+    no informa, confunde.
+*/
 const MEDIDAS = `
-    count(*) AS cantidad,
-    count(*) FILTER (WHERE ${ESTADO} = 'ALTA') AS cantidad_alta,
-    count(*) FILTER (WHERE ${ESTADO} = 'BAJA') AS cantidad_baja`;
+    count(*) AS cantidad`;
 
 export const sqlBienesPorArea = `
 SELECT
@@ -37,6 +53,7 @@ SELECT
     count(DISTINCT nullif(btrim(v.espacio), '')) AS espacios,
     ${MEDIDAS}
 FROM (${sqlBienes}) v
+WHERE ${SOLO_ALTA}
 GROUP BY coalesce(nullif(btrim(v.area), ''), '${SIN_ASIGNAR}')
 `;
 
@@ -151,7 +168,8 @@ SELECT
     ${textoONulo('v.responsable')} AS responsable${seleccionAtributos}
 FROM (${sqlBienes}) v
 ${pivot}
-WHERE btrim(coalesce(v.rubro, '')) = '3'
+WHERE ${SOLO_ALTA}
+  AND btrim(coalesce(v.rubro, '')) = '3'
   AND btrim(coalesce(v.clase, '')) IN (${CLASES_PARQUE_TECNOLOGICO.map(c => `'${c}'`).join(', ')})
 `;
 }
@@ -187,6 +205,7 @@ SELECT
     ${textoONulo('v.modalidad_uso')} AS modalidad_uso,
     ${textoONulo('v.enusode')} AS enusode
 FROM (${sqlBienes}) v
+WHERE ${SOLO_ALTA}
 `;
 
 export const sqlBienesPorResponsable = `
@@ -196,5 +215,6 @@ SELECT
     count(DISTINCT nullif(btrim(v.sede), '')) AS sedes,
     ${MEDIDAS}
 FROM (${sqlBienes}) v
+WHERE ${SOLO_ALTA}
 GROUP BY coalesce(nullif(btrim(v.responsable), ''), '${SIN_ASIGNAR}')
 `;

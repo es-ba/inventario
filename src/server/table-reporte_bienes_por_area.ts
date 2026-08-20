@@ -6,6 +6,10 @@ import {sqlBienesPorArea} from "./reportes-bienes";
 /*
     Reporte: bienes por área.
 
+    Cuenta sólo los bienes en alta: es el patrimonio vigente. Un bien dado de baja
+    conserva el área y el responsable que tuvo, y contarlo ahí infla el inventario de un
+    sector con cosas que ya no están.
+
     Es de sólo lectura y no tiene tabla física detrás. Al abrir una fila se puede bajar al
     detalle de los bienes de esa área.
 */
@@ -19,8 +23,6 @@ export function reporte_bienes_por_area(_context:TableContext):TableDefinition{
         fields:[
             {name:'area'               , typeName:'text'   , title:'área'},
             {name:'cantidad'           , typeName:'bigint' , title:'bienes'},
-            {name:'cantidad_alta'      , typeName:'bigint' , title:'en alta'},
-            {name:'cantidad_baja'      , typeName:'bigint' , title:'en baja'},
             {name:'responsables'       , typeName:'bigint' , title:'responsables'},
             {name:'sedes'              , typeName:'bigint' , title:'sedes'},
             {name:'espacios'           , typeName:'bigint' , title:'espacios'},
