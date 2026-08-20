@@ -30,6 +30,7 @@ import { generarDeclaracionPdf } from './declaracion-pdf-render';
 import { DocumentoEmitido, analizarFirmaPdf, verificarDeclaracionFirmada } from './declaracion-verificacion';
 import { setAtributosDeBienes } from './reportes-bienes';
 import { describirPlan, planificarEdicionMasiva } from './bienes-edicion-masiva';
+import { ESTADO_BAJA, describirBaja, planificarBaja } from './bienes-baja';
 import { generarDocumentoSolicitud } from './solicitud-documento-render';
 import { operacionDeActa } from './solicitud-documento';
 import type { TipoDocumentoSolicitud } from './solicitud-documento';
@@ -950,6 +951,50 @@ export const ProceduresInventario:ProcedureDef[] = [
             return {
                 message:`Se cargó el ${tipo} firmado de la solicitud ${acta}.${reemplazo}`,
                 acta, tipo, version, archivo,
+            };
+        }
+    },
+    {
+        action:'bienes_dar_de_baja',
+        parameters:[
+            {name:'fichas', typeName:'text'},
+            {name:'motivo_baja', typeName:'text'},
+        ],
+        proceedLabel:'dar de baja',
+        coreFunction: async function(context:ProcedureContext, params:any){
+            /*
+                Baja de bienes: pone activo en BAJA y deja el motivo.
+
+                No pasa por la edición masiva porque ésta bloquea activo y motivo_baja a
+                propósito: la baja es un acto administrativo con campos propios, y mezclarla
+                con un update genérico haría que se pudiera dar de baja sin motivo.
+
+                Los que ya estaban de baja no se tocan y se informan aparte. Sin ese filtro,
+                volver a dar de baja pisaría el motivo original con el nuevo.
+            */
+            const client = context.client;
+            if(context.user.rol === 'lectura'){
+                throw new Error('No tiene permisos para dar de baja bienes');
+            }
+
+            const motivos = await client.query(`SELECT motivo_baja FROM motivos_baja`).fetchAll();
+            const plan = planificarBaja(
+                {fichas:params.fichas, motivo:params.motivo_baja},
+                motivos.rows.map((fila:any) => String(fila.motivo_baja)),
+            );
+
+            const result = await client.query(`
+                UPDATE bienes
+                    SET activo = $1, motivo_baja = $2
+                    WHERE ficha = ANY($3::text[])
+                      AND coalesce(upper(btrim(activo)), '') <> $1
+                    RETURNING ficha
+            `, [ESTADO_BAJA, plan.motivo, plan.fichas]).fetchAll();
+
+            return {
+                message:describirBaja(plan.fichas.length, result.rows.length),
+                pedidos:plan.fichas.length,
+                dados_de_baja:result.rows.length,
             };
         }
     },

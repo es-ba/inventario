@@ -12,7 +12,7 @@ import {
     Tabs,
     Typography,
 } from '@mui/material';
-import {Edit, ExpandMore} from '@mui/icons-material';
+import {Block, Edit, ExpandMore} from '@mui/icons-material';
 import type {FieldDefinition, FixedFields, TableDefinition} from 'frontend-plus';
 
 import {useAvisos, useConexion} from '../base/contexto-base';
@@ -25,6 +25,7 @@ import {useRowEditor} from '../base/use-row-editor';
 import type {Fila} from '../base/tipos-tabla';
 import {AdjuntosBien} from './adjuntos-bien';
 import {BienHeader, ResumenDelBien} from './bien-header';
+import {BajaBienes} from '../baja-bienes';
 import {prepararEtiquetasCodigosBarra} from '../../../common/codigos-barra';
 import {imprimirEtiquetasCodigosBarra} from '../imprimir-codigos-barra';
 
@@ -234,6 +235,9 @@ export function BienFormulario({
     const [seccionAbierta, setSeccionAbierta] = React.useState<string>(SECCIONES[0].titulo);
     // Un bien existente se abre para leer; uno nuevo, directo en edición.
     const [editando, setEditando] = React.useState(!ficha);
+    const [bajaAbierta, setBajaAbierta] = React.useState(false);
+    // Se incrementa para releer el bien después de darlo de baja.
+    const [version, setVersion] = React.useState(0);
 
     React.useEffect(() => {
         if(!ficha){
@@ -267,7 +271,7 @@ export function BienFormulario({
                 }
             });
         return () => { cancelado = true; };
-    }, [conn, ficha, mostrarError]);
+    }, [conn, ficha, mostrarError, version]);
 
     // El resumen del encabezado va aparte del bien: es un agregado de otras tablas y no
     // tiene que demorar la carga del formulario. Si falla, el encabezado se muestra igual.
@@ -371,7 +375,21 @@ export function BienFormulario({
         <TabPanel value={solapa} index={0} sinRelleno>
             {!editando
                 ? <>
-                    <Stack direction="row" justifyContent="flex-end" sx={{mb:1}}>
+                    <Stack direction="row" justifyContent="flex-end" spacing={1} sx={{mb:1}}>
+                        {/*
+                            Sólo sobre un bien ya guardado y que no esté de baja: darlo de
+                            baja de nuevo pisaría el motivo original.
+                        */}
+                        {guardado && String(editor.row.activo ?? '').toUpperCase() !== 'BAJA'
+                            ? <Button
+                                variant="outlined"
+                                color="error"
+                                startIcon={<Block/>}
+                                onClick={() => setBajaAbierta(true)}
+                            >
+                                dar de baja
+                            </Button>
+                            : null}
                         <Button variant="outlined" startIcon={<Edit/>} onClick={() => setEditando(true)}>
                             editar
                         </Button>
@@ -446,5 +464,17 @@ export function BienFormulario({
                     </Alert>}
             </TabPanel>
         )}
+
+        <BajaBienes
+            abierto={bajaAbierta}
+            conn={conn}
+            fichas={fichaActual ? [fichaActual] : []}
+            onCerrar={() => setBajaAbierta(false)}
+            onAplicada={(mensaje) => {
+                mostrarMensaje(mensaje);
+                // El bien queda en BAJA: se relee para que la ficha lo muestre.
+                setVersion(v => v + 1);
+            }}
+        />
     </Box>;
 }

@@ -11,7 +11,9 @@ import {
     Typography,
 } from '@mui/material';
 import {
+    Add,
     Download,
+    Block,
     EditNote,
     KeyboardArrowDown,
     LocalShipping,
@@ -78,6 +80,7 @@ import {imprimirEtiquetasCodigosBarra} from './imprimir-codigos-barra';
 import {unmountConnectedAppInventario} from './render-connected-app-inventario';
 import {EdicionMasivaBienes} from './edicion-masiva-bienes';
 import {MoverBienes} from './mover-bienes';
+import {BajaBienes} from './baja-bienes';
 
 declare module 'frontend-plus' {
     interface FieldDefinition {
@@ -117,6 +120,8 @@ type BusquedaBienesProps = {
     fixedFields:FixedFields;
     /** Si se provee, "Abrir" muestra el formulario React en vez de saltar a la grilla legacy. */
     onAbrirBien?:(ficha:string) => void;
+    /** Si se provee, aparece el botón para dar de alta un bien. */
+    onNuevoBien?:() => void;
     accionSeleccion?:AccionSeleccionBienes;
     /** Fichas que no se pueden elegir —ya están en la solicitud—: se ven, pero apagadas. */
     fichasExcluidas?:ReadonlySet<string>;
@@ -260,6 +265,7 @@ export function BusquedaBienes({
     conn,
     fixedFields,
     onAbrirBien,
+    onNuevoBien,
     accionSeleccion,
     fichasExcluidas,
 }:BusquedaBienesProps){
@@ -293,6 +299,7 @@ export function BusquedaBienes({
         React.useState<Map<string, BienesBusquedaRow>>(new Map());
     const [edicionMasivaAbierta, setEdicionMasivaAbierta] = React.useState(false);
     const [moverAbierto, setMoverAbierto] = React.useState(false);
+    const [bajaAbierta, setBajaAbierta] = React.useState(false);
     const [avisoMasivo, setAvisoMasivo] = React.useState<string|null>(null);
     const requestSequence = React.useRef(0);
 
@@ -597,6 +604,21 @@ export function BusquedaBienes({
             <GridToolbarColumnsButton/>
             <GridToolbarFilterButton/>
             <GridToolbarDensitySelector/>
+            {/*
+                Sólo si el contenedor sabe abrir el formulario. Embebida en una solicitud la
+                pantalla sirve para elegir bienes que ya existen, y dar de alta uno ahí no
+                viene al caso.
+            */}
+            {onNuevoBien
+                ? <Button
+                    size="small"
+                    variant="contained"
+                    startIcon={<Add/>}
+                    onClick={onNuevoBien}
+                >
+                    Nuevo bien
+                </Button>
+                : null}
             <Button
                 size="small"
                 startIcon={<Refresh/>}
@@ -653,6 +675,15 @@ export function BusquedaBienes({
                     </Button>
                     <Button
                         size="small"
+                        color="error"
+                        startIcon={<Block/>}
+                        disabled={rowSelectionModel.length === 0}
+                        onClick={() => setBajaAbierta(true)}
+                    >
+                        Dar de baja
+                    </Button>
+                    <Button
+                        size="small"
                         startIcon={<LocalShipping/>}
                         disabled={rowSelectionModel.length === 0}
                         onClick={() => setMoverAbierto(true)}
@@ -671,6 +702,7 @@ export function BusquedaBienes({
         exportRows,
         hasSearched,
         loading,
+        onNuevoBien,
         printSelectedRows,
         rowSelectionModel.length,
     ]);
@@ -827,6 +859,19 @@ export function BusquedaBienes({
                     es lo de antes. Por acta todavía no cambió nada, pero recargar no cuesta
                     y evita tener dos comportamientos según el modo.
                 */
+                clearSelection();
+                setSearchVersion(version => version + 1);
+            }}
+        />
+        <BajaBienes
+            abierto={bajaAbierta}
+            conn={conn}
+            fichas={filasSeleccionadasEnOrden(rowSelectionModel, selectedRows)
+                .map(fila => String(fila.ficha))}
+            onCerrar={() => setBajaAbierta(false)}
+            onAplicada={(mensaje) => {
+                setAvisoMasivo(mensaje);
+                // Los bienes dados de baja salen de la solapa de activos: hay que recargar.
                 clearSelection();
                 setSearchVersion(version => version + 1);
             }}

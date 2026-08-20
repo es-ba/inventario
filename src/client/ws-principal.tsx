@@ -72,6 +72,8 @@ function PantallaPrincipal({
                 conn={conn}
                 fixedFields={fixedFields}
                 onAbrirBien={ficha => setVista({nombre:'bien', ficha})}
+                // Sin ficha, el formulario se abre como alta. Es la misma vista.
+                onNuevoBien={() => setVista({nombre:'bien', ficha:undefined})}
             />
         }
     </Paper>;

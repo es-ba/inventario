@@ -50,6 +50,26 @@ function paresDeReferencia(field:FieldDefinition):{source:string, target:string}
     return declarados.length ? declarados : [{source:field.name, target:field.name}];
 }
 
+/**
+ * Opciones de una referencia, acotadas por las partes de la clave que la fila ya tiene.
+ *
+ * Una parte todavía vacía no filtra: filtrar por nada dejaría el selector en blanco sin
+ * explicación, y es peor que ofrecer de más.
+ */
+export function opcionesDeReferencia(
+    filas:Fila[],
+    condiciones:{source:string, target:string}[],
+    row:Fila,
+):Fila[]{
+    if(condiciones.length === 0){
+        return filas;
+    }
+    return filas.filter(fila => condiciones.every(({source, target}) => {
+        const impuesto = row[source];
+        return impuesto == null || impuesto === '' || fila[target] === impuesto;
+    }));
+}
+
 function CampoReferencia({field, row, setField, disabled, error, size}:FormFieldRendererProps){
     const {filas, cargando} = useDatosReferencial(field.references);
     const {definicion} = useEstructuraTabla(field.references);
@@ -73,13 +93,39 @@ function CampoReferencia({field, row, setField, disabled, error, size}:FormField
         [camposVisibles],
     );
 
+    /*
+        En una referencia compuesta, las partes de la clave que ya están elegidas acotan la
+        lista. El valor de un atributo se identifica por (atributo, valor): sin esto, al
+        cargar la memoria RAM de una notebook se ofrecen también los tamaños de pantalla y
+        los colores de etiqueta, que son valores de otros atributos.
+
+        Vale para toda referencia compuesta, no sólo para ésta: elegir una clase ofrece las
+        del rubro elegido, y una cuenta las de esa clase.
+
+        Si la parte que condiciona todavía está vacía se muestra todo: filtrar por nada no
+        tiene sentido y dejaría el selector en blanco sin explicación.
+    */
+    const condiciones = pares.filter(par => par.source !== field.name);
+    const claveCondiciones = JSON.stringify(condiciones.map(({source}) => row[source] ?? null));
+    const opciones = React.useMemo(
+        () => opcionesDeReferencia(filas, condiciones, row),
+        // condiciones se rearma en cada render; lo que importa es qué valores impone la fila
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [filas, claveCondiciones],
+    );
+
+    /*
+        La seleccionada se busca en la lista completa y no en la filtrada: si la fila ya
+        tenía un valor que no encaja con el atributo actual, se muestra igual en vez de
+        aparecer vacía como si no hubiera nada cargado.
+    */
     const seleccionada = filas.find(
         fila => pares.every(({source, target}) => fila[target] === row[source]),
     ) ?? null;
 
     return <Autocomplete
         size={size}
-        options={filas}
+        options={opciones}
         value={seleccionada}
         loading={cargando}
         fullWidth
