@@ -380,7 +380,7 @@ export function BienFormulario({
                             Sólo sobre un bien ya guardado y que no esté de baja: darlo de
                             baja de nuevo pisaría el motivo original.
                         */}
-                        {guardado && String(editor.row.activo ?? '').toUpperCase() !== 'BAJA'
+                        {guardado && editor.row.activo !== false
                             ? <Button
                                 variant="outlined"
                                 color="error"

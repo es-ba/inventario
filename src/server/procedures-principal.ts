@@ -30,7 +30,7 @@ import { generarDeclaracionPdf } from './declaracion-pdf-render';
 import { DocumentoEmitido, analizarFirmaPdf, verificarDeclaracionFirmada } from './declaracion-verificacion';
 import { setAtributosDeBienes } from './reportes-bienes';
 import { describirPlan, planificarEdicionMasiva } from './bienes-edicion-masiva';
-import { ESTADO_BAJA, describirBaja, planificarBaja } from './bienes-baja';
+import { describirBaja, planificarBaja } from './bienes-baja';
 import { generarDocumentoSolicitud } from './solicitud-documento-render';
 import { operacionDeActa } from './solicitud-documento';
 import type { TipoDocumentoSolicitud } from './solicitud-documento';
@@ -199,8 +199,8 @@ export const ProceduresInventario:ProcedureDef[] = [
             const where:string[] = [`
                 (
                     $1 = ''
-                    OR ($1 = 'baja' AND lower(coalesce(b.activo, '')) = 'baja')
-                    OR ($1 = 'activo' AND lower(coalesce(b.activo, '')) <> 'baja')
+                    OR ($1 = 'baja' AND NOT b.activo)
+                    OR ($1 = 'activo' AND b.activo)
                 )
             `];
 
@@ -363,8 +363,8 @@ export const ProceduresInventario:ProcedureDef[] = [
             const grilla = {
             tableName: 'bienes',
             fixedFields: [
-                { fieldName: 'activo', value: 'alta' },
-            ],
+                { fieldName: 'activo', value: true },
+            ] as {fieldName:string, value:unknown}[],
             tableDef: {
                 title: 'Declaracion de Bienes',
                 firstDisplayOverLimit: 20000,
@@ -963,7 +963,7 @@ export const ProceduresInventario:ProcedureDef[] = [
         proceedLabel:'dar de baja',
         coreFunction: async function(context:ProcedureContext, params:any){
             /*
-                Baja de bienes: pone activo en BAJA y deja el motivo.
+                Baja de bienes: pone activo en false y deja el motivo.
 
                 No pasa por la edición masiva porque ésta bloquea activo y motivo_baja a
                 propósito: la baja es un acto administrativo con campos propios, y mezclarla
@@ -985,11 +985,11 @@ export const ProceduresInventario:ProcedureDef[] = [
 
             const result = await client.query(`
                 UPDATE bienes
-                    SET activo = $1, motivo_baja = $2
-                    WHERE ficha = ANY($3::text[])
-                      AND coalesce(upper(btrim(activo)), '') <> $1
+                    SET activo = false, motivo_baja = $1
+                    WHERE ficha = ANY($2::text[])
+                      AND activo
                     RETURNING ficha
-            `, [ESTADO_BAJA, plan.motivo, plan.fichas]).fetchAll();
+            `, [plan.motivo, plan.fichas]).fetchAll();
 
             return {
                 message:describirBaja(plan.fichas.length, result.rows.length),

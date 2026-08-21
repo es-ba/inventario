@@ -8,15 +8,13 @@ import {TOPE_FICHAS} from './bienes-edicion-masiva';
     Módulo puro —entra el pedido, sale lo que hay que ejecutar— para poder probar la parte
     delicada sin base.
 
-    Dar de baja es un acto directo: pone bienes.activo en BAJA y deja asentado el motivo.
+    Dar de baja es un acto directo: pone bienes.activo en false y deja asentado el motivo.
     No usa estado_baja: ese referencial existe para un circuito de solicitud y aprobación
     que hoy no está implementado, y llenarlo a medias sería peor que dejarlo vacío.
 
     Quién y cuándo no se guardan acá: los registra la auditoría, que ya anota cada cambio de
     campo con usuario y fecha.
 */
-
-export const ESTADO_BAJA = 'BAJA';
 
 export class ErrorBaja extends Error {}
 

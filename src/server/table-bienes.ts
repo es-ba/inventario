@@ -132,7 +132,16 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'importe'                     , typeName:'text'    , nullable:true},
             {name:'importetotal'                , typeName:'text'    , nullable:true},
             {name:'tipo_bien'                   , typeName:'text'    , nullable:true},
-            {name:'activo'                      , typeName:'text'    , nullable:true},
+            /*
+                Situación patrimonial. Era texto contra un referencial de tres valores
+                —ALTA, BAJA, ENDESUSO—, pero ENDESUSO nunca se usó y lo único que se
+                preguntaba era si el bien está o no está.
+
+                NOT NULL con default true: un bien sin dato es un bien en alta. Es lo que
+                ya asumía la búsqueda, que mostraba los 3679 sin valor en la solapa de
+                activos. Dejarlo nullable devolvería el tercer estado que estamos sacando.
+            */
+            {name:'activo'                      , typeName:'boolean' , nullable:false, defaultValue:true},
             {name:'estado'                      , typeName:'text'    , nullable:true},
             {name:'categoria'                   , typeName:'text'    , nullable:true},
             {name:'rubro'                       , typeName:'text'    , nullable:true},
@@ -177,7 +186,6 @@ export function bienes(context:TableContext):TableDefinition{
             {references:'grupos', fields:['grupo']},
             {references:'motivos_baja', fields:['motivo_baja']},
             {references:'categoria_bien', fields:['categoria']},
-            {references:'estados_activo', fields:['activo']},
             {references:'estados_bien', fields:[{source:'estado', target:'estado_bien'}], displayFields:[]},
             {references:'estados_baja', fields:['estado_baja']},
             {references:'marcas', fields:['marca']},

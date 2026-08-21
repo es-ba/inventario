@@ -360,9 +360,10 @@ export function buildBienesBusquedaQueries(
     };
     const where: string[] = [`(${options.visibilitySql})`];
     if (request.estado === 'activo') {
-        where.push(`lower(coalesce(b.activo, '')) <> 'baja'`);
+        // activo es booleano y no admite nulos: alcanza con nombrarlo.
+        where.push(`b.activo`);
     } else if (request.estado === 'baja') {
-        where.push(`lower(coalesce(b.activo, '')) = 'baja'`);
+        where.push(`NOT b.activo`);
     }
     if (request.filters.length) {
         const separator = request.logicOperator === 'or' ? ' OR ' : ' AND ';

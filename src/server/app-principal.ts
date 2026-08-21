@@ -24,7 +24,6 @@ import { areas } from './table-areas';
 import { categoria_bien } from "./table-categoria_bien";
 import { estados_baja } from "./table-estados_baja";
 import { estados_bien } from "./table-estados_bien";
-import { estados_activo } from "./table-estados_activo";
 import { marcas } from "./table-marcas";
 import { modalidad_uso } from "./table-modalidad_uso";
 import { motivos_baja } from "./table-motivos_baja";
@@ -261,14 +260,14 @@ export class AppInventario extends AppBackend{
             {menuType:'principal', name:'principal', label:'principal'     },
             {menuType: 'menu', name: 'bienes' , label: 'inventario', menuContent: [
                 {menuType: 'table', name: 'bienes', label: 'todos', selectedByDefault: true},
-                {menuType: 'table', name: 'bienes_activos', table: 'bienes', label: 'bienes en alta', ff: {activo: 'ALTA'}},
-                {menuType: 'table', name: 'bienes_inactivos', table: 'bienes', label: 'bienes en baja', ff: {activo: 'BAJA'}},
+                {menuType: 'table', name: 'bienes_activos', table: 'bienes', label: 'bienes en alta', ff: {activo: true}},
+                {menuType: 'table', name: 'bienes_inactivos', table: 'bienes', label: 'bienes en baja', ff: {activo: false}},
             ]},            
             {menuType: 'menu', name: 'operaciones', label: 'operaciones', menuContent: [
                 {menuType: 'table', name: 'declaraciones', label: 'declaraciones'},
                 {menuType: 'solicitudes', name: 'solicitudes_movimiento', label: 'solicitudes de movimiento'},
-                {menuType: 'table', name: 'movimientos_solicitudes', label: 'solicitudes (grilla)'},
-                {menuType: 'table', name: 'movimientos_solicitudes_acciones', label: 'acciones en solicitudes'},
+                {menuType: 'table', name: 'movimientos_solicitudes_acciones', label: 'solicitudes (con acciones)'},
+                {menuType: 'table', name: 'movimientos_solicitudes', label: 'solicitudes (sólo datos)'},
             ]},
 
             {menuType: 'menu', name: 'reportes', label: 'reportes', menuContent: [
@@ -313,7 +312,6 @@ export class AppInventario extends AppBackend{
                     ]},
                       {menuType: 'menu', name: 'definiciones_estados', label: 'estados y flujos', menuContent: [
                           {menuType: 'table', name: 'estados_bien', label: 'estados del bien'},
-                          {menuType: 'table', name: 'estados_activo', label: 'activo'},
                           {menuType: 'table', name: 'estado_ordencompra', label: 'estados de OC'},
                           {menuType: 'table', name: 'estados', label: 'estados de movimientos'},
                           {menuType: 'table', name: 'motivos_baja', label: 'motivos de baja'},
@@ -358,7 +356,6 @@ export class AppInventario extends AppBackend{
             estados_baja,
             estados_movimiento,
             estados_bien,
-            estados_activo,
             acciones,
             estados,
             estados_acciones,

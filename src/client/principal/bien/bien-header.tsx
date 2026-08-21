@@ -50,18 +50,10 @@ function conDescripcion(fila:Fila, campo:string):string{
     return (descriptivo ? comoTexto(fila[descriptivo]) : '') || comoTexto(fila[campo]);
 }
 
-function colorDeEstado(estado:string):'success'|'default'|'warning'{
-    const normalizado = estado.toUpperCase();
-    if(normalizado === 'ALTA'){
-        return 'success';
-    }
-    if(normalizado === 'BAJA'){
-        return 'default';
-    }
-    return 'warning';
+function estaEnAlta(row:Fila):boolean{
+    return row.activo !== false;
 }
 
-/** "12/03/2026 · alta · Pérez, Ana" con las partes que existan. */
 function ultimoMovimiento(resumen:ResumenDelBien):string{
     return [
         formatearValor(resumen.ultimo_movimiento_fecha),
@@ -112,7 +104,7 @@ export function BienHeader({
     const descripcion = comoTexto(row.detalle)
         || comoTexto(row.observacion)
         || comoTexto(row.modelo);
-    const estado = comoTexto(row.activo);
+    const enAlta = estaEnAlta(row);
     const categoria = comoTexto(row.categoria);
     const responsable = conDescripcion(row, 'responsable');
     const ubicacion = [
@@ -146,9 +138,11 @@ export function BienHeader({
                     <Typography variant="h6" component="div" sx={{fontWeight:600}}>
                         Ficha {ficha || '—'}
                     </Typography>
-                    {estado
-                        ? <Chip label={estado} size="small" color={colorDeEstado(estado)}/>
-                        : null}
+                    <Chip
+                        label={enAlta ? 'Alta' : 'Baja'}
+                        size="small"
+                        color={enAlta ? 'success' : 'default'}
+                    />
                     {categoria
                         ? <Chip label={categoria} size="small" variant="outlined"/>
                         : null}

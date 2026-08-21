@@ -18,8 +18,6 @@ import {sqlBienes, textoONuloSql} from './table-bienes';
 /** Etiqueta para los bienes que todavía no tienen movimiento que los ubique. */
 export const SIN_ASIGNAR = '(sin asignar)';
 
-const ESTADO = `upper(btrim(coalesce(v.activo, '')))`;
-
 /** Mismo criterio que la vista de bienes: vacío es NULL, nunca ''. */
 const textoONulo = textoONuloSql;
 
@@ -32,8 +30,12 @@ const textoONulo = textoONuloSql;
 
     Los bienes en baja se consultan desde la grilla de bienes, que tiene su propia vista
     filtrada, y desde la búsqueda de React, que tiene la solapa "Bienes en baja".
+
+    activo es booleano y no admite nulos, así que alcanza con nombrarlo. Cuando era texto
+    esto comparaba contra 'ALTA' y dejaba afuera los 3679 bienes sin valor, que la búsqueda
+    sí mostraba como activos: los reportes contaban un tercio menos de lo que había.
 */
-const SOLO_ALTA = `${ESTADO} = 'ALTA'`;
+const SOLO_ALTA = `v.activo`;
 
 /*
     Columnas de medición comunes a los reportes agrupados.
@@ -157,7 +159,7 @@ SELECT
     ${textoONulo('v.serie')} AS serie,
     ${textoONulo('v.imei')} AS imei,
     ${textoONulo('v.linea')} AS linea,
-    ${textoONulo('v.activo')} AS activo,
+    v.activo AS activo,
     ${textoONulo('v.estado')} AS estado,
     ${textoONulo('v.rubro')} AS rubro,
     ${textoONulo('v.clase')} AS clase,
@@ -190,7 +192,7 @@ SELECT
     ${textoONulo('v.marca')} AS marca,
     ${textoONulo('v.modelo')} AS modelo,
     ${textoONulo('v.serie')} AS serie,
-    ${textoONulo('v.activo')} AS activo,
+    v.activo AS activo,
     ${textoONulo('v.estado')} AS estado,
     ${textoONulo('v.categoria')} AS categoria,
     ${textoONulo('v.tipo_bien')} AS tipo_bien,

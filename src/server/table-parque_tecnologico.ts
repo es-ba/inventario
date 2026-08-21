@@ -44,7 +44,7 @@ export function parque_tecnologico(_context:TableContext):TableDefinition{
             {name:'serie'       , typeName:'text', title:'serie'      , nullable:true},
             {name:'imei'        , typeName:'text', title:'IMEI'       , nullable:true},
             {name:'linea'       , typeName:'text', title:'línea'      , nullable:true},
-            {name:'activo'      , typeName:'text', title:'activo'     , nullable:true},
+            {name:'activo'      , typeName:'boolean', title:'activo'   , nullable:false},
             {name:'estado'      , typeName:'text', title:'estado'     , nullable:true},
             {name:'rubro'       , typeName:'text', title:'rubro'      , nullable:true},
             {name:'clase'       , typeName:'text', title:'clase'      , nullable:true},
@@ -59,7 +59,6 @@ export function parque_tecnologico(_context:TableContext):TableDefinition{
         foreignKeys:[
             {references:'grupos'      , fields:['grupo']      , displayFields:['descripcion']},
             {references:'marcas'      , fields:['marca']      , displayFields:['descripcion']},
-            {references:'estados_activo', fields:['activo'], displayFields:['descripcion']},
             // displayFields vacío: el código ya es el texto, agregar la columna del
             // referencial sería repetirlo al lado.
             {references:'estados_bien', fields:[{source:'estado', target:'estado_bien'}], displayFields:[]},

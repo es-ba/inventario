@@ -26,7 +26,7 @@ export function reporte_bienes_listado(_context:TableContext):TableDefinition{
             {name:'marca'           , typeName:'text', title:'marca'              , nullable:true},
             {name:'modelo'          , typeName:'text', title:'modelo'             , nullable:true},
             {name:'serie'           , typeName:'text', title:'serie'              , nullable:true},
-            {name:'activo'          , typeName:'text', title:'activo'             , nullable:true},
+            {name:'activo'          , typeName:'boolean', title:'activo'          , nullable:false},
             {name:'estado'          , typeName:'text', title:'estado'             , nullable:true},
             {name:'categoria'       , typeName:'text', title:'categoría'          , nullable:true},
             {name:'tipo_bien'       , typeName:'text', title:'tipo'               , nullable:true},
@@ -44,7 +44,6 @@ export function reporte_bienes_listado(_context:TableContext):TableDefinition{
         primaryKey:['ficha'],
         foreignKeys:[
             {references:'marcas'         , fields:['marca']          , displayFields:['descripcion']},
-            {references:'estados_activo' , fields:['activo'], displayFields:['descripcion']},
             // Sin displayFields: el código ya es el texto del estado.
             {references:'estados_bien'   , fields:[{source:'estado', target:'estado_bien'}], displayFields:[]},
             {references:'categoria_bien' , fields:['categoria'], displayFields:['descripcion']},
