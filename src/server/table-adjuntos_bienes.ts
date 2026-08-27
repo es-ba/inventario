@@ -13,12 +13,10 @@ export const numero_adjunto: FieldDefinition = {
 
 export function adjuntos_bienes(context:TableContext):TableDefinition{
     var be = context.be;
-    var admin = context.user.rol==='admin';
-    var responsable = context.user.rol==='responsable';
     return {
         name:'adjuntos_bienes',
         elementName:'adjunto',
-        editable: admin || responsable,
+        editable:context.es.administrativo,
         fields:[
             {name:'ficha'      , typeName:'text'     },
             {...numero_adjunto, sequence:{ firstValue:101, name:'numero_adjunto_seq' }},

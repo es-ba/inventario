@@ -3,7 +3,7 @@
 //       ,[tipo]
 //       ,[ubicacion]
 //       ,[denominacion]
-//       ,[area]
+//       ,[sector]
 //       ,[responsable]
 //       ,[sede]
 "use strict";
@@ -15,7 +15,7 @@ export function espacios(context:TableContext):TableDefinition{
     return {
         name:'espacios',
         elementName:'espacio', 
-        title:'espacio', // solo si es distinto al "name", si es igual se puede omitir
+        title:'espacio',
         editable:admin,
         fields:[
             {name:'espacio'             , typeName:'text'    }, 
@@ -23,7 +23,7 @@ export function espacios(context:TableContext):TableDefinition{
             {name:'tipo'                , typeName:'text'    }, 
             {name:'ubicacion'           , typeName:'text'    , isName:true}, 
             {name:'denominacion'        , typeName:'text'    , isName:true},
-            {name:'area'                , typeName:'text'    },
+            {name:'sector'                , typeName:'text'    },
             {name:'responsable'         , typeName:'text'    },
             {name:'sede'                , typeName:'text'    },
             {name:'id_anterior'         , typeName:'text'    },
@@ -32,7 +32,7 @@ export function espacios(context:TableContext):TableDefinition{
         foreignKeys:[
             {references:'tipo_espacio', fields:[{ source: 'tipo', target: 'tipo_espacio' }]},
             {references:'responsables', fields:['responsable']},
-            {references:'areas', fields:['area']},
+            {references:'sectores', fields:['sector']},
             {references:'sedes', fields:['sede']}
         ],
         constraints:[
@@ -51,8 +51,8 @@ export function espacios(context:TableContext):TableDefinition{
         //        Acá las "policies" se heredan de la tabla padre, lo cual lo hace más complejo aún.
         //     */
         //     policies:{
-        //         all:{using:`(SELECT ${pol.all.using} FROM bienes WHERE area = bienes.area)`},
-        //         select:{using:`(SELECT ${pol.select.using} FROM bienes WHERE area = bienes.area)`}
+        //         all:{using:`(SELECT ${pol.all.using} FROM bienes WHERE sector = bienes.sector)`},
+        //         select:{using:`(SELECT ${pol.select.using} FROM bienes WHERE sector = bienes.sector)`}
         //     }
         // },
         sortColumns:[{column:'espacio', order:1}]

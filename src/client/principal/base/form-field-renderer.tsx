@@ -14,10 +14,6 @@ import {useDatosReferencial, useEstructuraTabla} from './cache-tablas';
 import {aValorFechaInput, formatearValor} from './formato-valores';
 import {Fila, nombreDeTipo} from './tipos-tabla';
 
-/**
- * Texto para un input. Los strings se dejan intactos —reformatearlos rompería la
- * edición— y sólo los valores tipados que manda el backend se convierten.
- */
 function comoTextoEditable(value:unknown):string{
     if(value == null){
         return '';
@@ -25,13 +21,6 @@ function comoTextoEditable(value:unknown):string{
     return typeof value === 'object' ? formatearValor(value) : String(value);
 }
 
-/*
-    Renderiza un campo de formulario a partir de su FieldDefinition.
-
-    Las fechas usan el input nativo de HTML, como ya hace filtros-compuestos.tsx, para no
-    sumarle @mui/x-date-pickers y date-fns al bundle —que ya está en 714 KB— por un
-    control que el navegador trae de fábrica.
-*/
 
 export type FormFieldRendererProps = {
     field:FieldDefinition,
@@ -44,18 +33,11 @@ export type FormFieldRendererProps = {
     size?:'small'|'medium',
 };
 
-/** Pares (campo local, campo referenciado) de la FK; por defecto el campo consigo mismo. */
 function paresDeReferencia(field:FieldDefinition):{source:string, target:string}[]{
     const declarados = field.referencesFields ?? [];
     return declarados.length ? declarados : [{source:field.name, target:field.name}];
 }
 
-/**
- * Opciones de una referencia, acotadas por las partes de la clave que la fila ya tiene.
- *
- * Una parte todavía vacía no filtra: filtrar por nada dejaría el selector en blanco sin
- * explicación, y es peor que ofrecer de más.
- */
 export function opcionesDeReferencia(
     filas:Fila[],
     condiciones:{source:string, target:string}[],
@@ -81,7 +63,6 @@ function CampoReferencia({field, row, setField, disabled, error, size}:FormField
         const unidos = [...objetivos, ...nombres]
             .filter((nombre, i, todos) => nombre && todos.indexOf(nombre) === i);
         return unidos.length ? unidos : [field.name];
-        // pares se recalcula en cada render pero su contenido depende sólo del field
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [definicion, field.name, field.references]);
 
@@ -93,32 +74,14 @@ function CampoReferencia({field, row, setField, disabled, error, size}:FormField
         [camposVisibles],
     );
 
-    /*
-        En una referencia compuesta, las partes de la clave que ya están elegidas acotan la
-        lista. El valor de un atributo se identifica por (atributo, valor): sin esto, al
-        cargar la memoria RAM de una notebook se ofrecen también los tamaños de pantalla y
-        los colores de etiqueta, que son valores de otros atributos.
-
-        Vale para toda referencia compuesta, no sólo para ésta: elegir una clase ofrece las
-        del rubro elegido, y una cuenta las de esa clase.
-
-        Si la parte que condiciona todavía está vacía se muestra todo: filtrar por nada no
-        tiene sentido y dejaría el selector en blanco sin explicación.
-    */
     const condiciones = pares.filter(par => par.source !== field.name);
     const claveCondiciones = JSON.stringify(condiciones.map(({source}) => row[source] ?? null));
     const opciones = React.useMemo(
         () => opcionesDeReferencia(filas, condiciones, row),
-        // condiciones se rearma en cada render; lo que importa es qué valores impone la fila
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [filas, claveCondiciones],
     );
 
-    /*
-        La seleccionada se busca en la lista completa y no en la filtrada: si la fila ya
-        tenía un valor que no encaja con el atributo actual, se muestra igual en vez de
-        aparecer vacía como si no hubiera nada cargado.
-    */
     const seleccionada = filas.find(
         fila => pares.every(({source, target}) => fila[target] === row[source]),
     ) ?? null;

@@ -3,40 +3,42 @@
 import { FieldDefinition } from "backend-plus";
 import {TableDefinition, TableContext} from "./types-principal";
 
-export const area: FieldDefinition = {name: 'area', typeName: 'text', title: 'area'}
+export const sector: FieldDefinition = {name: 'sector', typeName: 'text', title: 'sector'}
 
-export function areas(context:TableContext):TableDefinition{
+export function sectores(context:TableContext):TableDefinition{
     var admin = context.user.rol==='admin';
     return {
-        name:'areas',
-        elementName:'área', 
-        title:'áreas', // solo si es distinto al "name", si es igual se puede omitir
+        name:'sectores',
+        elementName:'sector', 
+        title:'sectores',
         editable:admin,
         fields:[
-            area,
-            {name:'nombre_area'        , typeName:'text'        , isName:true},
-            // La sigla es como se nombra al área en el organismo, y hoy es lo único
-            // cargado: nombre_area viene vacío del origen. Marcarla como isName hace que
-            // los selectores y las FK la muestren en vez de dejar sólo el código.
+            sector,
+            {name:'nombre_sector'        , typeName:'text'        , isName:true},
             {name:'sigla'              , typeName:'text'        , isName:true},
-            {name:'descripcion'        , typeName:'text'        }, 
-            {name:'jerarquia'          , typeName:'text'        , nullable:true}, 
-            {name:'pertenece_a'        , typeName:area.typeName , nullable:true, defaultValue:null },
+            {name:'descripcion'        , typeName:'text'        },
+            {name:'pertenece_a'        , typeName:sector.typeName , nullable:true, defaultValue:null },
             {name:'activo'             , typeName:'boolean'    , nullable: false, defaultValue: true},
             {name:'responsable'        , typeName:'text'        , nullable:true},
-            {name:'tipo_area'          , typeName:'text'        },
+            {name:'tipo_sector'        , typeName:'text'        },
+            {name:'id_anterior'        , typeName:'text'        , nullable:true},
             {name:'fecha_creacion'     , typeName:'date'        , defaultValue:null},
             {name:'fecha_modificacion' , typeName:'date'        , nullable:true, defaultValue:null},
         ],
-        primaryKey:[area.name],
+        primaryKey:[sector.name],
         foreignKeys:[
-            {references:'areas', fields:[{source:'pertenece_a', target:'area'}], alias: 'pertenece_a'},
-            {references:'tipo_area', fields:['tipo_area']},
+            {references:'sectores', fields:[{source:'pertenece_a', target:'sector'}], alias: 'pertenece_a'},
+            {references:'tipo_sector', fields:['tipo_sector'], displayFields:['descripcion']},
             {references:'responsables', fields:['responsable']},
-            {references:'jerarquias', fields:['jerarquia']},
+        ],
+        detailTables:[
+            {table:'sectores', fields:[{source:'sector', target:'pertenece_a'}],
+                abr:'Sec', label:'Sectores que dependen'},
+            {table:'espacios', fields:['sector'], abr:'Esp', label:'Espacios'},
+            {table:'responsables', fields:['sector'], abr:'Per', label:'Personal'},
         ],
         constraints:[
-            {constraintType:'unique', fields:['area']}
+            {constraintType:'unique', fields:['sector']}
         ],
         // sql:{
         //     /* 
@@ -51,10 +53,10 @@ export function areas(context:TableContext):TableDefinition{
         //        Acá las "policies" se heredan de la tabla padre, lo cual lo hace más complejo aún.
         //     */
         //     policies:{
-        //         all:{using:`(SELECT ${pol.all.using} FROM bienes WHERE area = bienes.area)`},
-        //         select:{using:`(SELECT ${pol.select.using} FROM bienes WHERE area = bienes.area)`}
+        //         all:{using:`(SELECT ${pol.all.using} FROM bienes WHERE sector = bienes.sector)`},
+        //         select:{using:`(SELECT ${pol.select.using} FROM bienes WHERE sector = bienes.sector)`}
         //     }
         // },
-        sortColumns:[{column:'area', order:1}]
+        sortColumns:[{column:'sector', order:1}]
     };
 }

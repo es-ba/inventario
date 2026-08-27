@@ -10,23 +10,20 @@ export function responsables(context:TableContext):TableDefinition{
     return {
         name:'responsables',
         elementName:'responsable', 
-        title:'Responsables', // solo si es distinto al "name", si es igual se puede omitir
+        title:'Responsables',
         editable:admin,
         fields:[
-            responsable,
+            {...responsable, nullable:true, editable:false},
             {name:'nombre'                  , typeName:'text'       },  
             {name:'apellido'                , typeName:'text'       , isName:true}, 
             {name:'mail'                    , typeName:'text'       },
-            // Datos personales que pide el comodato (F-SA-12). Sin ellos el documento sale
-            // con líneas de puntos para completar a mano.
             {name:'dni'                     , typeName:'text'    , nullable:true},
             {name:'domicilio'               , typeName:'text'    , nullable:true},
             {name:'telefono'                , typeName:'text'    , nullable:true},
-            // El cargo con el que la persona firma: "Director Ejecutivo", "agente", etc.
             {name:'caracter'                , typeName:'text'    , nullable:true},
             {name:'situacion_revista'       , typeName:'text'    , nullable:true},
             {name:'externo'                 , typeName:'boolean'    , defaultValue:false},
-            {name:'usuario'                 , typeName:'text'       , nullable:true},
+            {name:'sector'                  , typeName:'text'    , nullable:true},
             {name:'activo'                  , typeName:'boolean'    , defaultValue:true},
             {name:'fecha_creacion'          , typeName:'date'    , defaultDbValue:'current_date'},
             {name:'fecha_modificacion'      , typeName:'date'    , nullable:true, defaultValue:null},
@@ -38,7 +35,10 @@ export function responsables(context:TableContext):TableDefinition{
             {constraintType:'unique', fields:['responsable']}
         ],
         foreignKeys:[
-            {references:'usuarios', fields:['usuario']},
+            {references:'sectores', fields:['sector'], displayFields:['sigla']},
+        ],
+        detailTables:[
+            {table:'usuarios', fields:['responsable'], abr:'Usu', label:'Usuarios'},
         ],
         // sql:{
         //     /* 
@@ -53,8 +53,8 @@ export function responsables(context:TableContext):TableDefinition{
         //        Acá las "policies" se heredan de la tabla padre, lo cual lo hace más complejo aún.
         //     */
         //     policies:{
-        //         all:{using:`(SELECT ${pol.all.using} FROM bienes WHERE area = bienes.area)`},
-        //         select:{using:`(SELECT ${pol.select.using} FROM bienes WHERE area = bienes.area)`}
+        //         all:{using:`(SELECT ${pol.all.using} FROM bienes WHERE sector = bienes.sector)`},
+        //         select:{using:`(SELECT ${pol.select.using} FROM bienes WHERE sector = bienes.sector)`}
         //     }
         // },
         sortColumns:[{column:'responsable', order:1}]

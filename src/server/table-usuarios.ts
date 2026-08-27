@@ -11,6 +11,7 @@ export function usuarios(context:TableContext):TableDefinition{
         fields:[
             {name:'usuario'          , typeName:'text'    , nullable:false  },
             {name:'rol'              , typeName:'text'    },
+            {name:'responsable'      , typeName:'text'    , nullable:true},
             {name:'md5clave'         , typeName:'text'    , allow:{select: context.forDump} },
             {name:'activo'           , typeName:'boolean' , nullable:false ,defaultValue:false},
             {name:'nombre'           , typeName:'text'                      },
@@ -24,6 +25,7 @@ export function usuarios(context:TableContext):TableDefinition{
         primaryKey:['usuario'],
         foreignKeys:[
             {references:'roles', fields:[{ source: 'rol', target: 'rol' }]},
+            {references:'responsables', fields:['responsable'], displayFields:['apellido','nombre']},
         ],
         sql:{
             where:admin || context.forDump?'true':"usuario = "+context.be.db.quoteNullable(context.user.usuario)

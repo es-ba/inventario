@@ -4,14 +4,6 @@ import {Button, Chip, CircularProgress, Stack} from '@mui/material';
 import {useAvisos, useConexion} from '../base/contexto-base';
 import type {EstadoAccion} from '../../../common/contracts';
 
-/*
-    Barra de acciones de una solicitud.
-
-    Las acciones no se calculan acá: la vista movimientos_solicitudes_acciones ya devuelve,
-    por cada solicitud, las que su estado habilita y cuya condición se cumple —lo resuelve
-    accion_cumple_condicion del lado de la base—. Este componente sólo las dibuja y las
-    ejecuta. Así la máquina de estados sigue viviendo en un solo lugar.
-*/
 
 declare module 'frontend-plus' {
     interface BEAPI {
@@ -25,7 +17,6 @@ const COLOR_POR_DIRECCION:Record<string, 'primary'|'warning'|'inherit'> = {
     blanqueo:'inherit',
 };
 
-/** El jsonb puede llegar como arreglo o como texto sin parsear. */
 export function accionesDe(valor:unknown):EstadoAccion[]{
     if(Array.isArray(valor)){
         return valor as EstadoAccion[];
@@ -41,7 +32,6 @@ export function accionesDe(valor:unknown):EstadoAccion[]{
     return [];
 }
 
-/** El botón muestra el nombre de la acción, no su código interno. */
 export function etiquetaDeAccion(accion:EstadoAccion):string{
     const abreviatura = String(accion.abr_eaccion ?? '').trim();
     return abreviatura !== '' ? abreviatura : accion.eaccion.replace(/_/g, ' ');

@@ -7,13 +7,11 @@
 import {TableDefinition, TableContext} from "./types-principal";
 
 export function grupos(context:TableContext):TableDefinition{
-    var admin = context.user.rol==='admin';
-    var responsable = context.user.rol==='responsable';
     return {
         name:'grupos',
         elementName:'grupo', 
-        title:'Grupos', // solo si es distinto al "name", si es igual se puede omitir
-        editable:admin || responsable,
+        title:'Grupos',
+        editable:context.es.administrativo,
         fields:[
             {name:'grupo'             , typeName:'text'    }, 
             {name:'pertenece_a'       , typeName:'text'    },  
@@ -36,8 +34,8 @@ export function grupos(context:TableContext):TableDefinition{
         //        Acá las "policies" se heredan de la tabla padre, lo cual lo hace más complejo aún.
         //     */
         //     policies:{
-        //         all:{using:`(SELECT ${pol.all.using} FROM bienes WHERE area = bienes.area)`},
-        //         select:{using:`(SELECT ${pol.select.using} FROM bienes WHERE area = bienes.area)`}
+        //         all:{using:`(SELECT ${pol.all.using} FROM bienes WHERE sector = bienes.sector)`},
+        //         select:{using:`(SELECT ${pol.select.using} FROM bienes WHERE sector = bienes.sector)`}
         //     }
         // },
         sortColumns:[{column:'grupo', order:1}]

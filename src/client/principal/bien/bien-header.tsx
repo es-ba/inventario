@@ -16,37 +16,20 @@ export type ResumenDelBien = {
     ultima_declaracion_estado?:unknown,
 };
 
-/*
-    Encabezado del bien: lo que hay que ver siempre, aunque se cambie de solapa.
-
-    La ubicación y el responsable no son campos del bien: salen del último movimiento,
-    resueltos por la vista de la tabla. Por eso se muestran acá y no en el formulario,
-    donde parecerían editables.
-*/
 
 function comoTexto(valor:unknown):string{
     return valor == null ? '' : String(valor).trim();
 }
 
-/*
-    Nombre descriptivo de una referencia del bien.
-
-    Leía <campo>_texto. Esas columnas existen en la vista pero no están declaradas como
-    campos de la tabla, así que backend-plus no las selecciona: la lectura daba siempre
-    undefined y el encabezado terminaba mostrando el código pelado —"27", "138"—.
-
-    Las que sí llegan son las que la definición declara.
-*/
 const CAMPO_DESCRIPTIVO:Record<string, string> = {
     responsable:'responsable_nombre',
-    area:'area_sigla',
+    sector:'sector_sigla',
     sede:'sede_nombre',
     espacio:'espacio_numero',
 };
 
 function conDescripcion(fila:Fila, campo:string):string{
     const descriptivo = CAMPO_DESCRIPTIVO[campo];
-    // Si el referencial está incompleto queda el código: identifica, aunque no se lea bien.
     return (descriptivo ? comoTexto(fila[descriptivo]) : '') || comoTexto(fila[campo]);
 }
 
@@ -74,7 +57,6 @@ function ultimaDeclaracion(resumen:ResumenDelBien):string{
     ].filter(parte => parte !== '').join(' · ');
 }
 
-/** Un dato del resumen: etiqueta arriba, valor abajo. Se omite si no hay nada que mostrar. */
 function DatoResumen({etiqueta, valor}:{etiqueta:string, valor:string}){
     if(valor === ''){
         return null;
@@ -108,7 +90,7 @@ export function BienHeader({
     const categoria = comoTexto(row.categoria);
     const responsable = conDescripcion(row, 'responsable');
     const ubicacion = [
-        conDescripcion(row, 'area'),
+        conDescripcion(row, 'sector'),
         conDescripcion(row, 'sede'),
         conDescripcion(row, 'espacio'),
     ].filter(parte => parte !== '').join(' › ');
@@ -173,7 +155,7 @@ export function BienHeader({
                     </Stack>
                     : null}
 
-                {/* Lo que antes había que ir a buscar abriendo una solapa por vez. */}
+                {}
                 {resumen
                     ? <Stack
                         direction="row"

@@ -3,13 +3,11 @@
 import {TableDefinition, TableContext} from "./types-principal";
 
 export function declaraciones_bienes(context:TableContext):TableDefinition{
-    var admin = context.user.rol==='admin';
-    var responsable = context.user.rol==='responsable';
     return {
         name:'declaraciones_bienes',
         elementName:'declaracion_bien',
         title:'Bienes declarados',
-        editable:admin || responsable,
+        editable:context.es.administrativo,
         fields:[
             {name:'declaracion'           , typeName:'bigint'   , nullable:false},
             {name:'ficha'                 , typeName:'text'   , nullable:false},
@@ -21,12 +19,10 @@ export function declaraciones_bienes(context:TableContext):TableDefinition{
             {name:'grupo'                 , typeName:'text'},
             {name:'detalle'               , typeName:'text'},
             {name:'observacion'           , typeName:'text'},
-            {name:'area'                  , typeName:'text'},
+            {name:'sector'                  , typeName:'text'},
             {name:'responsable'           , typeName:'text'},
             {name:'sede'                  , typeName:'text'},
             {name:'espacio'               , typeName:'text'},
-            // Copia de bienes.activo al momento de armar la declaración. Se llamaba
-            // estado_bien, nombre que ahora es el de la condición del bien: otra cosa.
             {name:'activo'                , typeName:'boolean'},
         ],
         primaryKey:['declaracion', 'ficha'],
@@ -38,7 +34,7 @@ export function declaraciones_bienes(context:TableContext):TableDefinition{
             {references:'cuentas', fields:['rubro', 'clase', 'cuenta']},
             {references:'marcas', fields:['marca']},
             {references:'grupos', fields:['grupo']},
-            {references:'areas', fields:['area']},
+            {references:'sectores', fields:['sector']},
             {references:'responsables', fields:['responsable']},
             {references:'sedes', fields:['sede']},
             {references:'espacios', fields:['espacio']},

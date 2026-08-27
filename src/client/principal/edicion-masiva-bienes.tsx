@@ -21,17 +21,6 @@ import type {Connector, FieldDefinition, TableDefinition} from 'frontend-plus';
 
 import {FormFieldRenderer} from './base/form-field-renderer';
 
-/*
-    Edición masiva de bienes.
-
-    El formulario arranca vacío y el usuario agrega los campos que quiere cambiar. Sólo se
-    tocan los campos agregados: uno ausente no se modifica. Para vaciar hay un checkbox
-    explícito, porque "dejar en blanco" y "no tocar" son cosas distintas y confundirlas es
-    la forma clásica de arruinar datos en lote.
-
-    Antes de aplicar siempre se previsualiza: el servidor cuenta cuántos bienes cambian de
-    verdad por cada campo, y recién sobre esos números se confirma.
-*/
 
 declare module 'frontend-plus' {
     interface BEAPI {
@@ -49,16 +38,14 @@ declare module 'frontend-plus' {
     }
 }
 
-/** Los mismos que bloquea el servidor; acá sólo para no ofrecerlos. */
 const CAMPOS_BLOQUEADOS = new Set([
     'ficha', 'activo', 'estado_baja', 'motivo_baja',
-    'area', 'sede', 'espacio', 'responsable', 'enusode',
+    'sector', 'sede', 'espacio', 'responsable', 'enusode',
 ]);
 
 type CambioEnEdicion = {
     id:string,
     campo:string,
-    /** El valor tal como lo devuelve el control: código de la FK, opción, texto o fecha. */
     valor:unknown,
     vaciar:boolean,
 };
@@ -112,7 +99,6 @@ export function EdicionMasivaBienes({
         }
     }, [abierto]);
 
-    // Cualquier cambio en el formulario invalida la previsualización anterior.
     const actualizar = (id:string, patch:Partial<CambioEnEdicion>) => {
         setCambios(previos => previos.map(c => c.id === id ? {...c, ...patch} : c));
         setPrevisualizacion(null);
@@ -122,12 +108,6 @@ export function EdicionMasivaBienes({
     const completos = cambios.filter(c => c.campo !== '' && tieneValor(c));
     const puedeAplicar = completos.length > 0 && completos.length === cambios.length;
 
-    /*
-        El renderer escribe por nombre de campo, no sobre "el valor de este renglón". Eso
-        importa en las FK compuestas: elegir una cuenta setea rubro, clase y cuenta a la
-        vez. Cada uno de esos se guarda como su propio cambio, que es lo correcto — editar
-        la cuenta sin su rubro y su clase no tendría sentido.
-    */
     const escribirCampo = React.useCallback((idOrigen:string, nombre:string, valor:unknown) => {
         setPrevisualizacion(null);
         setCambios(previos => {
@@ -194,7 +174,6 @@ export function EdicionMasivaBienes({
                             value={cambio.campo}
                             onChange={evento => actualizar(cambio.id, {
                                 campo:evento.target.value,
-                                // El valor anterior no sirve para otro campo.
                                 valor:null,
                             })}
                             sx={{minWidth:220}}

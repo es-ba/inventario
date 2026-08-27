@@ -1,20 +1,12 @@
 "use strict";
 
 import {TableDefinition, TableContext, AppBackend} from "./types-principal";
+import {politicasInventario} from "./politicas";
 
-export function getPolicies(be:AppBackend){
-    return {
-        select:{ using: `${be.dbUserRolExpr} = 'admin'`},
-        all:{ using: `${be.dbUserRolExpr} = 'admin'`}
-    }
+export function getPolicies(_be?:AppBackend){
+    return politicasInventario();
 }
 
-/*
-    El validador de la grilla rechaza el string vacío en los campos de texto: sólo acepta
-    NULL o contenido. Las columnas que la vista calcula pueden salir vacías —el caso claro
-    es responsable_nombre, que sale de un concat_ws, y concat_ws devuelve '' y no NULL
-    cuando todos sus argumentos son nulos—, así que pasan por acá antes de salir.
-*/
 export function textoONuloSql(expresion:string):string{
     return `nullif(btrim(${expresion}), '')`;
 }
@@ -35,20 +27,22 @@ SELECT
     ${codigoTextoSql('b.rubro', 'ru.nombre')} AS rubro_texto,
     ${codigoTextoSql('b.clase', 'cla.nombre')} AS clase_texto,
     ${codigoTextoSql('b.cuenta', 'cue.nombre')} AS cuenta_texto,
-    ult.area,
+    ult.sector,
     ult.sede,
     ult.responsable,
     ult.espacio,
     ult.tipo_asignacion,
     ult.modalidad_uso,
     ult.enusode,
-    ult.nombre_area,
-    ult.area_sigla,
+    ult.enusode_responsable,
+    ult.enusode_responsable_nombre,
+    ult.nombre_sector,
+    ult.sector_sigla,
     ult.sede_nombre,
     ult.responsable_nombre,
     ult.espacio_numero,
     ult.responsable_texto,
-    ult.area_texto,
+    ult.sector_texto,
     ult.sede_texto,
     ult.espacio_texto,
     ult.tipo_asignacion_texto,
@@ -66,9 +60,9 @@ LEFT JOIN cuentas cue
       AND cue.cuenta = b.cuenta
 LEFT JOIN LATERAL (
     SELECT 
-        mb.area,
-        ${textoONuloSql('a.nombre_area')} AS nombre_area,
-        ${textoONuloSql('a.sigla')} AS area_sigla,
+        mb.sector,
+        ${textoONuloSql('a.nombre_sector')} AS nombre_sector,
+        ${textoONuloSql('a.sigla')} AS sector_sigla,
         mb.sede,
         ${textoONuloSql('s.descripcion')} AS sede_nombre,
         mb.responsable,
@@ -81,12 +75,17 @@ LEFT JOIN LATERAL (
         mb.tipo_asignacion,
         mb.modalidad_uso,
         ${textoONuloSql('mb.enusode')} AS enusode,
+        mb.enusode_responsable,
+        ${textoONuloSql(`concat_ws(', ',
+            nullif(btrim(eur.apellido), ''),
+            nullif(btrim(eur.nombre), '')
+        )`)} AS enusode_responsable_nombre,
         ${codigoTextoSql(
             'mb.responsable',
             "concat_ws(', ', nullif(btrim(r.apellido), ''), nullif(btrim(r.nombre), ''))",
         )} AS responsable_texto,
-        ${/* el área se identifica por su sigla, que es como se la nombra en el organismo */''}
-        ${codigoTextoSql('mb.area', 'a.sigla')} AS area_texto,
+        ${''}
+        ${codigoTextoSql('mb.sector', 'a.sigla')} AS sector_texto,
         ${codigoTextoSql('mb.sede', 's.descripcion')} AS sede_texto,
         ${codigoTextoSql(
             'mb.espacio',
@@ -95,9 +94,10 @@ LEFT JOIN LATERAL (
         ${codigoTextoSql('mb.tipo_asignacion', 'ta.descripcion')} AS tipo_asignacion_texto,
         ${codigoTextoSql('mb.modalidad_uso', 'mu.descripcion')} AS modalidad_uso_texto
     FROM movimientos_bien mb
-    LEFT JOIN areas a ON a.area = mb.area
+    LEFT JOIN sectores a ON a.sector = mb.sector
     LEFT JOIN sedes s ON s.sede = mb.sede
     LEFT JOIN responsables r ON r.responsable = mb.responsable
+    LEFT JOIN responsables eur ON eur.responsable = mb.enusode_responsable
     LEFT JOIN espacios e ON e.espacio = mb.espacio
     LEFT JOIN tipo_asignacion ta ON ta.tipo_asignacion = mb.tipo_asignacion
     LEFT JOIN modalidad_uso mu ON mu.modalidad_uso = mb.modalidad_uso
@@ -109,21 +109,19 @@ LEFT JOIN LATERAL (
 
 export function bienes(context:TableContext):TableDefinition{
     var be = context.be;
-    var admin = context.user.rol==='admin';
-    var responsable = context.user.rol==='responsable';
     return {
         name:'bienes',
         elementName:'bien', 
         title:'Bienes',
-        editable:admin || responsable,
+        editable:context.es.administrativo,
         allow:{ delete:false, deleteAll:false },
         fields:[
             {name:'ficha'                       , typeName:'text'    },
             {name:'responsable'                 , typeName:'text'    , editable:false, inTable:false},
             {name:'responsable_nombre'          , typeName:'text'    , editable:false, inTable:false},
-            {name:'area'                        , typeName:'text'    , editable:false, inTable:false},
-            {name:'area_sigla'                  , typeName:'text'    , editable:false, inTable:false},
-            {name:'nombre_area'                 , typeName:'text'    , editable:false, inTable:false},
+            {name:'sector'                        , typeName:'text'    , editable:false, inTable:false},
+            {name:'sector_sigla'                  , typeName:'text'    , editable:false, inTable:false},
+            {name:'nombre_sector'                 , typeName:'text'    , editable:false, inTable:false},
             {name:'numero_integrado'            , typeName:'text'    , nullable:true}, 
             {name:'ubicacion'                   , typeName:'text'    , nullable:true},
             {name:'observacion'                 , typeName:'text'    , nullable:true},
@@ -132,15 +130,6 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'importe'                     , typeName:'text'    , nullable:true},
             {name:'importetotal'                , typeName:'text'    , nullable:true},
             {name:'tipo_bien'                   , typeName:'text'    , nullable:true},
-            /*
-                Situación patrimonial. Era texto contra un referencial de tres valores
-                —ALTA, BAJA, ENDESUSO—, pero ENDESUSO nunca se usó y lo único que se
-                preguntaba era si el bien está o no está.
-
-                NOT NULL con default true: un bien sin dato es un bien en alta. Es lo que
-                ya asumía la búsqueda, que mostraba los 3679 sin valor en la solapa de
-                activos. Dejarlo nullable devolvería el tercer estado que estamos sacando.
-            */
             {name:'activo'                      , typeName:'boolean' , nullable:false, defaultValue:true},
             {name:'estado'                      , typeName:'text'    , nullable:true},
             {name:'categoria'                   , typeName:'text'    , nullable:true},
@@ -157,6 +146,8 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'prd'                         , typeName:'text'    , nullable:true},
             {name:'caracteridentificador'       , typeName:'text'    , nullable:true},
             {name:'enusode'                     , typeName:'text'    , editable:false, inTable:false},
+            {name:'enusode_responsable'         , typeName:'text'    , editable:false, inTable:false},
+            {name:'enusode_responsable_nombre'  , typeName:'text'    , editable:false, inTable:false},
             {name:'clasificacion'               , typeName:'text'    , nullable:true},
             {name:'orden_compra'                , typeName:'text'    , nullable:true},
             {name:'entidad_prestadora'          , typeName:'text'    , nullable:true},
@@ -199,7 +190,8 @@ export function bienes(context:TableContext):TableDefinition{
             {table:'movimientos_bien', fields:['ficha'], abr:'Mov', label:'Movimientos'},
             {table:'bien_atributo', fields:['ficha'], abr:'Atr', label:'Atributos'},
             {table:'adjuntos_bienes', fields:['ficha'], abr:'Adj', label:'Adjuntos'},
-            {table:'declaraciones_bienes', fields:['ficha'], abr:'Dec', label:'Declaraciones'}
+            {table:'declaraciones_bienes', fields:['ficha'], abr:'Dec', label:'Declaraciones'},
+            {table:'claves_bienes', fields:['ficha'], abr:'Cla', label:'Claves'},
         ],
         hiddenColumns: [
             'entidad_prestadora', 'fecha_inicio', 'fecha_fin', 'renovable', 'condiciones',

@@ -28,17 +28,6 @@ import {FormFieldRenderer} from '../base/form-field-renderer';
 import {formatearValor} from '../base/formato-valores';
 import type {Fila} from '../base/tipos-tabla';
 
-/*
-    Documentos de la solicitud: el comodato (F-SA-12) y el acta de entrega (F-751-04).
-
-    Se emiten desde acá con los bienes de la solicitud —con el mismo campo de firma que las
-    declaraciones—, se descargan para firmar, y el firmado se vuelve a cargar.
-
-    Al recargarlo sólo se pide que sea un PDF: vale tanto el firmado digitalmente como el
-    firmado a mano y escaneado. Tampoco se controla que sea byte a byte el que se emitió.
-
-    Una emisión equivocada se puede borrar; el archivo en disco lo saca después el cron.
-*/
 
 type TipoDocumento = 'comodato' | 'acta';
 
@@ -67,14 +56,6 @@ declare module 'frontend-plus' {
     }
 }
 
-/*
-    El representante del IDECBA se elige entre los responsables. Su carácter lo completa el
-    servidor con el área del organigrama que tiene a cargo, así que acá alcanza con elegir
-    la persona.
-
-    No sale de ninguna tabla, así que el field se arma a mano: al renderer le alcanza con
-    el nombre, el tipo y la referencia, y el resto de FieldDefinition no lo mira.
-*/
 const CAMPO_REPRESENTANTE = {
     name:'representante',
     typeName:'text',
@@ -83,11 +64,6 @@ const CAMPO_REPRESENTANTE = {
     referencesFields:[{source:'representante', target:'responsable'}],
 } as unknown as FieldDefinition;
 
-/*
-    "En su carácter de" es el cargo, y los cargos son las jerarquías. Era texto libre: en un
-    formulario que después se firma, escribir el cargo a mano termina en tres formas
-    distintas de nombrar el mismo puesto.
-*/
 const CAMPO_CARACTER = {
     name:'caracter_representante',
     typeName:'text',
@@ -96,10 +72,6 @@ const CAMPO_CARACTER = {
     referencesFields:[{source:'caracter_representante', target:'jerarquia'}],
 } as unknown as FieldDefinition;
 
-/*
-    El F-751-04 sirve para las dos puntas del circuito, y en el original eso se elige en un
-    combo. Define el título del acta y el verbo del cuerpo.
-*/
 const OPERACIONES = [
     {valor:'entrega', etiqueta:'entrega'},
     {valor:'devolucion', etiqueta:'devolución'},
@@ -148,7 +120,6 @@ export function SolicitudDocumentos({acta}:{acta:string}){
 
     React.useEffect(() => { void cargar(); }, [cargar]);
 
-    // Los selectores devuelven null al limpiarse; el procedure espera texto.
     const ponerDato = React.useCallback(
         (nombre:string, valor:unknown) =>
             setDatos(d => ({...d, [nombre]:valor == null ? '' : String(valor)})),
@@ -354,7 +325,7 @@ export function SolicitudDocumentos({acta}:{acta:string}){
                             label="entrega en representación de"
                             value={datos.entrega_representa}
                             onChange={e => setDatos(d => ({...d, entrega_representa:e.target.value}))}
-                            helperText="si se deja vacío se usa el área del representante"
+                            helperText="si se deja vacío se usa el sector del representante"
                         />
                         <TextField
                             size="small"

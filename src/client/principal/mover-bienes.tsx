@@ -18,19 +18,6 @@ import type {Connector, FieldDefinition} from 'frontend-plus';
 import {FormFieldRenderer} from './base/form-field-renderer';
 import type {Fila} from './base/tipos-tabla';
 
-/*
-    Movimiento masivo de bienes, por los dos caminos que admite el modelo:
-
-    - Con acta: crea una solicitud, que nace en el estado inicial de la máquina de estados
-      y recorre el circuito —confirmar, aprobar, firmar, procesar—. Los movimientos los
-      genera el trigger recién cuando llega a Procesada. Deja respaldo y permite adjuntos
-      y firma.
-
-    - Directo: registra los movimientos en el momento, con el acta en NULL. Sin circuito
-      y sin respaldo documental. Requiere el permiso puede_mover del rol.
-
-    En los dos casos el destino de la cabecera se aplica por igual a todos los bienes.
-*/
 
 declare module 'frontend-plus' {
     interface BEAPI {
@@ -39,7 +26,7 @@ declare module 'frontend-plus' {
             tipo_asignacion:string,
             modalidad_uso:string,
             responsable:string,
-            area:string,
+            sector:string,
             sede:string,
             espacio:string,
             accion:string,
@@ -55,7 +42,7 @@ declare module 'frontend-plus' {
             tipo_asignacion:string,
             modalidad_uso:string,
             responsable:string,
-            area:string,
+            sector:string,
             sede:string,
             espacio:string,
             detalle:string,
@@ -69,14 +56,6 @@ declare module 'frontend-plus' {
     }
 }
 
-/*
-    Los campos del destino son referencias, no texto: acá se elige de una lista y se ve el
-    nombre. Antes eran seis TextField donde había que saberse el código de memoria y
-    tipearlo bien, sin manera de confirmar que "138" fuera el espacio que uno quería.
-
-    Ninguno sale de una tabla, así que los fields se arman a mano: al renderer le alcanza
-    con el nombre, el tipo y la referencia.
-*/
 function campoDeReferencia(name:keyof Cabecera, title:string, references:string, target:string){
     return {
         name, typeName:'text', title, references,
@@ -86,7 +65,7 @@ function campoDeReferencia(name:keyof Cabecera, title:string, references:string,
 
 const CAMPOS = [
     campoDeReferencia('responsable'    , 'responsable'        , 'responsables'   , 'responsable'),
-    campoDeReferencia('area'           , 'área'               , 'areas'          , 'area'),
+    campoDeReferencia('sector'           , 'sector'               , 'sectores'          , 'sector'),
     campoDeReferencia('sede'           , 'sede'               , 'sedes'          , 'sede'),
     campoDeReferencia('espacio'        , 'espacio'            , 'espacios'       , 'espacio'),
     campoDeReferencia('tipo_asignacion', 'tipo de asignación' , 'tipo_asignacion', 'tipo_asignacion'),
@@ -95,7 +74,7 @@ const CAMPOS = [
 
 type Cabecera = {
     responsable:string,
-    area:string,
+    sector:string,
     sede:string,
     espacio:string,
     tipo_asignacion:string,
@@ -103,7 +82,7 @@ type Cabecera = {
 };
 
 const CABECERA_VACIA:Cabecera = {
-    responsable:'', area:'', sede:'', espacio:'', tipo_asignacion:'', modalidad_uso:'',
+    responsable:'', sector:'', sede:'', espacio:'', tipo_asignacion:'', modalidad_uso:'',
 };
 
 export function MoverBienes({
@@ -126,7 +105,6 @@ export function MoverBienes({
     const [error, setError] = React.useState<string|null>(null);
     const [trabajando, setTrabajando] = React.useState(false);
 
-    // Los selectores devuelven null al limpiarse; el procedure espera texto.
     const ponerCampo = React.useCallback(
         (nombre:string, valor:unknown) => setCabecera(previa => ({
             ...previa,
@@ -228,7 +206,7 @@ export function MoverBienes({
 
             {!hayDestino && (modo === 'directo' || acta.trim() !== '')
                 ? <Alert severity="info" sx={{mt:2}}>
-                    Indicá al menos un dato de destino: responsable, área, sede o espacio.
+                    Indicá al menos un dato de destino: responsable, sector, sede o espacio.
                 </Alert>
                 : null}
             {error ? <Alert severity="error" sx={{mt:2}}>{error}</Alert> : null}

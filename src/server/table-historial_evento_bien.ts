@@ -3,14 +3,12 @@
 import { TableDefinition, TableContext } from "./types-principal";
 
 export function historial_evento_bien(context: TableContext): TableDefinition {
-    var admin = context.user.rol === 'admin';
-    var responsable = context.user.rol === 'responsable';
 
     return {
         name: 'historial_evento_bien',
         elementName: 'evento',
         title: 'Eventos del bien',
-        editable: admin || responsable,
+        editable:context.es.administrativo,
         fields: [
             { name: 'ficha', typeName: 'text' },
             { name: 'orden', typeName: 'integer' },
@@ -24,8 +22,6 @@ export function historial_evento_bien(context: TableContext): TableDefinition {
         foreignKeys: [
             { references: 'bienes', fields: ['ficha'] },
         ],
-        // Sin detalle: historial_bienes se sigue llenando pero no se muestra en la
-        // aplicación. Acá quedan los eventos —qué se hizo, quién y cuándo—.
         constraints: [
             {
                 constraintType: 'unique',

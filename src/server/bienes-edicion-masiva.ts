@@ -2,29 +2,9 @@
 
 import type {TableDefinition} from './types-principal';
 
-/*
-    Edición masiva de bienes: validación y armado del SQL.
-
-    Módulo puro a propósito —entra la definición de la tabla y el pedido, sale el SQL—
-    así la parte delicada se puede testear sin base.
-
-    Dos reglas que sostienen todo lo demás:
-
-    - Sólo se tocan los campos que vienen explícitamente en el pedido. Un campo ausente
-      no se modifica; para vaciarlo hay que mandarlo con valor null. Sin esa distinción
-      no se puede saber si el usuario quiso borrar o simplemente no quiso tocar.
-
-    - Los nombres de campo se validan contra la definición de la tabla, nunca se
-      interpolan a ciegas. La lista de fichas y los valores viajan como parámetros.
-
-    Los campos de ubicación (area, sede, espacio, responsable) NO son editables acá:
-    no viven en bienes, se derivan del último movimiento. Cambiarlos es registrar un
-    movimiento nuevo, no un update.
-*/
 
 export type CambioMasivo = {
     campo:string,
-    /** null vacía el campo; undefined no es válido (sería "no tocar", y entonces no se manda). */
     valor:string|number|boolean|null,
 };
 
@@ -42,16 +22,14 @@ export type EdicionMasivaPlan = {
     valores:unknown[],
 };
 
-/** Tope de seguridad: una edición masiva no debería alcanzar media base por accidente. */
 export const TOPE_FICHAS = 500;
 
-/** Campos que nunca se editan en lote, con el motivo. */
 export const CAMPOS_BLOQUEADOS:Record<string, string> = {
     ficha:'es la clave del bien',
     activo:'la baja y el alta son actos administrativos con campos propios',
     estado_baja:'depende del circuito de baja',
     motivo_baja:'depende del circuito de baja',
-    area:'se deriva del último movimiento',
+    sector:'se deriva del último movimiento',
     sede:'se deriva del último movimiento',
     espacio:'se deriva del último movimiento',
     responsable:'se deriva del último movimiento',
@@ -64,7 +42,6 @@ function fallar(mensaje:string):never{
     throw new ErrorEdicionMasiva(mensaje);
 }
 
-/** Campos que la edición masiva acepta, según la definición de la tabla. */
 export function camposEditablesEnLote(definicion:TableDefinition):string[]{
     return definicion.fields
         .filter(field =>
@@ -132,10 +109,6 @@ function normalizarCambios(cambios:unknown, definicion:TableDefinition):CambioMa
     });
 }
 
-/**
- * Arma el plan de la edición: el UPDATE y una consulta previa que permite mostrar,
- * antes de aplicar nada, cuántos bienes cambian de verdad por cada campo.
- */
 export function planificarEdicionMasiva(
     pedido:EdicionMasivaRequest,
     definicion:TableDefinition,
@@ -143,7 +116,6 @@ export function planificarEdicionMasiva(
     const fichas = normalizarFichas(pedido.fichas);
     const cambios = normalizarCambios(pedido.cambios, definicion);
 
-    // $1 es siempre la lista de fichas; los valores van del $2 en adelante.
     const valores:unknown[] = [fichas];
     const asignaciones = cambios.map((cambio, i) => {
         valores.push(cambio.valor);
@@ -154,7 +126,6 @@ export function planificarEdicionMasiva(
         + ` WHERE ficha = ANY($1)\n`
         + ` RETURNING ficha`;
 
-    // Cuántos bienes ve el usuario, cuántos cambian por campo y cuántos ya tienen el valor.
     const conteos = cambios.map((cambio, i) =>
         `    count(*) FILTER (WHERE b."${cambio.campo}" IS DISTINCT FROM $${i + 2})`
         + ` AS "cambian_${cambio.campo}"`
@@ -165,7 +136,6 @@ export function planificarEdicionMasiva(
     return {fichas, cambios, sqlUpdate, sqlPrevio, valores};
 }
 
-/** Resumen legible de lo que la edición va a hacer, para confirmarlo antes de aplicar. */
 export function describirPlan(
     plan:EdicionMasivaPlan,
     alcanzados:number,

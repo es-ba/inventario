@@ -1,15 +1,3 @@
--- Ciclo de vida de las declaraciones de bienes.
---
---   BORRADOR --emitir--> EMITIDA --cargar firmado--> FIRMADA
---      ^                    |                           |
---      |                    +-------- observar ---------+
---      |                              |
---      +---------- reabrir -----------+        (re-emisión: version + 1)
---
--- Las guardas viven en la base y no en la aplicación, por el mismo criterio que
--- movimientos_solicitudes_estado_trg: lo que sostiene un documento firmado no puede
--- depender de que todos los caminos de código se acuerden de validar.
-
 CREATE OR REPLACE FUNCTION declaraciones_estado_trg()
   RETURNS trigger
   LANGUAGE plpgsql
@@ -131,7 +119,7 @@ BEGIN
     declaracion, ficha, orden,
     rubro, clase, cuenta, marca, grupo,
     detalle, observacion,
-    area, responsable, sede, espacio,
+    sector, responsable, sede, espacio,
     activo
   )
   SELECT
@@ -140,11 +128,11 @@ BEGIN
     row_number() OVER (ORDER BY b.ficha),
     b.rubro, b.clase, b.cuenta, b.marca, b.grupo,
     b.detalle, b.observacion,
-    ult.area, ult.responsable, ult.sede, ult.espacio,
+    ult.sector, ult.responsable, ult.sede, ult.espacio,
     b.activo
   FROM bienes b
   JOIN LATERAL (
-    SELECT mb.responsable, mb.area, mb.sede, mb.espacio
+    SELECT mb.responsable, mb.sector, mb.sede, mb.espacio
       FROM movimientos_bien mb
       WHERE mb.ficha = b.ficha
       ORDER BY mb.orden DESC

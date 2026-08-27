@@ -1,6 +1,7 @@
 "use strict";
 
 import { TableDefinition, TableContext, FieldDefinition, AppBackend } from "./types-principal";
+import { politicasInventario, deMisDependientes, MI_RESPONSABLE } from "./politicas";
 
 export const numero_adjunto_solicitud: FieldDefinition = {
     name: 'numero_adjunto',
@@ -10,22 +11,24 @@ export const numero_adjunto_solicitud: FieldDefinition = {
     editable: false,
 };
 
-function getPolicies(be:AppBackend){
-    return {
-        select:{ using: `${be.dbUserRolExpr} = 'admin' OR EXISTS (SELECT 1 FROM movimientos_solicitudes ms WHERE ms.acta = adjuntos_solicitudes.acta AND ms.responsable = ${be.dbUserNameExpr})`},
-        all:{ using: `${be.dbUserRolExpr} = 'admin' OR EXISTS (SELECT 1 FROM movimientos_solicitudes ms WHERE ms.acta = adjuntos_solicitudes.acta AND ms.responsable = ${be.dbUserNameExpr})`}
-    };
+const RESPONSABLE_DE_LA_SOLICITUD =
+    `(SELECT ms.responsable FROM movimientos_solicitudes ms`
+    + ` WHERE ms.acta = adjuntos_solicitudes.acta)`;
+
+function getPolicies(_be?:AppBackend){
+    return politicasInventario({
+        propio: `${RESPONSABLE_DE_LA_SOLICITUD} = ${MI_RESPONSABLE}`,
+        dependiente: deMisDependientes(RESPONSABLE_DE_LA_SOLICITUD),
+    });
 }
 
 export function adjuntos_solicitudes(context:TableContext):TableDefinition{
     var be = context.be;
-    var admin = context.user.rol==='admin';
-    var responsable = context.user.rol==='responsable';
     return {
         name:'adjuntos_solicitudes',
         elementName:'adjunto_solicitud',
         title:'adjuntos de solicitudes',
-        editable: admin || responsable,
+        editable:context.es.administrativo,
         fields:[
             {name:'acta'       , typeName:'text'     },
             {...numero_adjunto_solicitud, sequence:{ firstValue:101, name:'adjuntos_solicitudes_numero_adjunto_seq' }},

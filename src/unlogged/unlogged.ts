@@ -10,5 +10,4 @@ window.addEventListener('load', async function(){
     await myOwn.ready;
     layout.innerHTML='<div id=main_layout></div><span id="mini-console"></span>';
     // @ts-ignore ready existe!
-    //pantallaPrincipal({});
 })

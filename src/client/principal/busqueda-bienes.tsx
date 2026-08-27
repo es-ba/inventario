@@ -103,13 +103,6 @@ declare module 'frontend-plus' {
     }
 }
 
-/*
-    Acción que reemplaza a las masivas propias de la pantalla suelta (editar, mover,
-    imprimir) cuando la búsqueda está embebida en otro circuito y la selección se usa para
-    otra cosa: hoy, cargar bienes en una solicitud.
-
-    Devuelve el mensaje a mostrar; la pantalla se encarga de soltar la selección y refrescar.
-*/
 export type AccionSeleccionBienes = {
     etiqueta:string;
     ejecutar:(fichas:string[]) => Promise<string>;
@@ -118,12 +111,9 @@ export type AccionSeleccionBienes = {
 type BusquedaBienesProps = {
     conn:Connector;
     fixedFields:FixedFields;
-    /** Si se provee, "Abrir" muestra el formulario React en vez de saltar a la grilla legacy. */
     onAbrirBien?:(ficha:string) => void;
-    /** Si se provee, aparece el botón para dar de alta un bien. */
     onNuevoBien?:() => void;
     accionSeleccion?:AccionSeleccionBienes;
-    /** Fichas que no se pueden elegir —ya están en la solicitud—: se ven, pero apagadas. */
     fichasExcluidas?:ReadonlySet<string>;
 };
 
@@ -554,7 +544,6 @@ export function BusquedaBienes({
                             onAbrirBien(ficha);
                             return;
                         }
-                        // Sin pantalla React disponible se cae a la grilla legacy.
                         unmountConnectedAppInventario();
                         (myOwn.gotoAddrParams as (params:any) => void)({
                             i:['bienes', 'bienes'],
@@ -604,11 +593,7 @@ export function BusquedaBienes({
             <GridToolbarColumnsButton/>
             <GridToolbarFilterButton/>
             <GridToolbarDensitySelector/>
-            {/*
-                Sólo si el contenedor sabe abrir el formulario. Embebida en una solicitud la
-                pantalla sirve para elegir bienes que ya existen, y dar de alta uno ahí no
-                viene al caso.
-            */}
+            {}
             {onNuevoBien
                 ? <Button
                     size="small"
@@ -642,10 +627,7 @@ export function BusquedaBienes({
                 {rowSelectionModel.length}{' '}
                 {rowSelectionModel.length === 1 ? 'bien seleccionado' : 'bienes seleccionados'}
             </Typography>
-            {/*
-                Embebida en otro circuito, las masivas propias sobran: editar o mover desde
-                acá es justo lo que la solicitud viene a evitar.
-            */}
+            {}
             {accionSeleccion
                 ? <Button
                     size="small"
@@ -839,7 +821,6 @@ export function BusquedaBienes({
             onCerrar={() => setEdicionMasivaAbierta(false)}
             onAplicado={(mensaje) => {
                 setAvisoMasivo(mensaje);
-                // Los datos en pantalla quedaron viejos: se recarga y se suelta la selección.
                 clearSelection();
                 setSearchVersion(version => version + 1);
             }}
@@ -852,13 +833,6 @@ export function BusquedaBienes({
             onCerrar={() => setMoverAbierto(false)}
             onCreada={(mensaje) => {
                 setAvisoMasivo(mensaje);
-                /*
-                    Se recarga igual que después de la edición masiva. En el movimiento
-                    directo el área, la sede, el espacio y el responsable salen del último
-                    movimiento del bien: apenas se registra el nuevo, lo que hay en pantalla
-                    es lo de antes. Por acta todavía no cambió nada, pero recargar no cuesta
-                    y evita tener dos comportamientos según el modo.
-                */
                 clearSelection();
                 setSearchVersion(version => version + 1);
             }}
@@ -871,7 +845,6 @@ export function BusquedaBienes({
             onCerrar={() => setBajaAbierta(false)}
             onAplicada={(mensaje) => {
                 setAvisoMasivo(mensaje);
-                // Los bienes dados de baja salen de la solapa de activos: hay que recargar.
                 clearSelection();
                 setSearchVersion(version => version + 1);
             }}

@@ -1,12 +1,10 @@
 "use strict";
 
 import {TableDefinition, TableContext, AppBackend} from "./types-principal";
+import {politicasInventario} from "./politicas";
 
-export function getPolicies(be:AppBackend){
-    return {
-        select:{ using: `${be.dbUserRolExpr} = 'admin' or ${be.dbUserRolExpr} = 'auditor'`},
-        all:{ using: `${be.dbUserRolExpr} = 'admin'`}
-    }
+export function getPolicies(_be?:AppBackend){
+    return politicasInventario();
 }
 
 export function depreciaciones(context:TableContext):TableDefinition{

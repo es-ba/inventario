@@ -10,21 +10,12 @@ import {Menu as MenuIcon} from '@mui/icons-material';
 import type {Connector, FixedFields} from 'frontend-plus';
 import {BusquedaBienes} from './principal/busqueda-bienes';
 import {BienFormulario} from './principal/bien/bien-formulario';
-// Registra myOwn.wScreens.solicitudes; el bundle tiene una sola entrada.
 import './ws-solicitudes';
 import {
     renderConnectedAppInventario,
     unmountConnectedAppInventario,
 } from './principal/render-connected-app-inventario';
 
-/*
-    Navegación de la pantalla principal.
-
-    Por ahora vive en estado local y no en la URL: el hash ya lo administra el menú de
-    backend-plus, y compartirlo requiere validarlo con la aplicación corriendo. Está
-    concentrada en este componente justamente para que mudarla al hash más adelante sea
-    un cambio de un solo lugar.
-*/
 type Vista =
     {nombre:'busqueda'}
     | {nombre:'bien', ficha?:string};
@@ -72,7 +63,6 @@ function PantallaPrincipal({
                 conn={conn}
                 fixedFields={fixedFields}
                 onAbrirBien={ficha => setVista({nombre:'bien', ficha})}
-                // Sin ficha, el formulario se abre como alta. Es la misma vista.
                 onNuevoBien={() => setVista({nombre:'bien', ficha:undefined})}
             />
         }

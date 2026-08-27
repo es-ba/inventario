@@ -21,26 +21,13 @@ import {useAvisos, useConexion} from './contexto-base';
 import {formatearValor} from './formato-valores';
 import type {Fila} from './tipos-tabla';
 
-/*
-    Panel de adjuntos, común a bienes y a solicitudes.
-
-    No usa DetailTable porque subir un archivo no es guardar una fila: va por un procedure
-    con multipart, y la descarga es un GET a un endpoint. El borrado sí es un
-    table_record_delete; el archivo físico lo elimina el cron de las 23:58 a través de la
-    tabla archivos_borrar.
-*/
 
 export type AdjuntosPanelProps = {
-    /** Tabla de adjuntos: adjuntos_bienes o adjuntos_solicitudes. */
     tabla:string,
-    /** Campo que la relaciona con su maestro: ficha o acta. */
     campoClave:string,
     valorClave:string,
-    /** Campo autonumérico que completa la PK. */
     campoNumero:string,
-    /** Ruta del endpoint de descarga, sin los parámetros. */
     endpointDescarga:string,
-    /** Procedure de subida; recibe la clave y el archivo. */
     subir:(archivo:File) => Promise<{message:string}>,
     soloLectura?:boolean,
 };

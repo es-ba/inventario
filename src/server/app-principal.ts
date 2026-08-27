@@ -19,8 +19,8 @@ import { rubros } from "./table-rubros";
 import { responsables } from "./table-responsables";
 import { sedes } from "./table-sedes";
 import { tipo_bien } from "./table-tipo_bien";
-import { tipo_area } from "./table-tipo_area";
-import { areas } from './table-areas';
+import { tipo_sector } from "./table-tipo_sector";
+import { sectores } from './table-sectores';
 import { categoria_bien } from "./table-categoria_bien";
 import { estados_baja } from "./table-estados_baja";
 import { estados_bien } from "./table-estados_bien";
@@ -32,6 +32,8 @@ import { cuentas } from "./table-cuentas";
 import { clases } from "./table-clases";
 import { movimientos_bien } from "./table-movimientos_bien";
 import { tipo_asignacion } from "./table-tipo_asignacion";
+import { tipo_clave } from "./table-tipo_clave";
+import { claves_bienes } from "./table-claves_bienes";
 import { tipo_ordencompra } from "./table-tipo_ordencompra";
 import { estado_ordencompra } from "./table-estado_ordencompra";
 import { proveedores } from "./table-proveedores";
@@ -52,11 +54,13 @@ import { declaraciones_bienes } from "./table-declaraciones_bienes";
 import { declaraciones_documentos } from "./table-declaraciones_documentos";
 import { solicitudes_documentos } from "./table-solicitudes_documentos";
 import { estados_declaracion } from "./table-estados_declaracion";
-import { reporte_bienes_por_area } from "./table-reporte_bienes_por_area";
+import { reporte_bienes_por_sector } from "./table-reporte_bienes_por_sector";
 import { reporte_bienes_por_responsable } from "./table-reporte_bienes_por_responsable";
 import { reporte_bienes_listado } from "./table-reporte_bienes_listado";
+import { reporte_bienes_dependientes } from "./table-reporte_bienes_dependientes";
+import { mis_bienes_a_cargo, mis_bienes_asignados } from "./table-mis_bienes";
 import { parque_tecnologico } from "./table-parque_tecnologico";
-import { setAtributosDeBienes } from "./reportes-bienes";
+import { setAtributosDeBienes, VINCULOS_CON_EL_BIEN } from "./reportes-bienes";
 import { jerarquias } from "./table-jerarquias";
 import { adjuntos_bienes } from "./table-adjuntos_bienes";
 import { adjuntos_solicitudes } from "./table-adjuntos_solicitudes";
@@ -99,14 +103,6 @@ const cronMantenimiento = (be:AppBackend) => {
     });
 }
 
-/*
-    Los atributos de bienes son datos, no código: la grilla del parque tecnológico abre una
-    columna por cada uno. Se leen una vez al arrancar porque las definiciones de tabla de
-    backend-plus son sincrónicas y no pueden consultar la base.
-
-    Si falla —por ejemplo en el primer dump, cuando la tabla todavía no existe— el servidor
-    arranca igual y la grilla queda sin columnas de atributo.
-*/
 const cargarAtributosDeBienes = async (be:AppBackend) => {
     try{
         const lista = await be.inTransaction(null, async (client)=>{
@@ -152,11 +148,6 @@ export class AppInventario extends AppBackend{
         mainApp.get(baseUrl+'/download/declaracion_documento', async function (req, res) {
             // @ts-ignore
             await be.inDbClient(req, async (client)=>{
-                /*
-                    Se traen además la fecha y el responsable para poder nombrar el archivo:
-                    el nombre en disco es la clave técnica y en la carpeta de descargas
-                    quedan todos iguales.
-                */
                 const result = await client.query(
                     `SELECT dd.archivo, d.fecha,
                             upper(coalesce(nullif(btrim(concat_ws(', ',
@@ -183,10 +174,6 @@ export class AppInventario extends AppBackend{
         mainApp.get(baseUrl+'/download/solicitud_documento', async function (req, res) {
             // @ts-ignore
             await be.inDbClient(req, async (client)=>{
-                /*
-                    La acción sale de la solicitud, que ya la tiene: no hace falta guardarla
-                    de nuevo en cada documento emitido.
-                */
                 const result = await client.query(
                     `SELECT sd.archivo, sd.archivo_firmado, sd.tipo,
                             nullif(btrim(ms.accion), '') AS accion
@@ -201,7 +188,6 @@ export class AppInventario extends AppBackend{
                     res.status(404).send('El documento pedido no está cargado');
                     return;
                 }
-                // Sin acción cargada en la solicitud queda el tipo, que igual identifica.
                 const accion = result.row.accion ?? result.row.tipo;
                 res.setHeader('Content-Disposition', contentDisposition(nombreDeArchivo([
                     accion,
@@ -240,7 +226,7 @@ export class AppInventario extends AppBackend{
         var es = context.es ?? {} as Context["es"]
         es.admin = context.user && context.user.rol=="admin"
         es.superior = es.admin || context.user && context.user.rol=="superior"
-        es.administrativo = es.superior || context.user && context.user.rol=="administrativo" 
+        es.administrativo = es.superior || context.user && context.user.rol=="administrativo"
         es.lectura = es.administrativo || context.user && context.user.rol=="lectura"
         context.es = es;
     }
@@ -258,6 +244,12 @@ export class AppInventario extends AppBackend{
     override getMenu(context: Context): MenuDefinition {
         var menuContent: MenuInfoBase[] = [
             {menuType:'principal', name:'principal', label:'principal'     },
+            {menuType: 'menu', name: 'mis_bienes', label: 'mis bienes', menuContent:
+                VINCULOS_CON_EL_BIEN.map((vinculo, i) => ({
+                    menuType: 'table', name: vinculo.mio.tabla, label: vinculo.mio.label,
+                    selectedByDefault: i === 0,
+                }))
+            },
             {menuType: 'menu', name: 'bienes' , label: 'inventario', menuContent: [
                 {menuType: 'table', name: 'bienes', label: 'todos', selectedByDefault: true},
                 {menuType: 'table', name: 'bienes_activos', table: 'bienes', label: 'bienes en alta', ff: {activo: true}},
@@ -271,13 +263,13 @@ export class AppInventario extends AppBackend{
             ]},
 
             {menuType: 'menu', name: 'reportes', label: 'reportes', menuContent: [
-                {menuType: 'table', name: 'reporte_bienes_por_area', label: 'bienes por área'},
+                {menuType: 'table', name: 'reporte_bienes_por_sector', label: 'bienes por sector patrimonial'},
                 {menuType: 'table', name: 'reporte_bienes_por_responsable', label: 'bienes por responsable'},
                 {menuType: 'table', name: 'parque_tecnologico', label: 'parque tecnológico'},
             ]},
     
             {menuType: 'menu', name: 'gestion', label: 'gestion de datos', menuContent: [
-                {menuType: 'table', name: 'areas', label: 'áreas'},
+                {menuType: 'table', name: 'sectores', label: 'sectores'},
                 {menuType: 'table', name: 'responsables', label: 'responsables'},
                 {menuType: 'table', name: 'espacios', label: 'espacios'},
                 {menuType: 'table', name: 'ordenes_compra', label: 'ordenes de compra'},
@@ -298,11 +290,12 @@ export class AppInventario extends AppBackend{
                     {menuType: 'menu', name: 'referenciales', label: 'tablas referenciales', menuContent: [
                         {menuType: 'table', name: 'tipo_bien', label: 'tipos de bien'},
                         {menuType: 'table', name: 'categoria_bien', label: 'categorías de bien'},
-                        {menuType: 'table', name: 'tipo_area', label: 'tipos de área'},
+                        {menuType: 'table', name: 'tipo_sector', label: 'tipos de sector'},
                         {menuType: 'table', name: 'tipo_espacio', label: 'tipos de espacio'},
                         {menuType: 'table', name: 'tipo_contrato', label: 'tipos de contrato'},
                         {menuType: 'table', name: 'tipo_ordencompra', label: 'tipos de OC'},
                         {menuType: 'table', name: 'tipo_asignacion', label: 'tipos de asignación'},
+                        {menuType: 'table', name: 'tipo_clave', label: 'tipos de clave'},
                         {menuType: 'table', name: 'marcas', label: 'marcas'},
                         {menuType: 'table', name: 'rubros', label: 'rubros'},
                         {menuType: 'table', name: 'rubros', label: 'rubros'},
@@ -364,11 +357,16 @@ export class AppInventario extends AppBackend{
             declaraciones_documentos,
             solicitudes_documentos,
             estados_declaracion,
-            reporte_bienes_por_area,
+            reporte_bienes_por_sector,
             reporte_bienes_por_responsable,
             reporte_bienes_listado,
+            reporte_bienes_dependientes,
+            mis_bienes_a_cargo,
+            mis_bienes_asignados,
             parque_tecnologico,
             tipo_asignacion,
+            tipo_clave,
+            claves_bienes,
             modalidad_uso,
             motivos_baja,
             tipo_contrato,
@@ -376,8 +374,8 @@ export class AppInventario extends AppBackend{
             sedes       ,
             jerarquias  ,
             roles       ,    
-            tipo_area   ,
-            areas       ,
+            tipo_sector ,
+            sectores       ,
             grupos      ,
             tipo_espacio,
             espacios    ,

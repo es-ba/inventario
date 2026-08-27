@@ -12,12 +12,6 @@ import {
 } from './declaracion-pdf';
 import {agregarCampoDeFirma} from './declaracion-firma-campo';
 
-/*
-    Render del documento de declaración con pdfmake.
-
-    Separado de declaracion-pdf.ts para que el armado del contenido se pueda testear
-    sin depender de pdfmake ni del sistema de archivos.
-*/
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 export const pdfmake = require('pdfmake');
@@ -43,10 +37,7 @@ export function configurarPdfmake(){
             bolditalics: path.join(fuentes, 'Roboto-MediumItalic.ttf'),
         }
     });
-    // El contenido del documento sale de la base: no queremos que una URL guardada
-    // en un campo dispare una descarga desde el servidor.
     pdfmake.setUrlAccessPolicy(() => false);
-    // Sólo se pueden embeber las fuentes y el escudo, nada más del disco.
     const permitidos = [fuentes, path.resolve(RUTA_LOGO)];
     pdfmake.setLocalAccessPolicy((rutaPedida:string) => {
         const resuelta = path.resolve(rutaPedida);
@@ -55,7 +46,6 @@ export function configurarPdfmake(){
     configurado = true;
 }
 
-/** Devuelve la ruta del logo institucional si está disponible. Su ausencia no debe frenar una emisión. */
 export function resolverLogo():string|null{
     const ruta = path.resolve(RUTA_LOGO);
     return fs.existsSync(ruta) ? ruta : null;
@@ -68,7 +58,6 @@ export type DeclaracionPdfGenerado = {
     cantidadBienes:number,
 };
 
-/** Genera el PDF de la declaración y el hash del archivo resultante. */
 export async function generarDeclaracionPdf(
     params:Omit<DeclaracionDocParams, 'logo'> & {logo?:string|null},
 ):Promise<DeclaracionPdfGenerado>{
@@ -76,8 +65,6 @@ export async function generarDeclaracionPdf(
     const logo = params.logo === undefined ? resolverLogo() : params.logo;
     const docDefinition = buildDeclaracionDocDefinition({...params, logo});
     const renderizado:Buffer = await pdfmake.createPdf(docDefinition).getBuffer();
-    // El campo de firma se agrega antes del hash: el documento emitido es el que ya lo
-    // tiene, y es contra ése que se compara el archivo firmado que vuelve.
     const buffer = await agregarCampoDeFirma(renderizado);
     return {
         buffer,

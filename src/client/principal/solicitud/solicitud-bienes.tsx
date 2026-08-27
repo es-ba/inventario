@@ -21,19 +21,6 @@ import {TabPanel, propsDeSolapa} from '../base/tab-panel';
 import type {Fila} from '../base/tipos-tabla';
 import {BusquedaBienes} from '../busqueda-bienes';
 
-/*
-    Bienes de una solicitud, en dos solapas: los que ya tiene y la búsqueda para sumarle
-    más.
-
-    Para agregar se usa la misma pantalla de búsqueda de bienes que existe suelta, no una
-    búsqueda propia. Es la que ya sabe filtrar por cualquier campo o atributo con
-    operadores y AND/OR, mostrar en qué área, sede y espacio está cada bien y quién lo
-    tiene, elegir columnas y seleccionar de a muchos. Duplicar eso en chico daba siempre
-    una versión peor: se le pasa una acción de selección y alcanza.
-
-    Cuando la solicitud dejó de ser editable (ya salió de Borrador), queda sólo la lista:
-    es lo que se va a mover y no debería cambiar sin volver atrás.
-*/
 
 declare module 'frontend-plus' {
     interface BEAPI {
@@ -108,7 +95,6 @@ export function SolicitudBienes({
             fichas:JSON.stringify(fichas),
         });
         await cargar();
-        // Volver a la lista es lo que deja ver el resultado del agregado.
         setSolapa(0);
         return resultado.message;
     }, [acta, cargar, conn]);

@@ -1,25 +1,5 @@
 "use strict";
 
-/*
-    Verificación del PDF firmado que se vuelve a cargar al sistema.
-
-    El sistema no firma: el responsable aplica la firma digital fuera, con su token, y
-    un administrativo sube el archivo resultante. Acá se controlan dos cosas:
-
-    Nivel 1 — que el archivo sea un PDF y tenga una firma adentro. Detecta el error más
-    frecuente en la práctica: subir el PDF que se descargó, sin firmar.
-
-    Nivel 2 — que sea *este* documento. Una firma PAdES se aplica como incremental
-    update: los bytes del documento original quedan intactos como prefijo del archivo
-    firmado, y la firma se agrega al final. Comparar ese prefijo contra el archivo que
-    emitió el sistema prueba que se firmó lo que corresponde y no otra cosa.
-
-    No se valida la cadena de certificados ni la revocación (nivel 3): quedó fuera de
-    alcance por decisión del proyecto. Por eso el nombre del firmante que se extrae acá
-    es *declarado*, no verificado: sale de un campo del PDF y no prueba nada por sí solo.
-
-    Módulo puro: entran Buffers, sale un resultado. Sin base ni sistema de archivos.
-*/
 
 const SUB_FILTERS_DE_FIRMA = [
     'adbe.pkcs7.detached',
@@ -66,12 +46,10 @@ export type ResultadoVerificacion = {
     comparacion:ComparacionPrefijo|null,
 };
 
-/** Los PDF válidos arrancan con %PDF- (la especificación permite basura antes, pero ningún firmador la produce). */
 function tieneEncabezadoPdf(buffer:Buffer):boolean{
     return buffer.length > 5 && buffer.subarray(0, 5).toString('latin1') === '%PDF-';
 }
 
-/** Los strings de PDF pueden venir en UTF-16BE con BOM o en PDFDocEncoding. */
 function decodificarStringPdf(crudo:string):string{
     const sinEscapes = crudo.replace(/\\([()\\])/g, '$1');
     if(sinEscapes.charCodeAt(0) === 0xFE && sinEscapes.charCodeAt(1) === 0xFF){
@@ -86,10 +64,6 @@ function decodificarStringPdf(crudo:string):string{
     return sinEscapes.trim();
 }
 
-/**
- * Nivel 1: ¿es un PDF y tiene una firma adentro?
- * Además extrae, sin validarlo, el nombre que el PDF declara como firmante.
- */
 export function analizarFirmaPdf(buffer:Buffer):AnalisisFirma{
     const esPdf = tieneEncabezadoPdf(buffer);
     if(!esPdf){
@@ -121,11 +95,6 @@ export function analizarFirmaPdf(buffer:Buffer):AnalisisFirma{
     return {esPdf, firmaDetectada, subFilter, firmanteDeclarado, byteRange};
 }
 
-/**
- * Nivel 2: ¿el archivo emitido está intacto como prefijo del archivo subido?
- * Cuando no coincide informa el primer byte distinto, que es lo que permite
- * diagnosticar si el firmador reescribió el archivo en vez de anexarle la firma.
- */
 export function compararPrefijo(emitido:Buffer, subido:Buffer):ComparacionPrefijo{
     const base:ComparacionPrefijo = {
         coincide:false,
@@ -151,13 +120,6 @@ function formatearBytes(cantidad:number):string{
     return cantidad.toLocaleString('es-AR');
 }
 
-/**
- * Verificación completa del documento que se sube.
- *
- * Se compara contra todas las versiones emitidas, no sólo la vigente: si alguien firmó
- * una versión que después se reemplazó, conviene decírselo con precisión en vez de
- * rechazar el archivo como inválido.
- */
 export function verificarDeclaracionFirmada(opts:{
     subido:Buffer,
     emitidos:DocumentoEmitido[],

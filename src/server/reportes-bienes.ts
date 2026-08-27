@@ -2,77 +2,87 @@
 
 import {sqlBienes, textoONuloSql} from './table-bienes';
 
-/*
-    SQL compartido por los reportes de bienes.
 
-    Los reportes se apoyan en la misma vista que usa la grilla de bienes (sqlBienes), así
-    que el área, la sede, el espacio y el responsable salen del último movimiento de cada
-    ficha — la misma definición que ve el usuario en pantalla. Si esa lógica cambia, los
-    reportes la siguen sin tocar nada.
-
-    No definen tabla física: al declarar sql.from sin isTable, backend-plus los resuelve
-    como una subconsulta y no genera DDL. Las policies de bienes y movimientos_bien se
-    aplican igual, porque el filtro de RLS es por tabla y no depende del anidamiento.
-*/
-
-/** Etiqueta para los bienes que todavía no tienen movimiento que los ubique. */
 export const SIN_ASIGNAR = '(sin asignar)';
 
-/** Mismo criterio que la vista de bienes: vacío es NULL, nunca ''. */
 const textoONulo = textoONuloSql;
 
-/*
-    Todos los reportes son del patrimonio vigente: sólo los bienes en alta.
-
-    Está en una sola constante para que no se desincronicen entre sí. Un bien dado de baja
-    sigue teniendo área y responsable —el último que tuvo—, y contarlo ahí infla el
-    inventario de un sector con cosas que ya no están.
-
-    Los bienes en baja se consultan desde la grilla de bienes, que tiene su propia vista
-    filtrada, y desde la búsqueda de React, que tiene la solapa "Bienes en baja".
-
-    activo es booleano y no admite nulos, así que alcanza con nombrarlo. Cuando era texto
-    esto comparaba contra 'ALTA' y dejaba afuera los 3679 bienes sin valor, que la búsqueda
-    sí mostraba como activos: los reportes contaban un tercio menos de lo que había.
-*/
 const SOLO_ALTA = `v.activo`;
 
-/*
-    Columnas de medición comunes a los reportes agrupados.
-
-    No hay cantidad_alta ni cantidad_baja: con el reporte filtrado por alta, la primera
-    sería igual a cantidad y la segunda siempre cero. Una columna que siempre dice lo mismo
-    no informa, confunde.
-*/
 const MEDIDAS = `
     count(*) AS cantidad`;
 
-export const sqlBienesPorArea = `
+export type VinculoConElBien = {
+    rol:'cargo'|'asignado',
+    columna:'responsable'|'enusode_responsable',
+    contador:'cantidad'|'cantidad_asignados',
+    expresion:string,
+    titulo:string,
+    detalle:{abr:string, label:string},
+    mio:{tabla:string, title:string, label:string},
+};
+
+export const VINCULOS_CON_EL_BIEN:readonly VinculoConElBien[] = [
+    {
+        rol:'cargo',
+        columna:'responsable',
+        contador:'cantidad',
+        expresion:`coalesce(${textoONulo('v.responsable')}, '${SIN_ASIGNAR}')`,
+        titulo:'a cargo',
+        detalle:{abr:'B', label:'Bienes a cargo'},
+        mio:{tabla:'mis_bienes_a_cargo', title:'Bienes a mi cargo', label:'a mi cargo'},
+    },
+    {
+        rol:'asignado',
+        columna:'enusode_responsable',
+        contador:'cantidad_asignados',
+        expresion:textoONulo('v.enusode_responsable'),
+        titulo:'asignados',
+        detalle:{abr:'Asig', label:'Bienes asignados'},
+        mio:{tabla:'mis_bienes_asignados', title:'Bienes asignados a mí', label:'asignados a mí'},
+    },
+];
+
+export function vinculoConElBien(rol:VinculoConElBien['rol']):VinculoConElBien{
+    const vinculo = VINCULOS_CON_EL_BIEN.find(v => v.rol === rol);
+    if(vinculo == null){
+        throw new Error(`No hay un vínculo con el bien llamado "${rol}"`);
+    }
+    return vinculo;
+}
+
+const CONTADOR_A_CARGO = vinculoConElBien('cargo').contador;
+
+export const sqlBienesPorSector = `
+WITH por_sector AS (
+    SELECT
+        coalesce(nullif(btrim(r.sector), ''), '${SIN_ASIGNAR}') AS sector,
+        count(DISTINCT nullif(btrim(v.responsable), '')) AS responsables,
+        count(DISTINCT nullif(btrim(v.sede), '')) AS sedes,
+        count(DISTINCT nullif(btrim(v.espacio), '')) AS espacios,
+        ${MEDIDAS}
+    FROM (${sqlBienes}) v
+    LEFT JOIN responsables r ON r.responsable = v.responsable
+    WHERE ${SOLO_ALTA}
+    GROUP BY coalesce(nullif(btrim(r.sector), ''), '${SIN_ASIGNAR}')
+)
 SELECT
-    coalesce(nullif(btrim(v.area), ''), '${SIN_ASIGNAR}') AS area,
-    count(DISTINCT nullif(btrim(v.responsable), '')) AS responsables,
-    count(DISTINCT nullif(btrim(v.sede), '')) AS sedes,
-    count(DISTINCT nullif(btrim(v.espacio), '')) AS espacios,
-    ${MEDIDAS}
-FROM (${sqlBienes}) v
-WHERE ${SOLO_ALTA}
-GROUP BY coalesce(nullif(btrim(v.area), ''), '${SIN_ASIGNAR}')
+    p.sector,
+    p.responsables,
+    p.sedes,
+    p.espacios,
+    p.cantidad,
+    (SELECT coalesce(sum(d.cantidad), 0)
+        FROM por_sector d
+        WHERE d.sector = p.sector
+           OR sector_pertenece(d.sector, p.sector)) AS cantidad_dependientes
+FROM por_sector p
 `;
 
-/*
-    Parque tecnológico: la clase contable 3.6 (Elementos y Dispositivos para Computación)
-    y la 3.4 (Aparatos... Telefonía). Ahí caen tablets, notebooks, celulares, GPS, PCs,
-    impresoras y equipamiento de comunicaciones.
-*/
 export const CLASES_PARQUE_TECNOLOGICO = ['4', '6'];
 
 export type AtributoDeGrilla = {atributo:string, nombre:string};
 
-/*
-    Los atributos son datos, no código: se dan de alta en bienes_atributos. Por eso la
-    lista se carga al arrancar (postConfig) y de ahí sale una columna por atributo, en vez
-    de tenerlos fijos acá. Agregar un atributo nuevo requiere reiniciar, no recompilar.
-*/
 let atributosDeBienes:AtributoDeGrilla[] = [];
 
 export function setAtributosDeBienes(lista:AtributoDeGrilla[]):void{
@@ -84,24 +94,13 @@ export function getAtributosDeBienes():AtributoDeGrilla[]{
 }
 
 export type ColumnaDeAtributo = {
-    /** El código tal como está en bienes_atributos. Sólo se usa como literal. */
     atributo:string,
-    /** El nombre de columna, derivado y siempre válido. */
     columna:string,
     titulo:string,
 };
 
 const literalSql = (valor:string):string => "'" + valor.replace(/'/g, "''") + "'";
 
-/*
-    El código del atributo lo escribe un administrador desde la pantalla de atributos, así
-    que no se puede usar como nombre de columna: puede tener espacios, acentos, mayúsculas,
-    o llamarse igual que una columna del bien ("estado", "serie", "ficha").
-
-    Por eso la columna se deriva: se normaliza el código, se le antepone atr_ para que no
-    pueda chocar con nada del bien, y si dos códigos distintos normalizan igual se
-    desempatan con un sufijo. Nunca falla: un código raro da una columna fea, no un error.
-*/
 export function columnasDeAtributos(atributos:AtributoDeGrilla[]):ColumnaDeAtributo[]{
     const usadas = new Set<string>();
     return atributos.map(a => {
@@ -126,10 +125,6 @@ export function columnasDeAtributos(atributos:AtributoDeGrilla[]):ColumnaDeAtrib
     });
 }
 
-/**
- * Pasa los atributos de filas a columnas. El LATERAL evita tener que agrupar por todas
- * las columnas del bien, que es lo que vuelve ilegible un pivot hecho con GROUP BY.
- */
 export function sqlParqueTecnologico(atributos:AtributoDeGrilla[] = atributosDeBienes):string{
     const mapeo = columnasDeAtributos(atributos);
     const columnas = mapeo.map(c =>
@@ -143,12 +138,6 @@ export function sqlParqueTecnologico(atributos:AtributoDeGrilla[] = atributosDeB
         ? ',\n' + mapeo.map(c => `    atr.${c.columna}`).join(',\n')
         : '';
 
-    /*
-        Se exponen los códigos crudos, no las versiones "código — descripción". La
-        descripción la agrega backend-plus como columna aparte, vía displayFields en las
-        foreign keys de la definición de la tabla. Concatenar los dos en un solo campo
-        deja el filtro inutilizable: no se puede buscar ni por código ni por descripción.
-    */
     return `
 SELECT
     v.ficha,
@@ -164,7 +153,7 @@ SELECT
     ${textoONulo('v.rubro')} AS rubro,
     ${textoONulo('v.clase')} AS clase,
     ${textoONulo('v.cuenta')} AS cuenta,
-    ${textoONulo('v.area')} AS area,
+    ${textoONulo('v.sector')} AS sector,
     ${textoONulo('v.sede')} AS sede,
     ${textoONulo('v.espacio')} AS espacio,
     ${textoONulo('v.responsable')} AS responsable${seleccionAtributos}
@@ -176,15 +165,6 @@ WHERE ${SOLO_ALTA}
 `;
 }
 
-/*
-    Listado al que se baja desde cualquiera de los reportes.
-
-    No repite todos los campos del bien: sólo los de asignación y las características que
-    sirven para reconocerlo. Los códigos van en su versión "código — descripción", que es
-    la que la vista ya arma y la única que le dice algo a quien lee el reporte. Las
-    columnas area y responsable van en crudo porque son las que enlazan con el maestro;
-    la grilla las oculta sola al mostrarlas como detalle.
-*/
 export const sqlBienesListado = `
 SELECT
     v.ficha,
@@ -199,24 +179,76 @@ SELECT
     ${textoONulo('v.rubro')} AS rubro,
     ${textoONulo('v.clase')} AS clase,
     ${textoONulo('v.cuenta')} AS cuenta,
-    coalesce(nullif(btrim(v.area), ''), '${SIN_ASIGNAR}') AS area,
+    coalesce(nullif(btrim(v.sector), ''), '${SIN_ASIGNAR}') AS sector,
+
+    coalesce(nullif(btrim(r.sector), ''), '${SIN_ASIGNAR}') AS sector_responsable,
     ${textoONulo('v.sede')} AS sede,
     ${textoONulo('v.espacio')} AS espacio,
-    coalesce(nullif(btrim(v.responsable), ''), '${SIN_ASIGNAR}') AS responsable,
+    ${vinculoConElBien('cargo').expresion} AS responsable,
     ${textoONulo('v.tipo_asignacion')} AS tipo_asignacion,
     ${textoONulo('v.modalidad_uso')} AS modalidad_uso,
-    ${textoONulo('v.enusode')} AS enusode
+    ${textoONulo('v.enusode')} AS enusode,
+    ${vinculoConElBien('asignado').expresion} AS enusode_responsable
 FROM (${sqlBienes}) v
+LEFT JOIN responsables r ON r.responsable = v.responsable
 WHERE ${SOLO_ALTA}
 `;
 
-export const sqlBienesPorResponsable = `
+export const sqlBienesConDependientes = `
 SELECT
-    coalesce(nullif(btrim(v.responsable), ''), '${SIN_ASIGNAR}') AS responsable,
-    count(DISTINCT nullif(btrim(v.area), '')) AS areas,
-    count(DISTINCT nullif(btrim(v.sede), '')) AS sedes,
-    ${MEDIDAS}
-FROM (${sqlBienes}) v
-WHERE ${SOLO_ALTA}
-GROUP BY coalesce(nullif(btrim(v.responsable), ''), '${SIN_ASIGNAR}')
+    a.sector AS depende_de,
+    ${textoONulo('a.responsable')} AS jefe,
+    l.*
+FROM (${sqlBienesListado}) l
+JOIN responsables r ON r.responsable = l.responsable
+JOIN sectores a ON sector_pertenece(r.sector, a.sector)
+`;
+
+export const sqlBienesPorResponsable = `
+WITH por_responsable AS (
+    SELECT
+        p.responsable,
+${VINCULOS_CON_EL_BIEN.map(vinculo =>
+`        count(*) FILTER (WHERE p.rol = '${vinculo.rol}') AS ${vinculo.contador},`
+).join('\n')}
+        count(DISTINCT nullif(btrim(v.sector), '')) AS sectores,
+        count(DISTINCT nullif(btrim(v.sede), '')) AS sedes
+    FROM (${sqlBienes}) v
+    CROSS JOIN LATERAL (VALUES
+${VINCULOS_CON_EL_BIEN.map(vinculo =>
+`        ('${vinculo.rol}', ${vinculo.expresion})`
+).join(',\n')}
+    ) AS p(rol, responsable)
+    WHERE ${SOLO_ALTA}
+      AND p.responsable IS NOT NULL
+    GROUP BY p.responsable
+),
+
+personas AS (
+    SELECT responsable, sector FROM responsables
+    UNION ALL
+    SELECT '${SIN_ASIGNAR}', NULL::text
+)
+SELECT
+    pe.responsable,
+${VINCULOS_CON_EL_BIEN.map(vinculo =>
+`    coalesce(c.${vinculo.contador}, 0) AS ${vinculo.contador},`
+).join('\n')}
+    coalesce(c.sectores, 0)           AS sectores,
+    coalesce(c.sedes, 0)              AS sedes,
+    coalesce(d.personas, 0)           AS personas_dependientes,
+    coalesce(c.${CONTADOR_A_CARGO}, 0) + coalesce(d.cantidad, 0) AS cantidad_dependientes
+FROM personas pe
+LEFT JOIN por_responsable c ON c.responsable = pe.responsable
+
+LEFT JOIN LATERAL (
+    SELECT count(*) AS personas,
+           coalesce(sum(o.${CONTADOR_A_CARGO}), 0) AS cantidad
+        FROM responsables sub
+        LEFT JOIN por_responsable o ON o.responsable = sub.responsable
+        WHERE sub.responsable IS DISTINCT FROM pe.responsable
+          AND EXISTS (SELECT 1 FROM sectores j
+                        WHERE j.responsable = pe.responsable
+                          AND sector_pertenece(sub.sector, j.sector))
+) d ON true
 `;

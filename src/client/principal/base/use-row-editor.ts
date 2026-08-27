@@ -11,13 +11,6 @@ import {
     normalizarValor,
 } from './tipos-tabla';
 
-/*
-    Edición y alta de un registro.
-
-    Replica a nivel fila lo que la grilla de backend-plus hace celda por celda: sabe si es
-    alta o modificación, valida obligatorios, y en la modificación manda sólo los campos
-    que cambiaron (la PK siempre, para que el backend sepa a quién actualizar).
-*/
 
 const MARCA_NUEVA = '$new';
 
@@ -39,7 +32,6 @@ export function useRowEditor({
 }:{
     tabla:string,
     definicion:TableDefinition,
-    /** undefined significa alta. */
     filaInicial?:Fila,
 }):ResultadoRowEditor{
     const conn = useConexion();
@@ -50,7 +42,6 @@ export function useRowEditor({
     const [original, setOriginal] = React.useState<Fila>(() => filaInicial ?? {});
     const [modificado, setModificado] = React.useState(false);
 
-    // Huella de la PK: si cambia, es otro registro y hay que recargar el formulario.
     const huella = React.useMemo(() => {
         if(!filaInicial){
             return 'alta';
@@ -84,8 +75,6 @@ export function useRowEditor({
     const errores = React.useMemo(() => {
         const resultado:Record<string, string|null> = {};
         definicion.fields.forEach(field => {
-            // Un campo obligatorio que el usuario no puede completar no es su problema:
-            // lo resuelve el backend con su default o su secuencia.
             const debeTenerValor = esObligatorio(field, primaryKey)
                 && esEditable(field)
                 && !loCompletaLaBase(field);

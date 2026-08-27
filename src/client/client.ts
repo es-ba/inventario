@@ -191,23 +191,11 @@ myOwn.clientSides.subirAdjunto = {
     }
 };
 
-/*
-    Acciones del ciclo de vida de una declaración.
-
-    Van todas en una sola columna y se muestran según el estado, para no llenar la
-    grilla de botones apagados:
-
-      BORRADOR  -> emitir
-      EMITIDA   -> subir firmado | observar
-      FIRMADA   -> observar
-      OBSERVADA -> reabrir            (al emitirla otra vez se genera la versión siguiente)
-*/
 type AccionDeclaracion = {
     nombre:string,
     estados:string[],
     ayuda:string,
     direccion:'avance'|'retroceso',
-    /** Devuelve el mensaje a mostrar, o null si el propio diálogo ya informó. */
     ejecutar:(declaracion:any, refrescar:()=>void)=>Promise<string|null>,
 };
 

@@ -4,7 +4,6 @@ import {AdjuntosPanel} from '../base/adjuntos-panel';
 import {useConexion} from '../base/contexto-base';
 import type {Fila} from '../base/tipos-tabla';
 
-/** Adjuntos de un bien: el panel genérico atado al circuito de archivo_subir. */
 
 declare module 'frontend-plus' {
     interface BEAPI {

@@ -2,13 +2,11 @@
 import {TableDefinition, TableContext} from "./types-principal";
 
 export function ordenes_compra(context:TableContext):TableDefinition{
-    var admin = context.user.rol==='admin';
-    var responsable = context.user.rol==='responsable';
     return {
         name:'ordenes_compra',
         elementName:'orden_compra', 
-        title:'orden_compra', // solo si es distinto al "name", si es igual se puede omitir
-        editable:admin || responsable,
+        title:'orden_compra',
+        editable:context.es.administrativo,
         fields:[
             {name:'orden_compra'                        , typeName:'text'    },
             {name:'codigo'                              , typeName:'text'    , isName:true},
@@ -49,8 +47,8 @@ export function ordenes_compra(context:TableContext):TableDefinition{
         //        Acá las "policies" se heredan de la tabla padre, lo cual lo hace más complejo aún.
         //     */
         //     policies:{
-        //         all:{using:`(SELECT ${pol.all.using} FROM bienes WHERE area = bienes.area)`},
-        //         select:{using:`(SELECT ${pol.select.using} FROM bienes WHERE area = bienes.area)`}
+        //         all:{using:`(SELECT ${pol.all.using} FROM bienes WHERE sector = bienes.sector)`},
+        //         select:{using:`(SELECT ${pol.select.using} FROM bienes WHERE sector = bienes.sector)`}
         //     }
         // },
         sortColumns:[{column:'orden_compra', order:1}]

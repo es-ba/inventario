@@ -1,23 +1,8 @@
-/*
-    Formato de valores para mostrar en pantalla.
-
-    backend-plus manda los valores tipados: json4all los reconstruye del otro lado, así
-    que una fecha llega como objeto, no como texto. Y ahí está la trampa:
-
-      - los `date` de best-globals extienden Date, así que String() los muestra (feo,
-        pero legible);
-      - los `datetime` NO extienden Date, y String() sobre ellos devuelve
-        literalmente "[object Object]".
-
-    Por eso todo lo que se pinte en una grilla o en un input tiene que pasar por acá y
-    no por String() directo.
-*/
 
 function dosDigitos(valor:unknown):string{
     return String(valor).padStart(2, '0');
 }
 
-/** Los datetime de best-globals exponen sus componentes en `parts`. */
 type PartesFechaHora = {
     year:number, month:number, day:number,
     hour?:number, minutes?:number, seconds?:number,
@@ -38,7 +23,6 @@ function esFechaHora(value:unknown):boolean{
     return Boolean((value as {isRealDateTime?:boolean}).isRealDateTime) || partesDe(value) != null;
 }
 
-/** dd/mm/aaaa a partir de un Date (los `date` de best-globals lo son). */
 function fechaDeDate(value:Date):string{
     return [
         dosDigitos(value.getDate()),
@@ -47,16 +31,11 @@ function fechaDeDate(value:Date):string{
     ].join('/');
 }
 
-/** Normaliza el d/m/aaaa de best-globals a dd/mm/aaaa. */
 function normalizarDmy(texto:string):string{
     const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(texto.trim());
     return m ? `${dosDigitos(m[1])}/${dosDigitos(m[2])}/${m[3]}` : texto;
 }
 
-/**
- * Convierte cualquier valor que mande el backend en algo mostrable.
- * Nunca devuelve "[object Object]".
- */
 export function formatearValor(value:unknown):string{
     if(value == null){
         return '';
@@ -80,7 +59,6 @@ export function formatearValor(value:unknown):string{
             : partes && partes.hour != null
                 ? `${dosDigitos(partes.hour)}:${dosDigitos(partes.minutes ?? 0)}`
                 : '';
-        // La medianoche exacta suele ser una fecha sin hora real: no se muestra.
         return hora && hora !== '00:00' ? `${fecha} ${hora}` : fecha;
     }
     if(typeof value === 'object'){
@@ -93,7 +71,6 @@ export function formatearValor(value:unknown):string{
         }
     }
     const texto = String(value);
-    // Texto ISO que llega sin tipar.
     const iso = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/.exec(texto);
     if(iso){
         const fecha = `${iso[3]}/${iso[2]}/${iso[1]}`;
@@ -102,7 +79,6 @@ export function formatearValor(value:unknown):string{
     return texto;
 }
 
-/** aaaa-mm-dd para los inputs nativos de tipo date. */
 export function aValorFechaInput(value:unknown):string{
     if(value == null || value === ''){
         return '';

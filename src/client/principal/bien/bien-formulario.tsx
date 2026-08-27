@@ -29,13 +29,6 @@ import {BajaBienes} from '../baja-bienes';
 import {prepararEtiquetasCodigosBarra} from '../../../common/codigos-barra';
 import {imprimirEtiquetasCodigosBarra} from '../imprimir-codigos-barra';
 
-/*
-    Formulario de un bien, con sus tablas de detalle.
-
-    Las secciones agrupan los campos por tema. Lo que no esté listado en ninguna cae en
-    "Otros datos": así, si mañana se agrega un campo a la tabla, aparece en el formulario
-    en vez de quedar invisible para siempre.
-*/
 
 const SECCIONES:{titulo:string, campos:string[], abiertaPorDefecto?:boolean}[] = [
     {
@@ -77,10 +70,6 @@ declare module 'frontend-plus' {
     }
 }
 
-/**
- * Campos que no van al formulario: los que la vista deriva del último movimiento
- * —se muestran en el encabezado— y los alias de texto que arma el SQL.
- */
 function esCampoDelFormulario(field:FieldDefinition):boolean{
     if(field.clientSide){
         return false;
@@ -91,11 +80,6 @@ function esCampoDelFormulario(field:FieldDefinition):boolean{
     return field.editable !== false;
 }
 
-/*
-    En modo lectura el valor de una clave foránea se muestra por su descripción, que
-    backend-plus ya trae como columna aparte (<tabla>__<campo>) por cada displayFields.
-    El código queda como dato secundario: sirve para identificar, no para leer.
-*/
 function valorLegible(field:FieldDefinition, row:Fila):{texto:string, codigo:string} {
     const codigo = formatearValor(row[field.name]);
     if(!field.references){
@@ -112,7 +96,6 @@ function valorLegible(field:FieldDefinition, row:Fila):{texto:string, codigo:str
         : {texto:codigo, codigo:''};
 }
 
-/** Un dato en modo lectura. Los campos sin valor no se muestran. */
 function DatoLeido({field, row}:{field:FieldDefinition, row:Fila}){
     const {texto, codigo} = valorLegible(field, row);
     if(texto === ''){
@@ -133,13 +116,6 @@ function DatoLeido({field, row}:{field:FieldDefinition, row:Fila}){
     </Box>;
 }
 
-/*
-    Vista de lectura: densa, en tres columnas, y sin los campos vacíos.
-
-    De los ~40 campos de un bien la mayoría suele estar sin cargar; mostrarlos todos como
-    inputs vacíos es lo que hace que la ficha se sienta un formulario interminable. Acá se
-    muestran sólo los que tienen dato, y las secciones que quedan sin nada no se dibujan.
-*/
 function VistaDatos({definicion, row}:{definicion:TableDefinition, row:Fila}){
     const secciones = SECCIONES.map(seccion => {
         const campos = seccion.campos
@@ -220,7 +196,6 @@ export function BienFormulario({
     ficha,
     onVolver,
 }:{
-    /** undefined significa alta de un bien nuevo. */
     ficha?:string,
     onVolver:() => void,
 }){
@@ -233,10 +208,8 @@ export function BienFormulario({
     const [resumen, setResumen] = React.useState<ResumenDelBien|null>(null);
     const [solapa, setSolapa] = React.useState(0);
     const [seccionAbierta, setSeccionAbierta] = React.useState<string>(SECCIONES[0].titulo);
-    // Un bien existente se abre para leer; uno nuevo, directo en edición.
     const [editando, setEditando] = React.useState(!ficha);
     const [bajaAbierta, setBajaAbierta] = React.useState(false);
-    // Se incrementa para releer el bien después de darlo de baja.
     const [version, setVersion] = React.useState(0);
 
     React.useEffect(() => {
@@ -273,8 +246,6 @@ export function BienFormulario({
         return () => { cancelado = true; };
     }, [conn, ficha, mostrarError, version]);
 
-    // El resumen del encabezado va aparte del bien: es un agregado de otras tablas y no
-    // tiene que demorar la carga del formulario. Si falla, el encabezado se muestra igual.
     React.useEffect(() => {
         if(!ficha){
             setResumen(null);
@@ -376,10 +347,7 @@ export function BienFormulario({
             {!editando
                 ? <>
                     <Stack direction="row" justifyContent="flex-end" spacing={1} sx={{mb:1}}>
-                        {/*
-                            Sólo sobre un bien ya guardado y que no esté de baja: darlo de
-                            baja de nuevo pisaría el motivo original.
-                        */}
+                        {}
                         {guardado && editor.row.activo !== false
                             ? <Button
                                 variant="outlined"
@@ -472,7 +440,6 @@ export function BienFormulario({
             onCerrar={() => setBajaAbierta(false)}
             onAplicada={(mensaje) => {
                 mostrarMensaje(mensaje);
-                // El bien queda en BAJA: se relee para que la ficha lo muestre.
                 setVersion(v => v + 1);
             }}
         />

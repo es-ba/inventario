@@ -11,7 +11,7 @@ const BIENES_PRESENTATION_FIELDS = Object.freeze([
     'clase',
     'cuenta',
     'responsable',
-    'area',
+    'sector',
     'sede',
     'espacio',
     'tipo_asignacion',

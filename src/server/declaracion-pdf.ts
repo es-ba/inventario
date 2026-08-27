@@ -2,22 +2,8 @@
 
 import {createHash} from 'node:crypto';
 
-/*
-    Armado del documento de una declaración de bienes.
-
-    El formato replica el "Informe de Inventario detallado" del sistema anterior
-    (Crystal Reports, Reports/DeclaracionAdjunta.rpt): cinco columnas —Item, Ficha,
-    Rubro Patrimonial, Descripción del Bien, Marca— y el bloque de firma repetido al
-    pie de cada página. Los códigos nunca se imprimen solos: van siempre acompañados
-    de su descripción, que es lo que el responsable puede reconocer.
-
-    Este módulo es puro a propósito: construye la definición del documento (un objeto
-    plano) y el código de contenido, sin tocar pdfmake ni el sistema de archivos.
-    El render vive en declaracion-pdf-render.ts.
-*/
 
 export type DeclaracionInstitucional = {
-    /** Se usa como texto sólo cuando no hay logo: el logo institucional ya lo incluye. */
     organismo:string,
     dependencia?:string|null,
     lema?:string|null,
@@ -28,9 +14,6 @@ export const INSTITUCIONAL_POR_DEFECTO:DeclaracionInstitucional = {
     organismo:'Instituto de Estadística y Censos de la Ciudad Autónoma de Buenos Aires',
     dependencia:null,
     lema:null,
-    // TODO: confirmar el código patrimonial. El número viene del informe anterior, de
-    // cuando el organismo era una Dirección General; con el cambio a Instituto puede
-    // haber cambiado.
     institucionalPatrimonio:
         '2.60.3.1.1691.0.0 - Instituto de Estadística y Censos de la Ciudad Autónoma de Buenos Aires',
 };
@@ -41,8 +24,8 @@ export type DeclaracionCabecera = {
     responsable?:string|null,
     responsable_nombre?:string|null,
     responsable_apellido?:string|null,
-    area?:string|null,
-    area_nombre?:string|null,
+    sector?:string|null,
+    sector_nombre?:string|null,
     observaciones?:string|null,
 };
 
@@ -75,22 +58,14 @@ export type DeclaracionDocParams = {
 const SIN_DATO = '—';
 const SIN_MARCA = 'Sin Marca';
 
-/** A4 en puntos. */
 export const PAGINA = {ancho:595.28, alto:841.89};
 
-/**
- * Recuadro donde va el campo de firma, en coordenadas PDF (origen abajo a la izquierda).
- * Lo comparten el dibujo del recuadro —que hace pdfmake— y el campo AcroForm que agrega
- * declaracion-firma-campo.ts, para que no se desalineen.
- */
 export const RECT_CAMPO_FIRMA = {x:338, y:14, ancho:220, alto:46};
 
-/** pdfmake posiciona desde arriba; el PDF mide desde abajo. */
 export function yDesdeArriba(yPdf:number, alto:number = 0):number{
     return PAGINA.alto - yPdf - alto;
 }
 
-/** Las fechas llegan como Date, como texto o como los objetos date de best-globals. */
 export function formatearFecha(value:unknown):string{
     if(value == null || value === ''){
         return SIN_DATO;
@@ -119,7 +94,6 @@ export function formatearFecha(value:unknown):string{
     return texto;
 }
 
-/** El año de la declaración, que en el informe va como "Año: 2018". */
 export function anioDeclaracion(fecha:unknown):string{
     const formateada = formatearFecha(fecha);
     const match = /(\d{4})$/.exec(formateada);
@@ -131,11 +105,6 @@ function textoOSinDato(value:unknown):string{
     return texto === '' ? SIN_DATO : texto;
 }
 
-/**
- * Rubro patrimonial como lo mostraba el sistema anterior:
- * "3.6.1 - Equipamientos de Escritorio y Dispositivos Externos".
- * El código solo no le dice nada a nadie, así que va con la descripción de la cuenta.
- */
 export function rubroPatrimonial(bien:DeclaracionBienFila):string{
     const codigo = [bien.rubro, bien.clase, bien.cuenta]
         .map(parte => parte == null ? '' : String(parte).trim())
@@ -154,7 +123,6 @@ export function rubroPatrimonial(bien:DeclaracionBienFila):string{
     return `${codigo} - ${nombre}`;
 }
 
-/** La marca por su descripción. Sin marca cargada, el informe viejo imprime "Sin Marca". */
 export function marcaBien(bien:DeclaracionBienFila):string{
     const descripcion = bien.marca_descripcion == null ? '' : String(bien.marca_descripcion).trim();
     if(descripcion !== ''){
@@ -164,7 +132,6 @@ export function marcaBien(bien:DeclaracionBienFila):string{
     return codigo !== '' ? codigo : SIN_MARCA;
 }
 
-/** "Descripción del Bien": el detalle, y si está vacío la observación. */
 export function descripcionBien(bien:DeclaracionBienFila):string{
     const detalle = bien.detalle == null ? '' : String(bien.detalle).trim();
     if(detalle !== ''){
@@ -173,7 +140,6 @@ export function descripcionBien(bien:DeclaracionBienFila):string{
     return textoOSinDato(bien.observacion);
 }
 
-/** El responsable se imprime "NOMBRE APELLIDO", como en el informe anterior. */
 export function nombreResponsable(cabecera:DeclaracionCabecera):string{
     const partes = [cabecera.responsable_nombre, cabecera.responsable_apellido]
         .map(parte => parte == null ? '' : String(parte).trim())
@@ -184,23 +150,12 @@ export function nombreResponsable(cabecera:DeclaracionCabecera):string{
     return textoOSinDato(cabecera.responsable);
 }
 
-/**
- * Ordena los bienes por ficha de forma estable, para que dos emisiones del mismo
- * contenido produzcan el mismo documento y el mismo código.
- */
 export function ordenarBienes(bienes:DeclaracionBienFila[]):DeclaracionBienFila[]{
     return [...bienes].sort((a, b) =>
         String(a.ficha).localeCompare(String(b.ficha), 'es', {numeric:true})
     );
 }
 
-/**
- * Código corto que identifica el contenido declarado. Se imprime en el documento
- * para poder cotejar a ojo un papel contra el sistema.
- *
- * Es el hash del contenido, no del archivo: el hash del PDF no puede imprimirse
- * dentro del propio PDF. El hash del archivo se guarda en declaraciones_documentos.
- */
 export function calcularCodigoContenido(
     cabecera:DeclaracionCabecera,
     bienes:DeclaracionBienFila[],
@@ -216,7 +171,7 @@ export function calcularCodigoContenido(
         `declaracion:${cabecera.declaracion}`,
         `version:${version}`,
         `responsable:${textoOSinDato(cabecera.responsable)}`,
-        `area:${textoOSinDato(cabecera.area)}`,
+        `sector:${textoOSinDato(cabecera.sector)}`,
         `bienes:${filas.length}`,
         ...filas,
     ].join('\n');
@@ -242,20 +197,15 @@ function filaBien(bien:DeclaracionBienFila, indice:number):unknown[]{
     ];
 }
 
-/**
- * Definición del documento para pdfmake. Devuelve un objeto plano: no genera el PDF.
- */
 export function buildDeclaracionDocDefinition(params:DeclaracionDocParams):Record<string, any>{
     const {cabecera, emision, logo} = params;
     const institucional = params.institucional ?? INSTITUCIONAL_POR_DEFECTO;
     const bienes = ordenarBienes(params.bienes);
     const codigoContenido = calcularCodigoContenido(cabecera, bienes, emision.version);
     const responsable = nombreResponsable(cabecera);
-    const sector = textoOSinDato(cabecera.area_nombre ?? cabecera.area);
+    const sector = textoOSinDato(cabecera.sector_nombre ?? cabecera.sector);
     const anio = anioDeclaracion(cabecera.fecha);
 
-    // El logo institucional ya trae el nombre del organismo, así que no se repite como
-    // texto: sólo se escribe cuando el logo no está disponible.
     const identificacion:unknown[] = [];
     if(logo){
         identificacion.push({image:logo, width:150, margin:[0, 0, 10, 0]});
@@ -360,14 +310,6 @@ export function buildDeclaracionDocDefinition(params:DeclaracionDocParams):Recor
                 },
             },
         ],
-        /*
-            El pie lleva la identificación en todas las páginas. El recuadro de firma va
-            sólo en la última: una firma digital cubre el documento entero, así que no
-            tiene sentido repetirla por página como hacía el informe en papel.
-
-            El recuadro se dibuja en posición absoluta para que coincida exactamente con
-            el campo AcroForm que se agrega después sobre las mismas coordenadas.
-        */
         footer:(currentPage:number, pageCount:number) => {
             const partes:unknown[] = [{
                 margin:[36, 8, 36, 0],

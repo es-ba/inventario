@@ -2,20 +2,6 @@
 
 import {TOPE_FICHAS} from './bienes-edicion-masiva';
 
-/*
-    Baja de bienes: validación del pedido.
-
-    Módulo puro —entra el pedido, sale lo que hay que ejecutar— para poder probar la parte
-    delicada sin base.
-
-    Dar de baja es un acto directo: pone bienes.activo en false y deja asentado el motivo.
-    No usa estado_baja: ese referencial existe para un circuito de solicitud y aprobación
-    que hoy no está implementado, y llenarlo a medias sería peor que dejarlo vacío.
-
-    Quién y cuándo no se guardan acá: los registra la auditoría, que ya anota cada cambio de
-    campo con usuario y fecha.
-*/
-
 export class ErrorBaja extends Error {}
 
 export type BajaRequest = {
@@ -32,7 +18,6 @@ function fallar(mensaje:string):never{
     throw new ErrorBaja(mensaje);
 }
 
-/** Acepta el arreglo o su JSON, que es como viaja desde el cliente. */
 export function normalizarFichas(fichas:unknown):string[]{
     const lista = typeof fichas === 'string' ? JSON.parse(fichas) : fichas;
     if(!Array.isArray(lista)){
@@ -53,13 +38,6 @@ export function normalizarFichas(fichas:unknown):string[]{
     return unicas;
 }
 
-/**
- * Valida el pedido de baja.
- *
- * El motivo es obligatorio: una baja sin motivo no se puede explicar después, y es
- * justamente lo que se le va a preguntar a quien mire el bien dentro de un año. Se valida
- * contra los motivos cargados y no contra una lista fija, porque son datos.
- */
 export function planificarBaja(pedido:BajaRequest, motivosValidos:string[]):BajaPlan{
     const fichas = normalizarFichas(pedido.fichas);
     const motivo = String(pedido.motivo ?? '').trim();
@@ -72,7 +50,6 @@ export function planificarBaja(pedido:BajaRequest, motivosValidos:string[]):Baja
     return {fichas, motivo};
 }
 
-/** Mensaje del resultado, contando lo que no se tocó porque ya estaba de baja. */
 export function describirBaja(pedidas:number, dadasDeBaja:number):string{
     const yaEstaban = pedidas - dadasDeBaja;
     const cuantos = `${dadasDeBaja} ${dadasDeBaja === 1 ? 'bien' : 'bienes'}`;

@@ -1,7 +1,6 @@
 import * as React from 'react';
 import {Box} from '@mui/material';
 
-/** Panel de una solapa, con los atributos de accesibilidad que espera MUI Tabs. */
 export function TabPanel({
     children,
     value,
@@ -23,7 +22,6 @@ export function TabPanel({
     </div>;
 }
 
-/** Props para el <Tab> que se enlaza con el panel de arriba. */
 export function propsDeSolapa(index:number){
     return {
         id:`solapa-${index}`,

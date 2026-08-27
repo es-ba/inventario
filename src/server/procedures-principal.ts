@@ -25,7 +25,8 @@ import {
     buildAtributosOpcionesQuery,
     buildAtributoValoresOpcionesQuery,
 } from './atributos-opciones-query';
-import { bienes, getPolicies, sqlBienes } from './table-bienes';
+import { bienes, sqlBienes } from './table-bienes';
+import { sqlVisibilidad } from './politicas';
 import { generarDeclaracionPdf } from './declaracion-pdf-render';
 import { DocumentoEmitido, analizarFirmaPdf, verificarDeclaracionFirmada } from './declaracion-verificacion';
 import { setAtributosDeBienes } from './reportes-bienes';
@@ -94,7 +95,7 @@ async function prepararBusquedaBienes(context:ProcedureContext, consulta:unknown
     );
     const queries = buildBienesBusquedaQueries(request, {
         baseSql:sqlBienes,
-        visibilitySql:getPolicies(context.be).select.using,
+        visibilitySql:sqlVisibilidad(),
         allowedFields,
         resolveSqlFieldName:resolveBienesPresentationSqlFieldName,
         allowedAttributes,
@@ -143,12 +144,6 @@ export const ProceduresInventario:ProcedureDef[] = [
             {name:'fichas', typeName:'text'},
         ],
         coreFunction:async function(context:ProcedureContext, params:any){
-            /*
-                Alta de varios bienes de una vez. Un insert por bien desde el cliente deja
-                la solicitud a medio cargar si alguno falla; acá entran todos o ninguno.
-
-                Los que ya estaban no son un error: se ignoran y se informan aparte.
-            */
             const acta = String(params.acta ?? '').trim();
             const fichas = JSON.parse(String(params.fichas ?? '[]'));
             if(!Array.isArray(fichas) || fichas.length === 0){
@@ -519,8 +514,6 @@ export const ProceduresInventario:ProcedureDef[] = [
                 throw new Error('No tiene permisos para emitir declaraciones');
             }
 
-            // Se toma el lock de la declaración antes de leer nada, para que dos emisiones
-            // simultáneas no generen la misma versión.
             const bloqueo = await client.query(`
                 SELECT estado FROM declaraciones WHERE declaracion = $1 FOR UPDATE
             `, [declaracion]).fetchAll();
@@ -540,20 +533,17 @@ export const ProceduresInventario:ProcedureDef[] = [
                     d.declaracion,
                     d.fecha,
                     d.responsable,
-                    d.area,
+                    d.sector,
                     d.observaciones,
                     r.nombre AS responsable_nombre,
                     r.apellido AS responsable_apellido,
-                    a.sigla AS area_nombre
+                    a.sigla AS sector_nombre
                 FROM declaraciones d
                 LEFT JOIN responsables r ON r.responsable = d.responsable
-                LEFT JOIN areas a ON a.area = d.area
+                LEFT JOIN sectores a ON a.sector = d.sector
                 WHERE d.declaracion = $1
             `, [declaracion]).fetchUniqueRow();
 
-            // Las descripciones se resuelven acá y no se guardan en declaraciones_bienes:
-            // el documento queda congelado como archivo, así que alcanza con leerlas al
-            // momento de emitir.
             const bienesResult = await client.query(`
                 SELECT
                     db.ficha,
@@ -594,9 +584,6 @@ export const ProceduresInventario:ProcedureDef[] = [
             });
 
             const archivo = `declaraciones/${declaracion}/v${version}-emitido.pdf`;
-            // El archivo se escribe antes que la fila: si falla el disco no queda un
-            // documento registrado que no existe, y un PDF huérfano es inocuo (la próxima
-            // emisión de la misma versión lo pisa).
             await fs.outputFile(`local-attachments/${archivo}`, generado.buffer);
             try{
                 await client.query(`
@@ -665,9 +652,6 @@ export const ProceduresInventario:ProcedureDef[] = [
                 cambios: parsear(params.cambios, 'cambios'),
             }, definicion);
 
-            // Siempre se cuenta primero: el usuario confirma sobre números concretos y no
-            // sobre una intención. Las filas que la RLS no deja ver quedan afuera del
-            // conteo, y por eso se informa la diferencia.
             const previo = await client.query(plan.sqlPrevio, plan.valores).fetchUniqueRow();
             const alcanzados = Number(previo.row.alcanzados);
             const cambianPorCampo:Record<string, number> = {};
@@ -720,9 +704,8 @@ export const ProceduresInventario:ProcedureDef[] = [
                 throw new Error(`Tipo de documento no válido: ${params.tipo}`);
             }
 
-            // Lock antes de leer: dos emisiones simultáneas no pueden generar la misma versión.
             const bloqueo = await client.query(
-                `SELECT acta, fecha_creacion, responsable, area, detalle
+                `SELECT acta, fecha_creacion, responsable, enusode_responsable, sector, detalle
                     FROM movimientos_solicitudes WHERE acta = $1 FOR UPDATE`,
                 [acta]
             ).fetchAll();
@@ -731,12 +714,6 @@ export const ProceduresInventario:ProcedureDef[] = [
             }
             const solicitud = bloqueo.rows[0];
 
-            /*
-                Los datos de una persona salen siempre de responsables. El representante del
-                IDECBA se elige entre los responsables, y su "carácter de dicha repartición"
-                se completa con el área del organigrama que tiene a cargo — si no tiene
-                ninguna, con el carácter cargado en su ficha.
-            */
             const datosPersona = async (codigo:unknown) => {
                 if(codigo == null || String(codigo).trim() === ''){
                     return null;
@@ -753,19 +730,18 @@ export const ProceduresInventario:ProcedureDef[] = [
                         nullif(btrim(r.telefono), '')          AS telefono,
                         nullif(btrim(r.caracter), '')          AS caracter,
                         nullif(btrim(r.situacion_revista), '') AS situacion_revista,
-                        -- El área del organigrama que encabeza. Si tiene más de una a cargo
-                        -- se toma la más alta: la que no depende de otra.
-                        (SELECT coalesce(nullif(btrim(a.sigla), ''), nullif(btrim(a.nombre_area), ''))
-                            FROM areas a
+                        (SELECT coalesce(nullif(btrim(a.sigla), ''), nullif(btrim(a.nombre_sector), ''))
+                            FROM sectores a
                             WHERE a.responsable = r.responsable AND a.activo
-                            ORDER BY (a.pertenece_a IS NOT NULL), a.area
-                            LIMIT 1)                           AS area_a_cargo
+                            ORDER BY (a.pertenece_a IS NOT NULL), a.sector
+                            LIMIT 1)                           AS sector_a_cargo
                     FROM responsables r WHERE r.responsable = $1
                 `, [String(codigo).trim()]).fetchAll();
                 return rows[0] ?? null;
             };
 
-            const comodatario = await datosPersona(solicitud.responsable);
+            const asignado = await datosPersona(solicitud.enusode_responsable)
+                ?? await datosPersona(solicitud.responsable);
             const firmante = await datosPersona(params.representante);
 
             const items = await client.query(`
@@ -797,11 +773,6 @@ export const ProceduresInventario:ProcedureDef[] = [
                 const t = String(v ?? '').trim();
                 return t === '' ? null : t;
             };
-            /*
-                El diálogo manda el código del referencial, no el texto que va impreso: el
-                carácter es una jerarquía, o sea el cargo. Si el código no está en la tabla
-                se imprime tal cual, así el documento sale igual en vez de fallar.
-            */
             const descripcionDe = async (tabla:string, campo:string, codigo:unknown) => {
                 const valor = texto(codigo);
                 if(valor == null){
@@ -815,15 +786,10 @@ export const ProceduresInventario:ProcedureDef[] = [
                 return rows[0]?.descripcion ?? valor;
             };
 
-            /*
-                El carácter con el que firma el representante sale del organigrama: el área
-                que tiene a cargo. Si no encabeza ninguna, se usa el carácter de su ficha.
-                La jerarquía elegida al emitir tiene prioridad sobre las dos cosas.
-            */
             const caracterDelFirmante =
                 await descripcionDe('jerarquias', 'jerarquia', params.caracter_representante)
                 ?? firmante?.caracter
-                ?? (firmante?.area_a_cargo ? `Responsable de ${firmante.area_a_cargo}` : null);
+                ?? (firmante?.sector_a_cargo ? `Responsable de ${firmante.sector_a_cargo}` : null);
 
 
             const generado = await generarDocumentoSolicitud({
@@ -833,17 +799,17 @@ export const ProceduresInventario:ProcedureDef[] = [
                     fecha:solicitud.fecha_creacion,
                     representante:firmante?.nombre ?? texto(params.representante),
                     caracterRepresentante:caracterDelFirmante,
-                    entregaRepresenta:texto(params.entrega_representa) ?? firmante?.area_a_cargo ?? null,
+                    entregaRepresenta:texto(params.entrega_representa) ?? firmante?.sector_a_cargo ?? null,
                     recibeRepresenta:texto(params.recibe_representa),
                     operacion:operacionDeActa(params.operacion),
                     persona:{
-                        nombre:comodatario?.nombre ?? null,
-                        mail:comodatario?.mail ?? null,
-                        dni:comodatario?.dni ?? null,
-                        domicilio:comodatario?.domicilio ?? null,
-                        telefono:comodatario?.telefono ?? null,
-                        caracter:comodatario?.caracter ?? null,
-                        situacionRevista:comodatario?.situacion_revista ?? null,
+                        nombre:asignado?.nombre ?? null,
+                        mail:asignado?.mail ?? null,
+                        dni:asignado?.dni ?? null,
+                        domicilio:asignado?.domicilio ?? null,
+                        telefono:asignado?.telefono ?? null,
+                        caracter:asignado?.caracter ?? null,
+                        situacionRevista:asignado?.situacion_revista ?? null,
                     },
                 },
                 items:items.rows as never,
@@ -882,15 +848,6 @@ export const ProceduresInventario:ProcedureDef[] = [
         ],
         files:{count:1},
         coreFunction: async function(context:ProcedureContext, params:any, files?:UploadedFileInfo[]){
-            /*
-                Recarga del documento firmado.
-
-                Lo único que se exige es que sea un PDF. No se pide que traiga firma digital
-                —vale el firmado a mano y escaneado— ni que sea byte a byte el que se emitió.
-
-                Igual se analiza y se guarda lo que se pueda saber: el hash de lo recargado y
-                el firmante que el PDF declare, si es que viene firmado.
-            */
             const client = context.client;
             const file = files![0];
             if(context.user.rol === 'lectura'){
@@ -916,14 +873,6 @@ export const ProceduresInventario:ProcedureDef[] = [
                 await fs.remove(file.path);
                 throw new Error('El archivo no es un PDF.');
             }
-            /*
-                No se exige que el PDF traiga firma digital: también vale el documento
-                firmado a mano y escaneado, que es como se resuelve cuando el firmante no
-                tiene certificado.
-
-                El análisis se sigue haciendo para dejar registro de si venía firmado y de
-                quién declara ser el firmante, pero no frena la carga.
-            */
 
             const extension = (file.originalFilename ?? '').split('.').pop() ?? 'pdf';
             const archivo = `solicitudes/${acta}/${tipo}-v${version}-firmado.${extension}`;
@@ -962,16 +911,6 @@ export const ProceduresInventario:ProcedureDef[] = [
         ],
         proceedLabel:'dar de baja',
         coreFunction: async function(context:ProcedureContext, params:any){
-            /*
-                Baja de bienes: pone activo en false y deja el motivo.
-
-                No pasa por la edición masiva porque ésta bloquea activo y motivo_baja a
-                propósito: la baja es un acto administrativo con campos propios, y mezclarla
-                con un update genérico haría que se pudiera dar de baja sin motivo.
-
-                Los que ya estaban de baja no se tocan y se informan aparte. Sin ese filtro,
-                volver a dar de baja pisaría el motivo original con el nuevo.
-            */
             const client = context.client;
             if(context.user.rol === 'lectura'){
                 throw new Error('No tiene permisos para dar de baja bienes');
@@ -1005,7 +944,7 @@ export const ProceduresInventario:ProcedureDef[] = [
             {name:'tipo_asignacion', typeName:'text'},
             {name:'modalidad_uso', typeName:'text'},
             {name:'responsable', typeName:'text'},
-            {name:'area', typeName:'text'},
+            {name:'sector', typeName:'text'},
             {name:'sede', typeName:'text'},
             {name:'espacio', typeName:'text'},
             {name:'accion', typeName:'text'},
@@ -1013,19 +952,6 @@ export const ProceduresInventario:ProcedureDef[] = [
         ],
         proceedLabel:'mover',
         coreFunction: async function(context:ProcedureContext, params:any){
-            /*
-                Movimiento directo, sin acta.
-
-                Registra un movimiento por bien apuntando al destino indicado. No pasa por
-                el circuito de solicitudes: queda asentado en el momento.
-
-                El acta va en NULL a propósito. movimientos_bien tiene una FK compuesta
-                (acta, ficha) contra movimientos_solicitud_bien: con acta en NULL la FK no
-                se evalúa, pero si se pusiera un acta tendría que existir esa fila. O sea
-                que el modelo no admite "actas sueltas": o hay solicitud, o no hay acta.
-
-                El orden lo asigna movimientos_bien_pk_trg cuando llega en 0.
-            */
             const client = context.client;
             const rol = String(context.user.rol ?? '');
             const permiso = await client.query(
@@ -1060,7 +986,7 @@ export const ProceduresInventario:ProcedureDef[] = [
                 tipo_asignacion:texto(params.tipo_asignacion),
                 modalidad_uso:texto(params.modalidad_uso),
                 responsable:texto(params.responsable),
-                area:texto(params.area),
+                sector:texto(params.sector),
                 sede:texto(params.sede),
                 espacio:texto(params.espacio),
             };
@@ -1071,7 +997,7 @@ export const ProceduresInventario:ProcedureDef[] = [
             const insertados = await client.query(`
                 insert into movimientos_bien
                     (ficha, orden, acta, tipo_asignacion, modalidad_uso, responsable,
-                     area, sede, espacio, accion, detalle, usuario_creacion)
+                     sector, sede, espacio, accion, detalle, usuario_creacion)
                     select f.ficha, 0, null, $2, $3, $4, $5, $6, $7, $8, $9, $10
                         from unnest($1::text[]) AS f(ficha)
                         where exists (select 1 from bienes b where b.ficha = f.ficha)
@@ -1081,7 +1007,7 @@ export const ProceduresInventario:ProcedureDef[] = [
                 destino.tipo_asignacion,
                 destino.modalidad_uso,
                 destino.responsable,
-                destino.area,
+                destino.sector,
                 destino.sede,
                 destino.espacio,
                 texto(params.accion),
@@ -1107,21 +1033,13 @@ export const ProceduresInventario:ProcedureDef[] = [
             {name:'tipo_asignacion', typeName:'text'},
             {name:'modalidad_uso', typeName:'text'},
             {name:'responsable', typeName:'text'},
-            {name:'area', typeName:'text'},
+            {name:'sector', typeName:'text'},
             {name:'sede', typeName:'text'},
             {name:'espacio', typeName:'text'},
             {name:'detalle', typeName:'text'},
         ],
         proceedLabel:'crear',
         coreFunction: async function(context:ProcedureContext, params:any){
-            /*
-                Crea una solicitud de movimiento con los bienes seleccionados.
-
-                No genera los movimientos: los genera el circuito existente cuando la
-                solicitud llega al estado Pr, con el trigger movimientos_solicitudes_estado_trg.
-                Acá sólo se arma la cabecera y el detalle, y la solicitud nace en el estado
-                inicial que define la máquina de estados (el default de la tabla, B).
-            */
             const client = context.client;
             if(context.user.rol === 'lectura'){
                 throw new Error('No tiene permisos para crear solicitudes');
@@ -1161,7 +1079,7 @@ export const ProceduresInventario:ProcedureDef[] = [
 
             const cabecera = await client.query(`
                 insert into movimientos_solicitudes
-                    (acta, tipo_asignacion, modalidad_uso, responsable, area, sede, espacio,
+                    (acta, tipo_asignacion, modalidad_uso, responsable, sector, sede, espacio,
                      detalle, usuario_creacion)
                     values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                     returning acta, estado
@@ -1170,7 +1088,7 @@ export const ProceduresInventario:ProcedureDef[] = [
                 texto(params.tipo_asignacion),
                 texto(params.modalidad_uso),
                 texto(params.responsable),
-                texto(params.area),
+                texto(params.sector),
                 texto(params.sede),
                 texto(params.espacio),
                 texto(params.detalle),
@@ -1204,7 +1122,6 @@ export const ProceduresInventario:ProcedureDef[] = [
             {name:'ficha', typeName:'text'},
         ],
         coreFunction: async function(context:ProcedureContext, params:any){
-            // Lo que el encabezado del bien necesita mostrar sin obligar a abrir solapas.
             const ficha = String(params.ficha ?? '').trim();
             if(ficha === ''){
                 throw new Error('Falta la ficha');
@@ -1249,9 +1166,6 @@ export const ProceduresInventario:ProcedureDef[] = [
         parameters:[],
         proceedLabel:'recargar',
         coreFunction: async function(context:ProcedureContext){
-            // Las columnas de atributo de la grilla del parque tecnológico se arman con la
-            // lista que se lee al arrancar, porque las definiciones de tabla de
-            // backend-plus son sincrónicas. Esto la refresca sin reiniciar el servidor.
             if(context.user.rol !== 'admin'){
                 throw new Error('Sólo un administrador puede recargar los atributos');
             }

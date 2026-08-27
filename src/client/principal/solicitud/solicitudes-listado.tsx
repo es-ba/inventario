@@ -10,22 +10,11 @@ import {bienesGridLocaleText} from '../localizacion-grid';
 import type {Fila} from '../base/tipos-tabla';
 import {SolicitudAcciones} from './solicitud-acciones';
 
-/*
-    Listado de solicitudes de movimiento.
-
-    Lee movimientos_solicitudes_acciones, que es la misma tabla más una columna con las
-    acciones que su estado habilita. Así cada fila puede mostrar sus botones sin que el
-    cliente sepa nada de la máquina de estados.
-*/
 
 const COLOR_POR_ESTADO:Record<string, 'default'|'info'|'warning'|'success'> = {
     B:'default', P:'warning', A:'info', F:'info', Pr:'success',
 };
 
-/**
- * Texto de una referencia. Si ninguna descripción vino —dato incompleto en el referencial—
- * cae al código: es feo pero identifica, y una celda vacía no dice nada.
- */
 function textoDeReferencia(codigo:unknown, ...descripciones:unknown[]):string{
     const texto = descripciones
         .map(parte => String(parte ?? '').trim())
@@ -63,12 +52,6 @@ export function SolicitudesListado({
 
     React.useEffect(() => { void cargar(); }, [cargar]);
 
-    /*
-        Las columnas descriptivas son las que agrega backend-plus por cada foreign key, con
-        el nombre <alias>__<campo>. En el listado se muestra el texto y no el código: "B",
-        "27" o "138" no le dicen nada a nadie. El código sigue estando en la fila y se ve
-        entero al abrir la solicitud.
-    */
     const columnas = React.useMemo<GridColDef[]>(() => [
         {field:'acta', headerName:'acta', width:120},
         {
@@ -93,10 +76,10 @@ export function SolicitudesListado({
             ),
         },
         {
-            field:'areas__sigla',
-            headerName:'área',
+            field:'sectores__sigla',
+            headerName:'sector',
             width:120,
-            valueGetter:(_v, fila) => textoDeReferencia(fila.area, fila.areas__sigla),
+            valueGetter:(_v, fila) => textoDeReferencia(fila.sector, fila.sectores__sigla),
         },
         {
             field:'sedes__descripcion',

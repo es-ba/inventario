@@ -21,17 +21,7 @@ import {useRowEditor} from './use-row-editor';
 import {bienesGridLocaleText} from '../localizacion-grid';
 import {Fila, mensajeDeError} from './tipos-tabla';
 
-/*
-    Tabla de detalle: el equivalente React de las detailTables de la grilla legacy.
 
-    Lista las filas de una tabla filtradas por los campos fijos que le impone el maestro
-    (por ejemplo ficha=123), y abre un panel lateral para dar de alta, editar o borrar.
-*/
-
-/**
- * Encabezado de una columna. Las que trae una foreign key se llaman "areas__sigla": eso no
- * es un título, así que se muestra la parte descriptiva junto al alias.
- */
 function encabezadoDeColumna(field:FieldDefinition):string{
     if(field.referencedName != null){
         return `${field.referencedAlias ?? ''} ${field.referencedName}`.trim();
@@ -41,7 +31,6 @@ function encabezadoDeColumna(field:FieldDefinition):string{
 
 export type DetailTableProps = {
     tabla:string,
-    /** Campos que vienen impuestos por el maestro. No se muestran ni se editan. */
     camposFijos:Record<string, unknown>,
     titulo?:string,
     anchoPanel?:number,
@@ -66,7 +55,6 @@ export function DetailTable({
     const [panelAbierto, setPanelAbierto] = React.useState(false);
     const [filaDelPanel, setFilaDelPanel] = React.useState<Fila|undefined>(undefined);
 
-    // camposFijos suele venir como literal nuevo en cada render: se estabiliza por contenido.
     const claveCamposFijos = JSON.stringify(camposFijos);
     const nombresFijos = React.useMemo(
         () => Object.keys(camposFijos),
@@ -79,7 +67,6 @@ export function DetailTable({
         [claveCamposFijos],
     );
 
-    // Los datos del detalle no se cachean: tienen que reflejar cada alta o borrado.
     const cargarFilas = React.useCallback(async () => {
         setCargando(true);
         try{
@@ -108,14 +95,6 @@ export function DetailTable({
             ...(definicion.hiddenColumns ?? []),
             ...(columnasOcultas ?? []),
         ]);
-        /*
-            Las columnas <alias>__<campo> que backend-plus agrega por cada foreign key
-            llegan con inTable:false, igual que los campos calculados. Filtrar por inTable a
-            secas las dejaba afuera, y el detalle terminaba mostrando sólo los códigos: en
-            movimientos_bien, "27" y "138" en vez del responsable y el espacio.
-
-            Se las reconoce por referencedName, que sólo traen ellas.
-        */
         return definicion.fields
             .filter(field => !ocultas.has(field.name)
                 && !field.clientSide
@@ -126,7 +105,6 @@ export function DetailTable({
                 flex:1,
                 minWidth:110,
                 sortable:true,
-                // Sin esto, un campo timestamp se pinta como "[object Object]".
                 valueFormatter:(valor:unknown) => formatearValor(valor),
             }));
     }, [columnasOcultas, definicion, nombresFijos]);
@@ -230,7 +208,6 @@ function PanelDeRegistro({
     const {mostrarError} = useAvisos();
     const [borrando, setBorrando] = React.useState(false);
 
-    // Es alta si falta alguna PK que no venga impuesta por el maestro.
     const esAlta = React.useMemo(() => {
         if(!filaInicial){
             return true;
@@ -247,7 +224,6 @@ function PanelDeRegistro({
         filaInicial:esAlta ? undefined : filaInicial,
     });
 
-    // En un alta, los campos fijos del maestro se precargan una sola vez.
     const precargados = React.useRef(false);
     React.useEffect(() => {
         if(!esAlta || precargados.current){
@@ -259,13 +235,6 @@ function PanelDeRegistro({
         });
     }, [esAlta, filaInicial, editor]);
 
-    // Los campos impuestos por el maestro no se muestran; los no editables sí, apagados,
-    // porque en un detalle suelen ser justamente lo que se quiere consultar.
-    /*
-        Las columnas que trae una foreign key no van en el formulario: son de sólo lectura y
-        lo que se edita es el código, que ya tiene su propio selector. Aparecían como campos
-        deshabilitados repitiendo lo de al lado.
-    */
     const camposVisibles = React.useMemo(
         () => definicion.fields.filter(field =>
             nombresFijos.indexOf(field.name) < 0

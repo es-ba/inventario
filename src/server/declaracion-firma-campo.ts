@@ -4,43 +4,13 @@ import {PDFArray, PDFDict, PDFDocument, PDFName, PDFNumber, PDFString} from 'pdf
 
 import {RECT_CAMPO_FIRMA} from './declaracion-pdf';
 
-/*
-    Campo de firma del documento emitido.
-
-    pdfmake dibuja el recuadro pero no genera campos AcroForm, así que el campo donde el
-    responsable aplica la firma se agrega acá, sobre las mismas coordenadas que dibuja
-    declaracion-pdf.ts (por eso las comparten en RECT_CAMPO_FIRMA).
-
-    /SigFlags 1 = hay campos de firma.
-
-    Antes iba en 3, que agrega el bit "sólo anexar" (2). Ese bit describe un documento que
-    YA tiene firmas y que por lo tanto no se puede reescribir entero sin invalidarlas. En un
-    documento recién emitido, sin ninguna firma puesta, Acrobat lo lee como que el archivo
-    ya está cerrado y contesta que la seguridad del documento no permite firmarlo.
-
-    No se pierde nada: el bit era sólo una indicación al visor. Firmar un PDF se hace
-    siempre con incremental update —así funciona la firma—, que es lo que necesita la
-    verificación de prefijo al recargar el documento firmado. Y cuando el firmador guarda,
-    es él quien deja el flag en 3.
-
-    Esto corre ANTES de calcular el hash y de guardar: el archivo con el campo es el
-    documento emitido, y es contra ése que después se compara el firmado.
-*/
 
 export const NOMBRE_CAMPO_FIRMA = 'FirmaResponsable';
 
-/** Bit 1 de /SigFlags: el documento tiene campos de firma. Sin el bit 2 (sólo anexar). */
 export const SIG_FLAGS_HAY_FIRMAS = 1;
 
 export type RectCampoFirma = {x:number, y:number, ancho:number, alto:number};
 
-/**
- * Agrega un campo de firma vacío y devuelve el PDF resultante.
- *
- * Por defecto va en la última página, en las coordenadas que dibuja la declaración. Los
- * documentos de solicitud tienen otra maqueta y pasan las suyas: reusar las de la
- * declaración dejaba el campo contra el pie, lejos de la línea que dice "Firma".
- */
 export async function agregarCampoDeFirma(
     pdf:Buffer,
     opts:{nombreCampo?:string, rect?:RectCampoFirma, pagina?:number} = {},
@@ -66,18 +36,12 @@ export async function agregarCampoDeFirma(
             rect.x + rect.ancho,
             rect.y + rect.alto,
         ]),
-        F: PDFNumber.of(4), // imprimible
+        F: PDFNumber.of(4),
         P: ultima.ref,
     });
     const widgetRef = ctx.register(widget);
     ultima.node.addAnnot(widgetRef);
 
-    /*
-        Si el documento ya trae un AcroForm —los de solicitud llegan con sus campos
-        completables—, se le agrega el campo de firma en vez de reemplazarlo: pisar el
-        diccionario dejaba los campos huérfanos, presentes en la página pero fuera del
-        formulario, y el visor no los ofrecía para completar.
-    */
     const acroFormExistente = doc.catalog.lookupMaybe(PDFName.of('AcroForm'), PDFDict);
     if(acroFormExistente){
         const campos = acroFormExistente.lookupMaybe(PDFName.of('Fields'), PDFArray);
@@ -94,7 +58,5 @@ export async function agregarCampoDeFirma(
         })));
     }
 
-    // Sin object streams el archivo queda en la forma más convencional posible, que es
-    // con la que mejor se llevan los firmadores.
     return Buffer.from(await doc.save({useObjectStreams:false}));
 }

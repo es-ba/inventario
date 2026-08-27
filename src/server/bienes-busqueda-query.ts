@@ -329,7 +329,7 @@ function quickSearchSql(
         'clase',
         'cuenta',
         'responsable',
-        'area',
+        'sector',
         'sede',
         'espacio',
         'tipo_asignacion',
@@ -360,7 +360,6 @@ export function buildBienesBusquedaQueries(
     };
     const where: string[] = [`(${options.visibilitySql})`];
     if (request.estado === 'activo') {
-        // activo es booleano y no admite nulos: alcanza con nombrarlo.
         where.push(`b.activo`);
     } else if (request.estado === 'baja') {
         where.push(`NOT b.activo`);

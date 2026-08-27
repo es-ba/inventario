@@ -4,14 +4,6 @@ import type {Connector} from 'frontend-plus';
 
 import {mensajeDeError} from './tipos-tabla';
 
-/*
-    Contexto base de las pantallas React.
-
-    Resuelve las dos cosas que en el repo de frontend aparte daba frontend-plus-react:
-    el acceso al backend (allá useApiCall, acá el Connector de backend-plus) y los avisos
-    al usuario (allá useSnackbar). Tenerlo en un contexto evita ir pasando `conn` por
-    props a través de toda la jerarquía de componentes.
-*/
 
 type Aviso = {
     texto:string,
@@ -37,7 +29,6 @@ export function BaseInventarioProvider({
 
     const mostrarError = React.useCallback((err:unknown, prefijo?:string) => {
         const texto = mensajeDeError(err);
-        // El error completo va a la consola: el usuario ve el mensaje, quien depura ve todo.
         console.error('[inventario]', prefijo ?? '', err);
         setAviso({texto:prefijo ? `${prefijo}: ${texto}` : texto, severidad:'error'});
     }, []);

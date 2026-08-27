@@ -1,0 +1,5 @@
+tipo_clave|descripcion
+CLAVE_PRODUCTO|Clave de producto (secreto: habilita la instalación)
+ID_ACTIVACION|Identificador de activación
+NUMERO_LICENCIA|Número de licencia administrativo
+CUENTA|Cuenta o usuario asociado a la licencia

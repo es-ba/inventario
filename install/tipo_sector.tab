@@ -1,0 +1,7 @@
+tipo_sector|descripcion|nivel
+DE|Dirección Ejecutiva|0
+DG|Dirección General|1
+SDG|Subdirección General|2
+DIR|Dirección|3
+DEP|Departamento|4
+DIV|División|5

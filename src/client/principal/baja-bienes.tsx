@@ -14,17 +14,6 @@ import type {Connector, FieldDefinition} from 'frontend-plus';
 import {FormFieldRenderer} from './base/form-field-renderer';
 import type {Fila} from './base/tipos-tabla';
 
-/*
-    Baja de bienes.
-
-    Es un acto directo: pone activo en BAJA y deja asentado el motivo. No pasa por la
-    edición masiva, que bloquea activo y motivo_baja a propósito —una baja sin motivo no se
-    puede explicar después—.
-
-    Quién y cuándo no se preguntan: los registra la auditoría, que anota cada cambio de campo
-    con usuario y fecha.
-*/
-
 declare module 'frontend-plus' {
     interface BEAPI {
         bienes_dar_de_baja:(params:{fichas:string, motivo_baja:string}) => Promise<{
@@ -35,7 +24,6 @@ declare module 'frontend-plus' {
     }
 }
 
-/** El motivo no sale de ninguna tabla en edición, así que el field se arma a mano. */
 const CAMPO_MOTIVO = {
     name:'motivo_baja',
     typeName:'text',

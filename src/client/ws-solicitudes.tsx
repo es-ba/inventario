@@ -10,12 +10,6 @@ import {
 import {SolicitudesListado} from './principal/solicitud/solicitudes-listado';
 import {SolicitudFormulario} from './principal/solicitud/solicitud-formulario';
 
-/*
-    Pantalla de solicitudes de movimiento.
-
-    Misma navegación por estado local que la pantalla principal: listado y formulario,
-    concentrados acá para que mudarlos al hash más adelante sea un cambio de un solo lugar.
-*/
 type Vista =
     {nombre:'listado'}
     | {nombre:'solicitud', acta?:string};

@@ -25,29 +25,13 @@ import {SolicitudAcciones, accionesDe, etiquetaDeAccion} from './solicitud-accio
 import {SolicitudBienes} from './solicitud-bienes';
 import {SolicitudDocumentos} from './solicitud-documentos';
 
-/*
-    Formulario de una solicitud de movimiento.
-
-    La cabecera define el destino que se va a aplicar a todos sus bienes. Las acciones
-    disponibles las trae la vista movimientos_solicitudes_acciones según el estado.
-
-    Una solicitud deja de ser editable apenas sale de Borrador: a partir de ahí lo que
-    tiene cargado es lo que va a moverse, y cambiarlo por atrás sería inconsistente con el
-    circuito de aprobación.
-*/
 
 const ESTADO_EDITABLE = 'B';
 
-/*
-    No se muestra `accion`: es un texto libre sin lista ni referencia, y se confunde con
-    la acción del circuito —confirmar, aprobar, firmar— que se ejecuta con los botones y
-    sale de estados_acciones. Tampoco se muestran los campos de auditoría ni el estado,
-    que los completa la base.
-*/
 const CAMPOS_CABECERA = [
     'acta', 'tipo_asignacion', 'modalidad_uso',
-    'responsable', 'area', 'sede', 'espacio',
-    'usuario_final', 'solicitado_por', 'firmado_por', 'detalle',
+    'responsable', 'sector', 'sede', 'espacio',
+    'enusode_responsable', 'usuario_final', 'solicitado_por', 'firmado_por', 'detalle',
 ];
 
 declare module 'frontend-plus' {
@@ -69,7 +53,6 @@ export function SolicitudFormulario({
     acta,
     onVolver,
 }:{
-    /** undefined significa alta de una solicitud nueva. */
     acta?:string,
     onVolver:() => void,
 }){
@@ -82,8 +65,6 @@ export function SolicitudFormulario({
     const [solapa, setSolapa] = React.useState(0);
     const [version, setVersion] = React.useState(0);
 
-    // Se lee de la vista con acciones para tener, además de la cabecera, lo que el estado
-    // habilita hacer en este momento.
     React.useEffect(() => {
         if(!acta){
             setFilaInicial(undefined);
@@ -141,11 +122,6 @@ export function SolicitudFormulario({
         </Box>;
     }
 
-    /*
-        El aviso de "no se edita" tiene que decir la verdad: si la máquina de estados no
-        declara ninguna transición de retroceso desde el estado actual, mandar al usuario a
-        "las acciones de arriba" lo deja dando vueltas buscando un botón que no existe.
-    */
     const retroceso = accionesDe(filaInicial?.acciones)
         .find(accion => accion.eaccion_direccion === 'retroceso');
     const hayComoRetroceder = retroceso != null;

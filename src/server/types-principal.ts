@@ -1,6 +1,5 @@
 import { AppInventario } from "./app-principal";
 
-// exposes APIs from this package
 export * from "backend-plus";
 export * from "pg-promise-strict";
 
@@ -13,7 +12,7 @@ declare module "backend-plus"{
         be:AppInventario
     }
     interface ClientSetup {
-        tableData:Record<string, Record<string, Record<string, any>>> // tableName -> json(pk) -> fieldName -> value
+        tableData:Record<string, Record<string, Record<string, any>>>
     }
     interface User {
         usuario:string
