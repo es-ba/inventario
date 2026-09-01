@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type {TableDefinition} from 'frontend-plus';
 
-import {useAvisos, useConexion} from './contexto-base';
+import {useAvisos, useConexion, usePermisos} from './contexto-base';
 import {
     Fila,
     esEditable,
@@ -20,6 +20,7 @@ export type ResultadoRowEditor = {
     reiniciar:(row:Fila) => void,
     guardar:() => Promise<boolean>,
     puedeGuardar:boolean,
+    soloLectura:boolean,
     esAlta:boolean,
     modificado:boolean,
     errores:Record<string, string|null>,
@@ -36,7 +37,12 @@ export function useRowEditor({
 }):ResultadoRowEditor{
     const conn = useConexion();
     const {mostrarError} = useAvisos();
+    const permisos = usePermisos();
     const primaryKey = definicion.primaryKey ?? [];
+
+    const soloLectura = !permisos.guardar
+        || definicion.editable === false
+        || definicion.allow?.update === false;
 
     const [row, setRow] = React.useState<Fila>(() => filaInicial ?? {[MARCA_NUEVA]:true});
     const [original, setOriginal] = React.useState<Fila>(() => filaInicial ?? {});
@@ -102,7 +108,7 @@ export function useRowEditor({
         setModificado(false);
     }, []);
 
-    const puedeGuardar = !faltanObligatorios && (modificado || esAlta);
+    const puedeGuardar = !soloLectura && !faltanObligatorios && (modificado || esAlta);
 
     const armarFilaAEnviar = React.useCallback(():Fila => {
         const resultado:Fila = {};
@@ -132,6 +138,10 @@ export function useRowEditor({
     }, [definicion.fields, esAlta, original, row, primaryKey.join(',')]);
 
     const guardar = React.useCallback(async ():Promise<boolean> => {
+        if(soloLectura){
+            mostrarError('No tiene permiso para guardar');
+            return false;
+        }
         if(faltanObligatorios){
             mostrarError('Faltan completar campos obligatorios');
             return false;
@@ -160,10 +170,10 @@ export function useRowEditor({
         }
     }, [
         armarFilaAEnviar, conn, esAlta, faltanObligatorios, modificado,
-        mostrarError, original, row, tabla,
+        mostrarError, original, row, soloLectura, tabla,
         // eslint-disable-next-line react-hooks/exhaustive-deps
         primaryKey.join(','),
     ]);
 
-    return {row, setField, reiniciar, guardar, puedeGuardar, esAlta, modificado, errores};
+    return {row, setField, reiniciar, guardar, puedeGuardar, soloLectura, esAlta, modificado, errores};
 }

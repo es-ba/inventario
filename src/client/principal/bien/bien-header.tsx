@@ -89,6 +89,7 @@ export function BienHeader({
     const enAlta = estaEnAlta(row);
     const categoria = comoTexto(row.categoria);
     const responsable = conDescripcion(row, 'responsable');
+    const asignacion = conDescripcion(row, 'tipo_asignacion');
     const ubicacion = [
         conDescripcion(row, 'sector'),
         conDescripcion(row, 'sede'),
@@ -140,7 +141,7 @@ export function BienHeader({
                     </Typography>
                     : null}
 
-                {ubicacion || responsable
+                {ubicacion || responsable || asignacion
                     ? <Stack direction="row" spacing={2} sx={{mt:0.5}} flexWrap="wrap">
                         {ubicacion
                             ? <Typography variant="caption" color="text.secondary">
@@ -150,6 +151,11 @@ export function BienHeader({
                         {responsable
                             ? <Typography variant="caption" color="text.secondary">
                                 👤 {responsable}
+                            </Typography>
+                            : null}
+                        {asignacion
+                            ? <Typography variant="caption" color="text.secondary">
+                                📄 {asignacion}
                             </Typography>
                             : null}
                     </Stack>

@@ -4,7 +4,7 @@ import {Add, Refresh} from '@mui/icons-material';
 import {DataGrid, GridColDef, GridRowParams} from '@mui/x-data-grid';
 import type {FixedFields} from 'frontend-plus';
 
-import {useAvisos, useConexion} from '../base/contexto-base';
+import {useAvisos, useConexion, usePermisos} from '../base/contexto-base';
 import {formatearValor} from '../base/formato-valores';
 import {bienesGridLocaleText} from '../localizacion-grid';
 import type {Fila} from '../base/tipos-tabla';
@@ -30,6 +30,7 @@ export function SolicitudesListado({
 }){
     const conn = useConexion();
     const {mostrarError} = useAvisos();
+    const permisos = usePermisos();
     const [filas, setFilas] = React.useState<Fila[]>([]);
     const [cargando, setCargando] = React.useState(true);
 
@@ -65,6 +66,14 @@ export function SolicitudesListado({
                     ? <Chip size="small" label={texto} color={COLOR_POR_ESTADO[codigo] ?? 'default'}/>
                     : null;
             },
+        },
+        {
+            field:'tipo_asignacion__descripcion',
+            headerName:'asignación',
+            width:120,
+            valueGetter:(_v, fila) => textoDeReferencia(
+                fila.tipo_asignacion, fila.tipo_asignacion__descripcion,
+            ),
         },
         {
             field:'responsables__apellido',
@@ -126,9 +135,11 @@ export function SolicitudesListado({
             <Button startIcon={<Refresh/>} onClick={() => void cargar()} disabled={cargando}>
                 actualizar
             </Button>
-            <Button variant="contained" startIcon={<Add/>} onClick={() => onAbrir(undefined)}>
-                nueva solicitud
-            </Button>
+            {permisos.guardar
+                ? <Button variant="contained" startIcon={<Add/>} onClick={() => onAbrir(undefined)}>
+                    nueva solicitud
+                </Button>
+                : null}
         </Stack>
 
         {cargando

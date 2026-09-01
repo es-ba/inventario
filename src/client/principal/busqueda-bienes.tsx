@@ -81,6 +81,7 @@ import {unmountConnectedAppInventario} from './render-connected-app-inventario';
 import {EdicionMasivaBienes} from './edicion-masiva-bienes';
 import {MoverBienes} from './mover-bienes';
 import {BajaBienes} from './baja-bienes';
+import {usePermisos} from './base/contexto-base';
 
 declare module 'frontend-plus' {
     interface FieldDefinition {
@@ -259,6 +260,7 @@ export function BusquedaBienes({
     accionSeleccion,
     fichasExcluidas,
 }:BusquedaBienesProps){
+    const permisos = usePermisos();
     const [tableDefinition, setTableDefinition] = React.useState<TableDefinition|null>(null);
     const [metadataLoading, setMetadataLoading] = React.useState(true);
     const [metadataError, setMetadataError] = React.useState<string|null>(null);
@@ -594,7 +596,7 @@ export function BusquedaBienes({
             <GridToolbarFilterButton/>
             <GridToolbarDensitySelector/>
             {}
-            {onNuevoBien
+            {onNuevoBien && permisos.guardar
                 ? <Button
                     size="small"
                     variant="contained"
@@ -647,15 +649,15 @@ export function BusquedaBienes({
                     >
                         Imprimir códigos de barra
                     </Button>
-                    <Button
+                    {permisos.guardar ? <Button
                         size="small"
                         startIcon={<EditNote/>}
                         disabled={rowSelectionModel.length === 0}
                         onClick={() => setEdicionMasivaAbierta(true)}
                     >
                         Editar seleccionados
-                    </Button>
-                    <Button
+                    </Button> : null}
+                    {permisos.guardar ? <Button
                         size="small"
                         color="error"
                         startIcon={<Block/>}
@@ -663,15 +665,15 @@ export function BusquedaBienes({
                         onClick={() => setBajaAbierta(true)}
                     >
                         Dar de baja
-                    </Button>
-                    <Button
+                    </Button> : null}
+                    {permisos.mover ? <Button
                         size="small"
                         startIcon={<LocalShipping/>}
                         disabled={rowSelectionModel.length === 0}
                         onClick={() => setMoverAbierto(true)}
                     >
                         Mover seleccionados
-                    </Button>
+                    </Button> : null}
                 </>}
             <Box sx={{flex:1}}/>
             <GridToolbarQuickFilter debounceMs={400}/>
@@ -685,6 +687,7 @@ export function BusquedaBienes({
         hasSearched,
         loading,
         onNuevoBien,
+        permisos,
         printSelectedRows,
         rowSelectionModel.length,
     ]);

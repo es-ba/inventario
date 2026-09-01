@@ -21,6 +21,8 @@ declare module 'frontend-plus' {
         title?:string;
         hiddenColumns?:string[];
         nameFields?:string[];
+        editable?:boolean;
+        allow?:{insert?:boolean, update?:boolean, delete?:boolean, select?:boolean};
     }
     interface BEAPI {
         table_record_delete:(params:{

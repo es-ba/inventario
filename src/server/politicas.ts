@@ -15,9 +15,11 @@ export const MI_RESPONSABLE = `nullif(get_app_user('responsable'), '')`;
 export const MI_SECTOR = `nullif(get_app_user('sector'), '')`;
 
 export function deMisDependientes(columnaResponsable:string):string{
-    return `EXISTS (SELECT 1 FROM responsables r`
-        + ` WHERE r.responsable = ${columnaResponsable}`
-        + ` AND sector_pertenece(r.sector, ${MI_SECTOR}))`;
+    return `sector_pertenece(sector_responsable(${columnaResponsable}), ${MI_SECTOR})`;
+}
+
+export function visibilidadDeBienes(columnaFicha:string = 'ficha'):string{
+    return `(${PUEDE_VER_TODO} OR ${columnaFicha} IN (SELECT ficha FROM bienes_alcance()))`;
 }
 
 export type PoliticasDeTabla = {
@@ -32,7 +34,7 @@ export type AlcanceDeTabla = {
     dependiente?:string,
 };
 
-export function politicasInventario(alcance:AlcanceDeTabla = {}):PoliticasDeTabla{
+export function visibilidadDe(alcance:AlcanceDeTabla = {}):string{
     const ramas = [PUEDE_VER_TODO];
     if(alcance.propio != null){
         ramas.push(`(${PUEDE_VER_PROPIO} AND (${alcance.propio}))`);
@@ -40,7 +42,10 @@ export function politicasInventario(alcance:AlcanceDeTabla = {}):PoliticasDeTabl
     if(alcance.dependiente != null){
         ramas.push(`(${PUEDE_VER_DEPENDIENTES} AND (${alcance.dependiente}))`);
     }
-    const visibilidad = ramas.length === 1 ? ramas[0] : `(${ramas.join(' OR ')})`;
+    return ramas.length === 1 ? ramas[0] : `(${ramas.join(' OR ')})`;
+}
+
+function conVisibilidad(visibilidad:string):PoliticasDeTabla{
     const modificacion = `(${PUEDE_GUARDAR}) AND ${visibilidad}`;
     return {
         select:{using:visibilidad},
@@ -50,8 +55,28 @@ export function politicasInventario(alcance:AlcanceDeTabla = {}):PoliticasDeTabl
     };
 }
 
-export function sqlVisibilidad():string{
-    return PUEDE_VER_TODO;
+export function politicasInventario(alcance:AlcanceDeTabla = {}):PoliticasDeTabla{
+    return conVisibilidad(visibilidadDe(alcance));
+}
+
+export function politicasPorElBien(columnaFicha:string = 'ficha'):PoliticasDeTabla{
+    return conVisibilidad(`${columnaFicha} IN (SELECT ficha FROM bienes)`);
+}
+
+export function politicasResponsables():PoliticasDeTabla{
+    const visibilidad = visibilidadDe({
+        propio:`responsable = ${MI_RESPONSABLE}`,
+        dependiente:`sector_pertenece(sector, ${MI_SECTOR})`,
+    });
+    return conVisibilidad(`(get_app_user('mode') = 'login' OR ${visibilidad})`);
+}
+
+export function politicasBienes(columnaFicha:string = 'ficha'):PoliticasDeTabla{
+    return conVisibilidad(visibilidadDeBienes(columnaFicha));
+}
+
+export function sqlVisibilidad(columnaFicha:string = 'ficha'):string{
+    return visibilidadDeBienes(columnaFicha);
 }
 
 const PUEDE_VER_CLAVES = capacidad('puede_ver_claves');

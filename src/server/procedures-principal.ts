@@ -95,7 +95,7 @@ async function prepararBusquedaBienes(context:ProcedureContext, consulta:unknown
     );
     const queries = buildBienesBusquedaQueries(request, {
         baseSql:sqlBienes,
-        visibilitySql:sqlVisibilidad(),
+        visibilitySql:sqlVisibilidad('b.ficha'),
         allowedFields,
         resolveSqlFieldName:resolveBienesPresentationSqlFieldName,
         allowedAttributes,
@@ -105,6 +105,25 @@ async function prepararBusquedaBienes(context:ProcedureContext, consulta:unknown
 }
 
 export const ProceduresInventario:ProcedureDef[] = [
+    {
+        action:'info_usuario',
+        parameters:[],
+        coreFunction:async function(context:ProcedureContext){
+            const info = await context.client.query(
+                `select u.usuario, u.rol, u.nombre, u.apellido, u.responsable,
+                        r.sector,
+                        roles.puede_ver_todo, roles.puede_ver_propio, roles.puede_ver_dependientes,
+                        roles.puede_ver_claves, roles.puede_restaurar_baja, roles.puede_eliminar,
+                        roles.puede_guardar, roles.puede_mover
+                    from usuarios u
+                        inner join roles using(rol)
+                        left join responsables r using (responsable)
+                    where u.usuario = $1`,
+                [context.username]
+            ).fetchUniqueRow();
+            return info.row;
+        }
+    },
     {
         action:'ejemplo_publicar_propios',
         parameters:[
@@ -124,6 +143,23 @@ export const ProceduresInventario:ProcedureDef[] = [
             return !result.rows.length ? 'No había noticias sin publicar hasta esa fecha para usted':(
                 result.rows.length==1?'se publicó una noticia':'se publicaron '+result.rows.length+' noticias'
             );
+        }
+    },
+    {
+        action:'espacios_del_sector',
+        parameters:[
+            {name:'sector', typeName:'text'},
+        ],
+        coreFunction:async function(context:ProcedureContext, params:any){
+            const sector = params.sector == null ? '' : String(params.sector).trim();
+            if(sector === ''){
+                return [];
+            }
+            const result = await context.client.query(
+                `select espacio from espacios where sector_pertenece(sector, $1)`,
+                [sector]
+            ).fetchAll();
+            return result.rows.map(fila => fila.espacio as string);
         }
     },
     {

@@ -15,7 +15,7 @@ import {
 import {Delete} from '@mui/icons-material';
 import type {FixedFields} from 'frontend-plus';
 
-import {useAvisos, useConexion} from '../base/contexto-base';
+import {useAvisos, useConexion, usePermisos} from '../base/contexto-base';
 import {formatearValor} from '../base/formato-valores';
 import {TabPanel, propsDeSolapa} from '../base/tab-panel';
 import type {Fila} from '../base/tipos-tabla';
@@ -34,13 +34,15 @@ declare module 'frontend-plus' {
 
 export function SolicitudBienes({
     acta,
-    soloLectura = false,
+    soloLectura: soloLecturaPedida = false,
 }:{
     acta:string,
     soloLectura?:boolean,
 }){
     const conn = useConexion();
     const {mostrarError} = useAvisos();
+    const permisos = usePermisos();
+    const soloLectura = soloLecturaPedida || !permisos.guardar;
     const [filas, setFilas] = React.useState<Fila[]>([]);
     const [cargando, setCargando] = React.useState(true);
     const [solapa, setSolapa] = React.useState(0);

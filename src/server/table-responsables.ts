@@ -2,6 +2,7 @@
 
 import { FieldDefinition } from "backend-plus";
 import {TableDefinition, TableContext} from "./types-principal";
+import {politicasResponsables} from "./politicas";
 
 export const responsable: FieldDefinition = {name: 'responsable', typeName: 'text', title: 'responsable'}
 
@@ -18,6 +19,13 @@ export function responsables(context:TableContext):TableDefinition{
             {name:'apellido'                , typeName:'text'       , isName:true}, 
             {name:'mail'                    , typeName:'text'       },
             {name:'dni'                     , typeName:'text'    , nullable:true},
+            {name:'cuil'                    , typeName:'text'    , nullable:true},
+            {name:'tipo_doc'                , typeName:'text'    , nullable:true},
+            {name:'documento'               , typeName:'text'    , nullable:true},
+            {name:'ficha_siper'             , typeName:'text'    , nullable:true, title:'ficha (siper)'},
+            {name:'es_jefe'                 , typeName:'boolean' , nullable:true},
+            {name:'fecha_ingreso'           , typeName:'date'    , nullable:true},
+            {name:'fecha_egreso'            , typeName:'date'    , nullable:true},
             {name:'domicilio'               , typeName:'text'    , nullable:true},
             {name:'telefono'                , typeName:'text'    , nullable:true},
             {name:'caracter'                , typeName:'text'    , nullable:true},
@@ -25,9 +33,11 @@ export function responsables(context:TableContext):TableDefinition{
             {name:'externo'                 , typeName:'boolean'    , defaultValue:false},
             {name:'sector'                  , typeName:'text'    , nullable:true},
             {name:'activo'                  , typeName:'boolean'    , defaultValue:true},
+            {name:'activo_siper'            , typeName:'boolean' , nullable:true},
             {name:'fecha_creacion'          , typeName:'date'    , defaultDbValue:'current_date'},
             {name:'fecha_modificacion'      , typeName:'date'    , nullable:true, defaultValue:null},
             {name:'id_anterior'             , typeName:'text'    , nullable:true},
+            {name:'idper'                   , typeName:'text'    , nullable:true, postInput:'upperWithoutDiacritics'},
 
         ],
         primaryKey:[responsable.name],
@@ -57,6 +67,9 @@ export function responsables(context:TableContext):TableDefinition{
         //         select:{using:`(SELECT ${pol.select.using} FROM bienes WHERE sector = bienes.sector)`}
         //     }
         // },
+        sql:{
+            policies:politicasResponsables()
+        },
         sortColumns:[{column:'responsable', order:1}]
     };
 }

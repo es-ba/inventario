@@ -33,7 +33,7 @@ import {imprimirEtiquetasCodigosBarra} from '../imprimir-codigos-barra';
 const SECCIONES:{titulo:string, campos:string[], abiertaPorDefecto?:boolean}[] = [
     {
         titulo:'Datos generales',
-        campos:['ficha', 'numero_integrado', 'prd', 'clasificacion', 'tipo_bien', 'categoria', 'activo'],
+        campos:['ficha', 'numero_integrado', 'prd', 'tipo_bien', 'categoria', 'activo'],
         abiertaPorDefecto:true,
     },
     {
@@ -70,7 +70,12 @@ declare module 'frontend-plus' {
     }
 }
 
+const CAMPOS_OCULTOS = new Set(['clasificacion']);
+
 function esCampoDelFormulario(field:FieldDefinition):boolean{
+    if(CAMPOS_OCULTOS.has(field.name)){
+        return false;
+    }
     if(field.clientSide){
         return false;
     }
@@ -348,7 +353,7 @@ export function BienFormulario({
                 ? <>
                     <Stack direction="row" justifyContent="flex-end" spacing={1} sx={{mb:1}}>
                         {}
-                        {guardado && editor.row.activo !== false
+                        {!editor.soloLectura && guardado && editor.row.activo !== false
                             ? <Button
                                 variant="outlined"
                                 color="error"
@@ -358,9 +363,11 @@ export function BienFormulario({
                                 dar de baja
                             </Button>
                             : null}
-                        <Button variant="outlined" startIcon={<Edit/>} onClick={() => setEditando(true)}>
-                            editar
-                        </Button>
+                        {!editor.soloLectura
+                            ? <Button variant="outlined" startIcon={<Edit/>} onClick={() => setEditando(true)}>
+                                editar
+                            </Button>
+                            : null}
                     </Stack>
                     <VistaDatos definicion={definicion} row={editor.row}/>
                 </>

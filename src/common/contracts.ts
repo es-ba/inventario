@@ -146,3 +146,25 @@ export type BienesAtributoValorOpcion = {
 export type BienesAtributoValoresOpcionesResponse = {
     rows: BienesAtributoValorOpcion[];
 };
+
+export const info_usuario = {
+    procedure: 'info_usuario',
+    result: is.object({
+        usuario: is.string,
+        rol: is.string,
+        nombre: is.nullable.string,
+        apellido: is.nullable.string,
+        responsable: is.nullable.string,
+        sector: is.nullable.string,
+        puede_ver_todo: is.nullable.boolean,
+        puede_ver_propio: is.nullable.boolean,
+        puede_ver_dependientes: is.nullable.boolean,
+        puede_ver_claves: is.nullable.boolean,
+        puede_restaurar_baja: is.nullable.boolean,
+        puede_eliminar: is.nullable.boolean,
+        puede_guardar: is.nullable.boolean,
+        puede_mover: is.nullable.boolean,
+    })
+}
+
+export type InfoUsuario = DefinedType<typeof info_usuario.result>

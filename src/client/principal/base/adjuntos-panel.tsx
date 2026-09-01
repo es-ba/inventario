@@ -17,7 +17,7 @@ import {
 import {Delete, Download, UploadFile} from '@mui/icons-material';
 import type {FixedFields} from 'frontend-plus';
 
-import {useAvisos, useConexion} from './contexto-base';
+import {useAvisos, useConexion, usePermisos} from './contexto-base';
 import {formatearValor} from './formato-valores';
 import type {Fila} from './tipos-tabla';
 
@@ -45,10 +45,12 @@ export function AdjuntosPanel({
     campoNumero,
     endpointDescarga,
     subir,
-    soloLectura = false,
+    soloLectura: soloLecturaPedida = false,
 }:AdjuntosPanelProps){
     const conn = useConexion();
     const {mostrarError, mostrarMensaje} = useAvisos();
+    const permisos = usePermisos();
+    const soloLectura = soloLecturaPedida || !permisos.guardar;
     const [filas, setFilas] = React.useState<Fila[]>([]);
     const [cargando, setCargando] = React.useState(true);
     const [subiendo, setSubiendo] = React.useState(false);

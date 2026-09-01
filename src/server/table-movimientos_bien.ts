@@ -1,13 +1,10 @@
 "use strict";
 
 import {TableDefinition, TableContext, AppBackend} from "./types-principal";
-import {politicasInventario, deMisDependientes, MI_RESPONSABLE} from "./politicas";
+import {politicasPorElBien} from "./politicas";
 
 export function getPolicies(_be?:AppBackend){
-    return politicasInventario({
-        propio: `responsable = ${MI_RESPONSABLE}`,
-        dependiente: deMisDependientes('responsable'),
-    });
+    return politicasPorElBien('ficha');
 }
 
 export function movimientos_bien(context:TableContext):TableDefinition{

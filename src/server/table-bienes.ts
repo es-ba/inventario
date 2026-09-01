@@ -1,10 +1,10 @@
 "use strict";
 
 import {TableDefinition, TableContext, AppBackend} from "./types-principal";
-import {politicasInventario} from "./politicas";
+import {politicasBienes} from "./politicas";
 
 export function getPolicies(_be?:AppBackend){
-    return politicasInventario();
+    return politicasBienes('ficha');
 }
 
 export function textoONuloSql(expresion:string):string{
@@ -148,6 +148,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'enusode'                     , typeName:'text'    , editable:false, inTable:false},
             {name:'enusode_responsable'         , typeName:'text'    , editable:false, inTable:false},
             {name:'enusode_responsable_nombre'  , typeName:'text'    , editable:false, inTable:false},
+            {name:'tipo_asignacion'             , typeName:'text'    , editable:false, inTable:false},
             {name:'clasificacion'               , typeName:'text'    , nullable:true},
             {name:'orden_compra'                , typeName:'text'    , nullable:true},
             {name:'entidad_prestadora'          , typeName:'text'    , nullable:true},

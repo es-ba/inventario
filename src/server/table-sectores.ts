@@ -21,6 +21,7 @@ export function sectores(context:TableContext):TableDefinition{
             {name:'activo'             , typeName:'boolean'    , nullable: false, defaultValue: true},
             {name:'responsable'        , typeName:'text'        , nullable:true},
             {name:'tipo_sector'        , typeName:'text'        },
+            {name:'subsector'          , typeName:'text'        , nullable:true},
             {name:'id_anterior'        , typeName:'text'        , nullable:true},
             {name:'fecha_creacion'     , typeName:'date'        , defaultValue:null},
             {name:'fecha_modificacion' , typeName:'date'        , nullable:true, defaultValue:null},

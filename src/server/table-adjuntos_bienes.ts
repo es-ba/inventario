@@ -1,7 +1,7 @@
 "use strict";
 
 import { TableDefinition, TableContext, FieldDefinition } from "./types-principal";
-import { getPolicies } from "./table-bienes";
+import { politicasPorElBien } from "./politicas";
 
 export const numero_adjunto: FieldDefinition = {
     name: 'numero_adjunto',
@@ -12,7 +12,6 @@ export const numero_adjunto: FieldDefinition = {
 };
 
 export function adjuntos_bienes(context:TableContext):TableDefinition{
-    var be = context.be;
     return {
         name:'adjuntos_bienes',
         elementName:'adjunto',
@@ -36,7 +35,7 @@ export function adjuntos_bienes(context:TableContext):TableDefinition{
         selfRefresh:true,
         refrescable:true,
         sql:{
-            policies: getPolicies(be)
+            policies: politicasPorElBien('ficha')
         }
     };
 }

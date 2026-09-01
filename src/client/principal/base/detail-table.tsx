@@ -13,7 +13,7 @@ import {Add, Close, Delete, Refresh} from '@mui/icons-material';
 import {DataGrid, GridColDef, GridRowParams} from '@mui/x-data-grid';
 import type {FieldDefinition, FixedFields, TableDefinition} from 'frontend-plus';
 
-import {useAvisos, useConexion} from './contexto-base';
+import {useAvisos, useConexion, usePermisos} from './contexto-base';
 import {useEstructuraTabla} from './cache-tablas';
 import {formatearValor} from './formato-valores';
 import {FormFieldRenderer} from './form-field-renderer';
@@ -44,11 +44,16 @@ export function DetailTable({
     titulo,
     anchoPanel = 480,
     columnasOcultas,
-    soloLectura = false,
+    soloLectura: soloLecturaPedida = false,
 }:DetailTableProps){
     const conn = useConexion();
     const {mostrarError} = useAvisos();
+    const permisos = usePermisos();
     const {definicion} = useEstructuraTabla(tabla);
+
+    const soloLectura = soloLecturaPedida || !permisos.guardar
+        || definicion?.editable === false
+        || definicion?.allow?.update === false;
 
     const [filas, setFilas] = React.useState<Fila[]>([]);
     const [cargando, setCargando] = React.useState(true);
@@ -206,6 +211,7 @@ function PanelDeRegistro({
 }){
     const conn = useConexion();
     const {mostrarError} = useAvisos();
+    const permisos = usePermisos();
     const [borrando, setBorrando] = React.useState(false);
 
     const esAlta = React.useMemo(() => {
@@ -289,7 +295,8 @@ function PanelDeRegistro({
             justifyContent="space-between"
             sx={{mt:2, pt:2, borderTop:1, borderColor:'divider'}}
         >
-            {soloLectura || esAlta
+            {}
+            {soloLectura || esAlta || !permisos.eliminar
                 ? <span/>
                 : <Button color="error" startIcon={<Delete/>} onClick={() => void borrar()} disabled={borrando}>
                     eliminar

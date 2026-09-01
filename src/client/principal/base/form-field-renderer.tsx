@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import type {FieldDefinition} from 'frontend-plus';
 
-import {useDatosReferencial, useEstructuraTabla} from './cache-tablas';
+import {useDatosReferencial, useEspaciosDelSector, useEstructuraTabla} from './cache-tablas';
 import {aValorFechaInput, formatearValor} from './formato-valores';
 import {Fila, nombreDeTipo} from './tipos-tabla';
 
@@ -38,6 +38,28 @@ function paresDeReferencia(field:FieldDefinition):{source:string, target:string}
     return declarados.length ? declarados : [{source:field.name, target:field.name}];
 }
 
+export const CAMPO_SECTOR = 'sector';
+
+export const PERTENENCIA_A_SECTOR:Record<string, {columna:string, sigla:string}> = {
+    espacios:{columna:'espacio', sigla:'sectores__sigla'},
+};
+
+export const GRUPO_PROPIO = 'del sector';
+export const GRUPO_AJENO = 'otros sectores';
+
+export function grupoDePertenencia(fila:Fila, columna:string, propios:Set<string>):string{
+    return propios.has(String(fila[columna] ?? '').trim()) ? GRUPO_PROPIO : GRUPO_AJENO;
+}
+
+export function ordenarPorPertenencia(opciones:Fila[], columna:string, propios:Set<string>):Fila[]{
+    const esPropia = (fila:Fila) => grupoDePertenencia(fila, columna, propios) === GRUPO_PROPIO;
+    const propias = opciones.filter(esPropia);
+    if(propias.length === 0 || propias.length === opciones.length){
+        return opciones;
+    }
+    return [...propias, ...opciones.filter(fila => !esPropia(fila))];
+}
+
 export function opcionesDeReferencia(
     filas:Fila[],
     condiciones:{source:string, target:string}[],
@@ -56,11 +78,16 @@ function CampoReferencia({field, row, setField, disabled, error, size}:FormField
     const {filas, cargando} = useDatosReferencial(field.references);
     const {definicion} = useEstructuraTabla(field.references);
 
+    const pertenencia = PERTENENCIA_A_SECTOR[field.references ?? ''];
+    const sectorElegido = pertenencia ? comoTextoEditable(row[CAMPO_SECTOR]) : '';
+    const propios = useEspaciosDelSector(sectorElegido || undefined);
+    const agrupa = Boolean(pertenencia) && propios.size > 0;
+
     const pares = paresDeReferencia(field);
     const camposVisibles = React.useMemo(() => {
         const objetivos = pares.map(par => par.target);
         const nombres = definicion?.nameFields ?? [];
-        const unidos = [...objetivos, ...nombres]
+        const unidos = [...objetivos, ...nombres, ...(pertenencia ? [pertenencia.sigla] : [])]
             .filter((nombre, i, todos) => nombre && todos.indexOf(nombre) === i);
         return unidos.length ? unidos : [field.name];
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -77,9 +104,14 @@ function CampoReferencia({field, row, setField, disabled, error, size}:FormField
     const condiciones = pares.filter(par => par.source !== field.name);
     const claveCondiciones = JSON.stringify(condiciones.map(({source}) => row[source] ?? null));
     const opciones = React.useMemo(
-        () => opcionesDeReferencia(filas, condiciones, row),
+        () => {
+            const permitidas = opcionesDeReferencia(filas, condiciones, row);
+            return agrupa
+                ? ordenarPorPertenencia(permitidas, pertenencia.columna, propios)
+                : permitidas;
+        },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [filas, claveCondiciones],
+        [filas, claveCondiciones, agrupa, propios],
     );
 
     const seleccionada = filas.find(
@@ -94,6 +126,9 @@ function CampoReferencia({field, row, setField, disabled, error, size}:FormField
         fullWidth
         disabled={disabled || field.editable === false}
         getOptionLabel={etiquetaDe}
+        groupBy={agrupa
+            ? opcion => grupoDePertenencia(opcion, pertenencia.columna, propios)
+            : undefined}
         isOptionEqualToValue={(opcion, valor) =>
             pares.every(({target}) => opcion[target] === valor[target])}
         renderOption={(props, opcion) => {

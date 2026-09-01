@@ -23,7 +23,7 @@ import {
 import {Delete, Description, Download, UploadFile} from '@mui/icons-material';
 import type {FieldDefinition, FixedFields} from 'frontend-plus';
 
-import {useAvisos, useConexion} from '../base/contexto-base';
+import {useAvisos, useConexion, usePermisos} from '../base/contexto-base';
 import {FormFieldRenderer} from '../base/form-field-renderer';
 import {formatearValor} from '../base/formato-valores';
 import type {Fila} from '../base/tipos-tabla';
@@ -88,6 +88,7 @@ const DATOS_VACIOS = {
 export function SolicitudDocumentos({acta}:{acta:string}){
     const conn = useConexion();
     const {mostrarError, mostrarMensaje} = useAvisos();
+    const permisos = usePermisos();
     const [filas, setFilas] = React.useState<Fila[]>([]);
     const [cargando, setCargando] = React.useState(true);
     const [emitiendo, setEmitiendo] = React.useState<TipoDocumento|null>(null);
@@ -200,7 +201,7 @@ export function SolicitudDocumentos({acta}:{acta:string}){
 
     return <Box>
         <Stack direction="row" spacing={2} sx={{mb:2}} flexWrap="wrap" useFlexGap>
-            {(['comodato', 'acta'] as TipoDocumento[]).map(tipo => <Button
+            {!permisos.guardar ? null : (['comodato', 'acta'] as TipoDocumento[]).map(tipo => <Button
                 key={tipo}
                 variant="outlined"
                 startIcon={<Description/>}

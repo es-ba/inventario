@@ -48,6 +48,9 @@ install:
       owner: inventario_owner
     scripts:
       pre-adapt:
+      - ../install/sector_pertenece.sql
+      - ../install/sector_responsable.sql
+      - ../install/bienes_alcance.sql
       - ../install/movimientos_bien_pk_trg.sql
       - ../install/evento_bien_pk_trg.sql
       - ../install/historial_bien_acciones_trg.sql
@@ -58,7 +61,6 @@ install:
       - ../node_modules/pg-triggers/lib/function-changes-trg.sql
       - ../node_modules/pg-triggers/lib/enance.sql    
       - ../install/generador_accion_cumple_condicion.sql
-      - ../install/sector_pertenece.sql
       - ../install/auditoria_usuario_trg.sql
       - ../install/responsables_id_trg.sql
       - ../install/movimientos_solicitudes_estado_trg.sql

@@ -23,7 +23,7 @@ export function espacios(context:TableContext):TableDefinition{
             {name:'tipo'                , typeName:'text'    }, 
             {name:'ubicacion'           , typeName:'text'    , isName:true}, 
             {name:'denominacion'        , typeName:'text'    , isName:true},
-            {name:'sector'                , typeName:'text'    },
+            {name:'sector'                , typeName:'text'    , nullable:false},
             {name:'responsable'         , typeName:'text'    },
             {name:'sede'                , typeName:'text'    },
             {name:'id_anterior'         , typeName:'text'    },
@@ -32,8 +32,11 @@ export function espacios(context:TableContext):TableDefinition{
         foreignKeys:[
             {references:'tipo_espacio', fields:[{ source: 'tipo', target: 'tipo_espacio' }]},
             {references:'responsables', fields:['responsable']},
-            {references:'sectores', fields:['sector']},
+            {references:'sectores', fields:['sector'], displayFields:['sigla']},
             {references:'sedes', fields:['sede']}
+        ],
+        detailTables:[
+            {table:'historial_evento_bien', fields:['ficha'], abr:'Au', label:'Auditoria'},
         ],
         constraints:[
             {constraintType:'unique', fields:['espacio']}

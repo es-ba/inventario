@@ -72,11 +72,36 @@ SELECT
     p.sedes,
     p.espacios,
     p.cantidad,
+    (SELECT count(*)
+        FROM sectores s
+        WHERE s.sector IS DISTINCT FROM p.sector
+          AND sector_pertenece(s.sector, p.sector)) AS sectores_dependientes,
+    (SELECT count(*)
+        FROM espacios e
+        WHERE e.sector = p.sector) AS espacios_propios,
+    (SELECT count(*)
+        FROM espacios e
+        WHERE sector_pertenece(e.sector, p.sector)) AS espacios_dependientes,
     (SELECT coalesce(sum(d.cantidad), 0)
         FROM por_sector d
         WHERE d.sector = p.sector
            OR sector_pertenece(d.sector, p.sector)) AS cantidad_dependientes
 FROM por_sector p
+`;
+
+export const sqlBienesPorEspacio = `
+SELECT g.*, e.sector
+    FROM (
+        SELECT
+            coalesce(${textoONulo('v.espacio')}, '${SIN_ASIGNAR}') AS espacio,
+            count(DISTINCT nullif(btrim(v.responsable), '')) AS responsables,
+            count(DISTINCT nullif(btrim(v.sector), '')) AS sectores,
+            ${MEDIDAS}
+        FROM (${sqlBienes}) v
+        WHERE ${SOLO_ALTA}
+        GROUP BY coalesce(${textoONulo('v.espacio')}, '${SIN_ASIGNAR}')
+    ) g
+LEFT JOIN espacios e ON e.espacio = g.espacio
 `;
 
 export const CLASES_PARQUE_TECNOLOGICO = ['4', '6'];

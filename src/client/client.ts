@@ -75,15 +75,13 @@ var crearBotonAccion = (depot:myOwn.Depot, action:EstadoAccion)=>{
                 alertPromise(err.message)
                 throw err
             }finally{
-                //retraso la habilitación porque a veces tarda en redibujarse la botonera y puede traer problemas si dan doble click 
-                //ya que ejecuta nuevamente una acción que ya se ejecutó (y terminó) antes
                 setTimeout(()=>button.disabled=false,3000)
             }
         }
         
         var confirmPromiseOpts: DialogOptions = {}
         if(action.confirma){
-            confirmPromiseOpts.askForNoRepeat = 'no volver a mostrar'; //muestra mensaje por default pero anda igual
+            confirmPromiseOpts.askForNoRepeat = 'no volver a mostrar';
             var buttonsDef = [
                 {label:'sí', value:true},
                 {label:'no', value:false}
@@ -199,7 +197,6 @@ type AccionDeclaracion = {
     ejecutar:(declaracion:any, refrescar:()=>void)=>Promise<string|null>,
 };
 
-// confirmPromise rechaza cuando el usuario cancela o elige el botón false
 const confirmarDeclaracion = async (mensaje:string, etiqueta:string):Promise<boolean> => {
     try{
         await confirmPromise(mensaje, {buttonsDef:[
@@ -317,7 +314,6 @@ var crearBotonDeclaracion = (depot:myOwn.Depot, accion:AccionDeclaracion) => {
             // @ts-ignore
             await alertPromise(err.message);
         }finally{
-            // el redibujado de la fila puede demorar; se evita el doble click
             setTimeout(() => { boton.disabled = false; }, 1500);
         }
     };

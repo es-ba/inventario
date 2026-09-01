@@ -56,11 +56,13 @@ import { solicitudes_documentos } from "./table-solicitudes_documentos";
 import { estados_declaracion } from "./table-estados_declaracion";
 import { reporte_bienes_por_sector } from "./table-reporte_bienes_por_sector";
 import { reporte_bienes_por_responsable } from "./table-reporte_bienes_por_responsable";
+import { reporte_bienes_por_espacio } from "./table-reporte_bienes_por_espacio";
 import { reporte_bienes_listado } from "./table-reporte_bienes_listado";
 import { reporte_bienes_dependientes } from "./table-reporte_bienes_dependientes";
 import { mis_bienes_a_cargo, mis_bienes_asignados } from "./table-mis_bienes";
 import { parque_tecnologico } from "./table-parque_tecnologico";
 import { setAtributosDeBienes, VINCULOS_CON_EL_BIEN } from "./reportes-bienes";
+import { puedeElRol, setCapacidadesDeRoles } from "./capacidades-roles";
 import { jerarquias } from "./table-jerarquias";
 import { adjuntos_bienes } from "./table-adjuntos_bienes";
 import { adjuntos_solicitudes } from "./table-adjuntos_solicitudes";
@@ -122,6 +124,20 @@ const cargarAtributosDeBienes = async (be:AppBackend) => {
     }
 }
 
+const cargarCapacidadesDeRoles = async (be:AppBackend) => {
+    try{
+        const filas = await be.inTransaction(null, async (client)=>{
+            const {rows} = await client.query(`SELECT * FROM roles`).fetchAll();
+            return rows;
+        });
+        setCapacidadesDeRoles(filas);
+        console.info(`Capacidades de roles cargadas para el menú: ${filas.length}`);
+    }catch(err){
+        console.warn(`No se pudieron leer las capacidades de los roles: ${err}`);
+        setCapacidadesDeRoles([]);
+    }
+}
+
 export class AppInventario extends AppBackend{
     constructor(){
         super();
@@ -129,6 +145,7 @@ export class AppInventario extends AppBackend{
     override async postConfig(){
         cronMantenimiento(this);
         await cargarAtributosDeBienes(this);
+        await cargarCapacidadesDeRoles(this);
         await super.postConfig();
     }
     override addSchrödingerServices(mainApp:ExpressPlus, baseUrl:string){
@@ -227,7 +244,7 @@ export class AppInventario extends AppBackend{
         es.admin = context.user && context.user.rol=="admin"
         es.superior = es.admin || context.user && context.user.rol=="superior"
         es.administrativo = es.superior || context.user && context.user.rol=="administrativo"
-        es.lectura = es.administrativo || context.user && context.user.rol=="lectura"
+        es.lectura = es.administrativo || context.user && context.user.rol=="lectura"
         context.es = es;
     }
     override getContextForDump():Context{
@@ -242,6 +259,7 @@ export class AppInventario extends AppBackend{
     }
 
     override getMenu(context: Context): MenuDefinition {
+        const puedeGuardar = !!context.forDump || puedeElRol(context.user?.rol, 'puede_guardar');
         var menuContent: MenuInfoBase[] = [
             {menuType:'principal', name:'principal', label:'principal'     },
             {menuType: 'menu', name: 'mis_bienes', label: 'mis bienes', menuContent:
@@ -255,35 +273,47 @@ export class AppInventario extends AppBackend{
                 {menuType: 'table', name: 'bienes_activos', table: 'bienes', label: 'bienes en alta', ff: {activo: true}},
                 {menuType: 'table', name: 'bienes_inactivos', table: 'bienes', label: 'bienes en baja', ff: {activo: false}},
             ]},            
-            {menuType: 'menu', name: 'operaciones', label: 'operaciones', menuContent: [
-                {menuType: 'table', name: 'declaraciones', label: 'declaraciones'},
-                {menuType: 'solicitudes', name: 'solicitudes_movimiento', label: 'solicitudes de movimiento'},
-                {menuType: 'table', name: 'movimientos_solicitudes_acciones', label: 'solicitudes (con acciones)'},
-                {menuType: 'table', name: 'movimientos_solicitudes', label: 'solicitudes (sólo datos)'},
-            ]},
+        ];
 
+        if(puedeGuardar){
+            menuContent.push(
+                {menuType: 'menu', name: 'operaciones', label: 'operaciones', menuContent: [
+                    {menuType: 'table', name: 'declaraciones', label: 'declaraciones'},
+                    {menuType: 'solicitudes', name: 'solicitudes_movimiento', label: 'solicitudes de movimiento'},
+                    {menuType: 'table', name: 'movimientos_solicitudes_acciones', label: 'solicitudes (con acciones)'},
+                    {menuType: 'table', name: 'movimientos_solicitudes', label: 'solicitudes (sólo datos)'},
+                ]}
+            );
+        }
+
+        menuContent.push(
             {menuType: 'menu', name: 'reportes', label: 'reportes', menuContent: [
                 {menuType: 'table', name: 'reporte_bienes_por_sector', label: 'bienes por sector patrimonial'},
                 {menuType: 'table', name: 'reporte_bienes_por_responsable', label: 'bienes por responsable'},
+                {menuType: 'table', name: 'reporte_bienes_por_espacio', label: 'bienes por espacio'},
                 {menuType: 'table', name: 'parque_tecnologico', label: 'parque tecnológico'},
-            ]},
-    
-            {menuType: 'menu', name: 'gestion', label: 'gestion de datos', menuContent: [
-                {menuType: 'table', name: 'sectores', label: 'sectores'},
-                {menuType: 'table', name: 'responsables', label: 'responsables'},
-                {menuType: 'table', name: 'espacios', label: 'espacios'},
-                {menuType: 'table', name: 'ordenes_compra', label: 'ordenes de compra'},
-                {menuType: 'table', name: 'proveedores', label: 'proveedores'},
-                {menuType: 'table', name: 'marcas', label: 'marcas'},
-                {menuType: 'table', name: 'grupos', label: 'grupos'},
-                {menuType: 'table', name: 'sedes', label: 'sedes'},
-                {menuType: 'menu', name: 'atributos', label: 'atributos', menuContent: [
-                    {menuType: 'table', name: 'bienes_atributos', label: 'atributos de bienes'},
-                    {menuType: 'table', name: 'bienes_atributo_valores', label: 'valores posibles'},
-                ]},
-            ]},
-        ];
-        
+            ]}
+        );
+
+        if(puedeGuardar){
+            menuContent.push(
+                {menuType: 'menu', name: 'gestion', label: 'gestion de datos', menuContent: [
+                    {menuType: 'table', name: 'sectores', label: 'sectores'},
+                    {menuType: 'table', name: 'responsables', label: 'responsables'},
+                    {menuType: 'table', name: 'espacios', label: 'espacios'},
+                    {menuType: 'table', name: 'ordenes_compra', label: 'ordenes de compra'},
+                    {menuType: 'table', name: 'proveedores', label: 'proveedores'},
+                    {menuType: 'table', name: 'marcas', label: 'marcas'},
+                    {menuType: 'table', name: 'grupos', label: 'grupos'},
+                    {menuType: 'table', name: 'sedes', label: 'sedes'},
+                    {menuType: 'menu', name: 'atributos', label: 'atributos', menuContent: [
+                        {menuType: 'table', name: 'bienes_atributos', label: 'atributos de bienes'},
+                        {menuType: 'table', name: 'bienes_atributo_valores', label: 'valores posibles'},
+                    ]},
+                ]}
+            );
+        }
+
         if(context.user && context.es.admin){
             menuContent.push(
                 {menuType: 'menu', name: 'configuracion', label: 'configuración', menuContent: [
@@ -359,6 +389,7 @@ export class AppInventario extends AppBackend{
             estados_declaracion,
             reporte_bienes_por_sector,
             reporte_bienes_por_responsable,
+            reporte_bienes_por_espacio,
             reporte_bienes_listado,
             reporte_bienes_dependientes,
             mis_bienes_a_cargo,

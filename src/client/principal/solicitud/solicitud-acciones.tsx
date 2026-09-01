@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {Button, Chip, CircularProgress, Stack} from '@mui/material';
 
-import {useAvisos, useConexion} from '../base/contexto-base';
+import {useAvisos, useConexion, usePermisos} from '../base/contexto-base';
 import type {EstadoAccion} from '../../../common/contracts';
 
 
@@ -50,6 +50,7 @@ export function SolicitudAcciones({
 }){
     const conn = useConexion();
     const {mostrarError, mostrarMensaje} = useAvisos();
+    const permisos = usePermisos();
     const [ejecutando, setEjecutando] = React.useState<string|null>(null);
     const lista = accionesDe(acciones);
 
@@ -70,7 +71,7 @@ export function SolicitudAcciones({
         }
     }, [acta, conn, mostrarError, mostrarMensaje, onEjecutada]);
 
-    if(lista.length === 0){
+    if(lista.length === 0 || !permisos.guardar){
         return null;
     }
 
