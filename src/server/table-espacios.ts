@@ -23,7 +23,7 @@ export function espacios(context:TableContext):TableDefinition{
             {name:'tipo'                , typeName:'text'    }, 
             {name:'ubicacion'           , typeName:'text'    , isName:true}, 
             {name:'denominacion'        , typeName:'text'    , isName:true},
-            {name:'sector'                , typeName:'text'    , nullable:false},
+            {name:'sector'              , typeName:'text'    , nullable:false},
             {name:'responsable'         , typeName:'text'    },
             {name:'sede'                , typeName:'text'    },
             {name:'id_anterior'         , typeName:'text'    },
