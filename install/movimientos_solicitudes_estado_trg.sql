@@ -6,7 +6,6 @@ DECLARE
   v_accion text;
   v_condicion text;
   v_cumple boolean;
-  v_movimientos_existentes integer;
   v_bienes_solicitud integer;
 BEGIN
   IF old.estado IS NOT DISTINCT FROM new.estado THEN
@@ -39,15 +38,6 @@ BEGIN
 
   IF new.estado = 'Pr' AND old.estado IS DISTINCT FROM 'Pr' THEN
     SELECT count(*)::integer
-      INTO v_movimientos_existentes
-      FROM movimientos_bien
-      WHERE acta = new.acta;
-
-    IF v_movimientos_existentes > 0 THEN
-      RAISE EXCEPTION 'La solicitud % ya tiene movimientos de bienes generados', new.acta;
-    END IF;
-
-    SELECT count(*)::integer
       INTO v_bienes_solicitud
       FROM movimientos_solicitud_bien
       WHERE acta = new.acta;
@@ -59,7 +49,6 @@ BEGIN
     INSERT INTO movimientos_bien (
       ficha,
       orden,
-      acta,
       tipo_asignacion,
       accion,
       modalidad_uso,
@@ -67,9 +56,10 @@ BEGIN
       sector,
       sede,
       espacio,
+      puesto,
       enusode_responsable,
       detalle,
-      solicitado_por,
+      autorizado_por,
       firmado_por,
       fecha_movimiento,
       fecha_creacion,
@@ -78,7 +68,6 @@ BEGIN
     SELECT
       msb.ficha,
       0,
-      new.acta,
       new.tipo_asignacion,
       new.accion,
       new.modalidad_uso,
@@ -86,9 +75,10 @@ BEGIN
       new.sector,
       new.sede,
       new.espacio,
+      new.puesto,
       new.enusode_responsable,
       new.detalle,
-      new.solicitado_por,
+      new.autorizado_por,
       new.firmado_por,
       CURRENT_DATE,
       CURRENT_DATE,

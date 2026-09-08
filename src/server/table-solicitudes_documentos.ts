@@ -10,7 +10,7 @@ export function solicitudes_documentos(_context:TableContext):TableDefinition{
         editable:false,
         allow:{insert:true, update:true, delete:true, deleteAll:false},
         fields:[
-            {name:'acta'              , typeName:'text'     , nullable:false, editable:false},
+            {name:'acta'              , typeName:'bigint'   , nullable:false, editable:false},
             {name:'tipo'              , typeName:'text'     , nullable:false, editable:false,
                 options:['comodato', 'acta']},
             {name:'version'           , typeName:'bigint'   , nullable:false, editable:false},

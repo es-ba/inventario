@@ -29,7 +29,7 @@ declare module 'frontend-plus' {
             sector:string,
             sede:string,
             espacio:string,
-            accion:string,
+            puesto:string,
             detalle:string,
         }) => Promise<{
             message:string,
@@ -37,7 +37,6 @@ declare module 'frontend-plus' {
             no_encontrados:number,
         }>;
         solicitud_crear_desde_bienes:(params:{
-            acta:string,
             fichas:string,
             tipo_asignacion:string,
             modalidad_uso:string,
@@ -45,6 +44,8 @@ declare module 'frontend-plus' {
             sector:string,
             sede:string,
             espacio:string,
+            puesto:string,
+            accion:string,
             detalle:string,
         }) => Promise<{
             message:string,
@@ -63,27 +64,38 @@ function campoDeReferencia(name:keyof Cabecera, title:string, references:string,
     } as unknown as FieldDefinition;
 }
 
+const CAMPO_ACCION =
+    campoDeReferencia('accion'         , 'acción'             , 'acciones_movimiento', 'accion_movimiento');
+
 const CAMPOS = [
     campoDeReferencia('responsable'    , 'responsable'        , 'responsables'   , 'responsable'),
     campoDeReferencia('sector'           , 'sector'               , 'sectores'          , 'sector'),
     campoDeReferencia('sede'           , 'sede'               , 'sedes'          , 'sede'),
     campoDeReferencia('espacio'        , 'espacio'            , 'espacios'       , 'espacio'),
+    {name:'puesto', typeName:'integer', title:'puesto'} as unknown as FieldDefinition,
     campoDeReferencia('tipo_asignacion', 'tipo de asignación' , 'tipo_asignacion', 'tipo_asignacion'),
     campoDeReferencia('modalidad_uso'  , 'modalidad de uso'   , 'modalidad_uso'  , 'modalidad_uso'),
 ];
 
 type Cabecera = {
+    accion:string,
     responsable:string,
     sector:string,
     sede:string,
     espacio:string,
+    puesto:string,
     tipo_asignacion:string,
     modalidad_uso:string,
 };
 
 const CABECERA_VACIA:Cabecera = {
-    responsable:'', sector:'', sede:'', espacio:'', tipo_asignacion:'', modalidad_uso:'',
+    accion:'', responsable:'', sector:'', sede:'', espacio:'', puesto:'',
+    tipo_asignacion:'', modalidad_uso:'',
 };
+
+const CAMPOS_DE_DESTINO:(keyof Cabecera)[] = [
+    'responsable', 'sector', 'sede', 'espacio', 'puesto', 'tipo_asignacion', 'modalidad_uso',
+];
 
 export function MoverBienes({
     abierto,
@@ -99,7 +111,6 @@ export function MoverBienes({
     onCreada:(mensaje:string) => void,
 }){
     const [modo, setModo] = React.useState<'acta'|'directo'>('acta');
-    const [acta, setActa] = React.useState('');
     const [detalle, setDetalle] = React.useState('');
     const [cabecera, setCabecera] = React.useState<Cabecera>(CABECERA_VACIA);
     const [error, setError] = React.useState<string|null>(null);
@@ -116,30 +127,28 @@ export function MoverBienes({
     React.useEffect(() => {
         if(abierto){
             setModo('acta');
-            setActa('');
             setDetalle('');
             setCabecera(CABECERA_VACIA);
             setError(null);
         }
     }, [abierto]);
 
-    const hayDestino = Object.values(cabecera).some(valor => String(valor ?? '').trim() !== '');
-    const puedeCrear = hayDestino
-        && fichas.length > 0
-        && (modo === 'directo' || acta.trim() !== '');
+    const hayDestino = CAMPOS_DE_DESTINO.some(campo => String(cabecera[campo] ?? '').trim() !== '');
+    const puedeCrear = hayDestino && fichas.length > 0;
 
     const crear = React.useCallback(async () => {
         setTrabajando(true);
         setError(null);
         try{
+            const {accion, ...destino} = cabecera;
             const comun = {
                 fichas:JSON.stringify(fichas),
                 detalle:detalle.trim(),
-                ...cabecera,
+                ...destino,
             };
             const resultado = modo === 'directo'
-                ? await conn.ajax.bienes_mover_directo({...comun, accion:''})
-                : await conn.ajax.solicitud_crear_desde_bienes({...comun, acta:acta.trim()});
+                ? await conn.ajax.bienes_mover_directo(comun)
+                : await conn.ajax.solicitud_crear_desde_bienes({...comun, accion});
             onCreada(resultado.message);
             onCerrar();
         }catch(err){
@@ -147,7 +156,7 @@ export function MoverBienes({
         }finally{
             setTrabajando(false);
         }
-    }, [acta, cabecera, conn, detalle, fichas, modo, onCerrar, onCreada]);
+    }, [cabecera, conn, detalle, fichas, modo, onCerrar, onCreada]);
 
     return <Dialog open={abierto} onClose={onCerrar} maxWidth="sm" fullWidth>
         <DialogTitle>
@@ -168,26 +177,17 @@ export function MoverBienes({
 
             <Typography variant="body2" color="text.secondary" sx={{mb:2}}>
                 {modo === 'acta'
-                    ? 'Se crea una solicitud de movimiento con los bienes seleccionados.'
-                        + ' Los movimientos se registran cuando la solicitud recorra el'
-                        + ' circuito y llegue a Procesada.'
+                    ? 'Se crea una solicitud de movimiento con los bienes seleccionados,'
+                        + ' con su número de acta asignado automáticamente. Los movimientos'
+                        + ' se registran cuando la solicitud recorra el circuito y llegue'
+                        + ' a Procesada.'
                     : 'Los movimientos se registran ahora mismo, sin acta y sin pasar por'
                         + ' el circuito de aprobación. Queda asentado en el historial de'
                         + ' cada bien.'}
             </Typography>
 
             <Stack spacing={2}>
-                {modo === 'acta'
-                    ? <TextField
-                        label="acta"
-                        value={acta}
-                        onChange={evento => setActa(evento.target.value)}
-                        required
-                        size="small"
-                        helperText="número de acta de la solicitud"
-                    />
-                    : null}
-                {CAMPOS.map(campo => <FormFieldRenderer
+                {(modo === 'acta' ? [CAMPO_ACCION, ...CAMPOS] : CAMPOS).map(campo => <FormFieldRenderer
                     key={campo.name}
                     field={campo}
                     row={cabecera as unknown as Fila}
@@ -204,7 +204,7 @@ export function MoverBienes({
                 />
             </Stack>
 
-            {!hayDestino && (modo === 'directo' || acta.trim() !== '')
+            {!hayDestino
                 ? <Alert severity="info" sx={{mt:2}}>
                     Indicá al menos un dato de destino: responsable, sector, sede o espacio.
                 </Alert>

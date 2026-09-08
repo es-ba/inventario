@@ -32,6 +32,7 @@ import { cuentas } from "./table-cuentas";
 import { clases } from "./table-clases";
 import { movimientos_bien } from "./table-movimientos_bien";
 import { tipo_asignacion } from "./table-tipo_asignacion";
+import { acciones_movimiento } from "./table-acciones_movimiento";
 import { tipo_clave } from "./table-tipo_clave";
 import { claves_bienes } from "./table-claves_bienes";
 import { tipo_ordencompra } from "./table-tipo_ordencompra";
@@ -244,7 +245,8 @@ export class AppInventario extends AppBackend{
         es.admin = context.user && context.user.rol=="admin"
         es.superior = es.admin || context.user && context.user.rol=="superior"
         es.administrativo = es.superior || context.user && context.user.rol=="administrativo"
-        es.lectura = es.administrativo || context.user && context.user.rol=="lectura"
+        es.lectura = es.administrativo || context.user && context.user.rol=="lectura"
+
         context.es = es;
     }
     override getContextForDump():Context{
@@ -288,7 +290,7 @@ export class AppInventario extends AppBackend{
 
         menuContent.push(
             {menuType: 'menu', name: 'reportes', label: 'reportes', menuContent: [
-                {menuType: 'table', name: 'reporte_bienes_por_sector', label: 'bienes por sector patrimonial'},
+                {menuType: 'table', name: 'reporte_bienes_por_sector', label: 'bienes por sector'},
                 {menuType: 'table', name: 'reporte_bienes_por_responsable', label: 'bienes por responsable'},
                 {menuType: 'table', name: 'reporte_bienes_por_espacio', label: 'bienes por espacio'},
                 {menuType: 'table', name: 'parque_tecnologico', label: 'parque tecnológico'},
@@ -325,6 +327,7 @@ export class AppInventario extends AppBackend{
                         {menuType: 'table', name: 'tipo_contrato', label: 'tipos de contrato'},
                         {menuType: 'table', name: 'tipo_ordencompra', label: 'tipos de OC'},
                         {menuType: 'table', name: 'tipo_asignacion', label: 'tipos de asignación'},
+                        {menuType: 'table', name: 'acciones_movimiento', label: 'acciones de movimiento'},
                         {menuType: 'table', name: 'tipo_clave', label: 'tipos de clave'},
                         {menuType: 'table', name: 'marcas', label: 'marcas'},
                         {menuType: 'table', name: 'rubros', label: 'rubros'},
@@ -396,6 +399,7 @@ export class AppInventario extends AppBackend{
             mis_bienes_asignados,
             parque_tecnologico,
             tipo_asignacion,
+            acciones_movimiento,
             tipo_clave,
             claves_bienes,
             modalidad_uso,

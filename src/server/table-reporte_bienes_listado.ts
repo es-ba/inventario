@@ -40,6 +40,8 @@ export function reporte_bienes_listado(_context:TableContext):TableDefinition{
             {references:'categoria_bien' , fields:['categoria'], displayFields:['descripcion']},
             {references:'cuentas'        , fields:['rubro', 'clase', 'cuenta'], displayFields:['nombre']},
             {references:'sectores'          , fields:['sector']           , displayFields:['sigla']},
+            {references:'sectores', fields:[{source:'sector_responsable', target:'sector'}],
+                alias:'sector_responsable', displayFields:['sigla']},
             {references:'sedes'          , fields:['sede']           , displayFields:['descripcion']},
             {references:'espacios'       , fields:['espacio']        , displayFields:['numero', 'denominacion']},
             {references:'responsables'   , fields:['responsable']    , displayFields:['apellido', 'nombre']},

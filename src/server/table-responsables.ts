@@ -3,6 +3,7 @@
 import { FieldDefinition } from "backend-plus";
 import {TableDefinition, TableContext} from "./types-principal";
 import {politicasResponsables} from "./politicas";
+import {VINCULOS_CON_EL_BIEN} from "./reportes-bienes";
 
 export const responsable: FieldDefinition = {name: 'responsable', typeName: 'text', title: 'responsable'}
 
@@ -15,8 +16,8 @@ export function responsables(context:TableContext):TableDefinition{
         editable:admin,
         fields:[
             {...responsable, nullable:true, editable:false},
-            {name:'nombre'                  , typeName:'text'       },  
-            {name:'apellido'                , typeName:'text'       , isName:true}, 
+            {name:'apellido'                , typeName:'text'       , isName:true},
+            {name:'nombre'                  , typeName:'text'       , isName:true},
             {name:'mail'                    , typeName:'text'       },
             {name:'dni'                     , typeName:'text'    , nullable:true},
             {name:'cuil'                    , typeName:'text'    , nullable:true},
@@ -48,7 +49,12 @@ export function responsables(context:TableContext):TableDefinition{
             {references:'sectores', fields:['sector'], displayFields:['sigla']},
         ],
         detailTables:[
-            {table:'usuarios', fields:['responsable'], abr:'Usu', label:'Usuarios'},
+            ...VINCULOS_CON_EL_BIEN.map(vinculo => ({
+                table:'reporte_bienes_listado',
+                fields:[{source:'responsable', target:vinculo.columna}],
+                abr:vinculo.detalle.abr,
+                label:vinculo.detalle.label,
+            })),
         ],
         // sql:{
         //     /* 

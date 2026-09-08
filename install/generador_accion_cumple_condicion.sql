@@ -8,7 +8,7 @@ DECLARE
   v_sql text := $SQL_CON_TAG$
 
 CREATE OR REPLACE FUNCTION accion_cumple_condicion(
-    p_acta text,
+    p_acta bigint,
     p_estado text,
     p_eaccion text,
     p_condicion text)

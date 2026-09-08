@@ -30,7 +30,7 @@ export function adjuntos_solicitudes(context:TableContext):TableDefinition{
         title:'adjuntos de solicitudes',
         editable:context.es.administrativo,
         fields:[
-            {name:'acta'       , typeName:'text'     },
+            {name:'acta'       , typeName:'bigint'   },
             {...numero_adjunto_solicitud, sequence:{ firstValue:101, name:'adjuntos_solicitudes_numero_adjunto_seq' }},
             {name:'usuario'    , typeName:'text'     , editable:false, defaultValue: context.user.usuario},
             {name:'detalle'    , typeName:'text'     , nullable:true},

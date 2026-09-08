@@ -7,6 +7,24 @@ export const SIN_ASIGNAR = '(sin asignar)';
 
 const textoONulo = textoONuloSql;
 
+export const NIVELES_DE_SECTOR = 10;
+
+export const ARBOL_DE_SECTORES = `sector_arbol AS (
+    SELECT s.sector, s.sector AS ancestro, 0 AS nivel
+        FROM sectores s
+    UNION ALL
+    SELECT a.sector, s.pertenece_a, a.nivel + 1
+        FROM sector_arbol a
+        JOIN sectores s ON s.sector = a.ancestro
+        WHERE s.pertenece_a IS NOT NULL
+          AND a.nivel < ${NIVELES_DE_SECTOR - 1}
+)`;
+
+export function perteneceASql(sector:string, ancestro:string):string{
+    return `EXISTS (SELECT 1 FROM sector_arbol sa`
+        + ` WHERE sa.sector = ${sector} AND sa.ancestro = ${ancestro})`;
+}
+
 const SOLO_ALTA = `v.activo`;
 
 const MEDIDAS = `
@@ -15,6 +33,7 @@ const MEDIDAS = `
 export type VinculoConElBien = {
     rol:'cargo'|'asignado',
     columna:'responsable'|'enusode_responsable',
+    columnasConstantes:readonly string[],
     contador:'cantidad'|'cantidad_asignados',
     expresion:string,
     titulo:string,
@@ -26,6 +45,7 @@ export const VINCULOS_CON_EL_BIEN:readonly VinculoConElBien[] = [
     {
         rol:'cargo',
         columna:'responsable',
+        columnasConstantes:['sector_responsable'],
         contador:'cantidad',
         expresion:`coalesce(${textoONulo('v.responsable')}, '${SIN_ASIGNAR}')`,
         titulo:'a cargo',
@@ -35,6 +55,7 @@ export const VINCULOS_CON_EL_BIEN:readonly VinculoConElBien[] = [
     {
         rol:'asignado',
         columna:'enusode_responsable',
+        columnasConstantes:[],
         contador:'cantidad_asignados',
         expresion:textoONulo('v.enusode_responsable'),
         titulo:'asignados',
@@ -54,7 +75,8 @@ export function vinculoConElBien(rol:VinculoConElBien['rol']):VinculoConElBien{
 const CONTADOR_A_CARGO = vinculoConElBien('cargo').contador;
 
 export const sqlBienesPorSector = `
-WITH por_sector AS (
+WITH RECURSIVE ${ARBOL_DE_SECTORES},
+por_sector AS (
     SELECT
         coalesce(nullif(btrim(r.sector), ''), '${SIN_ASIGNAR}') AS sector,
         count(DISTINCT nullif(btrim(v.responsable), '')) AS responsables,
@@ -75,17 +97,23 @@ SELECT
     (SELECT count(*)
         FROM sectores s
         WHERE s.sector IS DISTINCT FROM p.sector
-          AND sector_pertenece(s.sector, p.sector)) AS sectores_dependientes,
+          AND ${perteneceASql('s.sector', 'p.sector')}) AS sectores_dependientes,
+    (SELECT count(*)
+        FROM responsables re
+        WHERE re.sector = p.sector) AS personas,
+    (SELECT count(*)
+        FROM responsables re
+        WHERE ${perteneceASql('re.sector', 'p.sector')}) AS personas_dependientes,
     (SELECT count(*)
         FROM espacios e
         WHERE e.sector = p.sector) AS espacios_propios,
     (SELECT count(*)
         FROM espacios e
-        WHERE sector_pertenece(e.sector, p.sector)) AS espacios_dependientes,
+        WHERE ${perteneceASql('e.sector', 'p.sector')}) AS espacios_dependientes,
     (SELECT coalesce(sum(d.cantidad), 0)
         FROM por_sector d
         WHERE d.sector = p.sector
-           OR sector_pertenece(d.sector, p.sector)) AS cantidad_dependientes
+           OR ${perteneceASql('d.sector', 'p.sector')}) AS cantidad_dependientes
 FROM por_sector p
 `;
 
@@ -220,17 +248,20 @@ WHERE ${SOLO_ALTA}
 `;
 
 export const sqlBienesConDependientes = `
+WITH RECURSIVE ${ARBOL_DE_SECTORES}
 SELECT
     a.sector AS depende_de,
     ${textoONulo('a.responsable')} AS jefe,
     l.*
 FROM (${sqlBienesListado}) l
 JOIN responsables r ON r.responsable = l.responsable
-JOIN sectores a ON sector_pertenece(r.sector, a.sector)
+JOIN sector_arbol sa ON sa.sector = r.sector
+JOIN sectores a ON a.sector = sa.ancestro
 `;
 
 export const sqlBienesPorResponsable = `
-WITH por_responsable AS (
+WITH RECURSIVE ${ARBOL_DE_SECTORES},
+por_responsable AS (
     SELECT
         p.responsable,
 ${VINCULOS_CON_EL_BIEN.map(vinculo =>
@@ -249,6 +280,22 @@ ${VINCULOS_CON_EL_BIEN.map(vinculo =>
     GROUP BY p.responsable
 ),
 
+dependientes AS (
+    SELECT j.jefe,
+           count(*) AS personas,
+           coalesce(sum(o.${CONTADOR_A_CARGO}), 0) AS cantidad
+        FROM (
+            SELECT DISTINCT s.responsable AS jefe, sub.responsable AS dependiente
+                FROM sectores s
+                JOIN sector_arbol sa ON sa.ancestro = s.sector
+                JOIN responsables sub ON sub.sector = sa.sector
+                WHERE s.responsable IS NOT NULL
+                  AND sub.responsable IS DISTINCT FROM s.responsable
+        ) j
+        LEFT JOIN por_responsable o ON o.responsable = j.dependiente
+        GROUP BY j.jefe
+),
+
 personas AS (
     SELECT responsable, sector FROM responsables
     UNION ALL
@@ -265,15 +312,5 @@ ${VINCULOS_CON_EL_BIEN.map(vinculo =>
     coalesce(c.${CONTADOR_A_CARGO}, 0) + coalesce(d.cantidad, 0) AS cantidad_dependientes
 FROM personas pe
 LEFT JOIN por_responsable c ON c.responsable = pe.responsable
-
-LEFT JOIN LATERAL (
-    SELECT count(*) AS personas,
-           coalesce(sum(o.${CONTADOR_A_CARGO}), 0) AS cantidad
-        FROM responsables sub
-        LEFT JOIN por_responsable o ON o.responsable = sub.responsable
-        WHERE sub.responsable IS DISTINCT FROM pe.responsable
-          AND EXISTS (SELECT 1 FROM sectores j
-                        WHERE j.responsable = pe.responsable
-                          AND sector_pertenece(sub.sector, j.sector))
-) d ON true
+LEFT JOIN dependientes d ON d.jefe = pe.responsable
 `;

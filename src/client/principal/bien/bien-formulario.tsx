@@ -46,7 +46,7 @@ const SECCIONES:{titulo:string, campos:string[], abiertaPorDefecto?:boolean}[] =
     },
     {
         titulo:'Compra',
-        campos:['orden_compra', 'importe', 'importetotal'],
+        campos:['importe', 'importetotal'],
     },
     {
         titulo:'Contrato',
@@ -54,7 +54,7 @@ const SECCIONES:{titulo:string, campos:string[], abiertaPorDefecto?:boolean}[] =
     },
     {
         titulo:'Baja',
-        campos:['estado_baja', 'motivo_baja', 'fecha_solicitud', 'valor_residual', 'autorizado_por', 'documento_respaldo'],
+        campos:['estado_baja', 'motivo_baja', 'fecha_solicitud', 'fecha_finalizacion', 'autorizado_por', 'documento_respaldo'],
     },
     {
         titulo:'Información adicional',
@@ -70,7 +70,7 @@ declare module 'frontend-plus' {
     }
 }
 
-const CAMPOS_OCULTOS = new Set(['clasificacion']);
+const CAMPOS_OCULTOS = new Set(['clasificacion', 'orden_compra']);
 
 function esCampoDelFormulario(field:FieldDefinition):boolean{
     if(CAMPOS_OCULTOS.has(field.name)){

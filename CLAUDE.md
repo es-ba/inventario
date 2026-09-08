@@ -5,7 +5,7 @@ Sistema de inventario para el IDECBA (Instituto de Estadística y Censos de la C
 ## Estructura del proyecto
 
 - `src/server/` — código del servidor (TypeScript). Define tablas (`table-*.ts`), procedures, app principal, configuración.
-- `src/client/` — código del cliente legacy embebido en `backend-plus` (grilla clásica). Aquí se agregan `clientSides`.
+- `src/client/` — código del cliente. `src/client/principal/` es el frontend React (MUI); en la raíz están los `clientSides` y las wScreens que lo montan sobre la grilla de `backend-plus`.
 - `src/unlogged/` — código para la pantalla de login y vistas no autenticadas.
 - `src/common/` — tipos y contratos compartidos entre cliente y servidor.
 - `install/` — scripts SQL aplicados durante el `dump`/`adapt` (triggers, funciones).
@@ -13,13 +13,9 @@ Sistema de inventario para el IDECBA (Instituto de Estadística y Censos de la C
 
 ## Frontend React
 
-El **frontend nuevo en React** del proyecto vive en un repo separado:
+El frontend React vive en este repo, en `src/client/principal/`: pantallas de bienes, solicitudes y reportes en React + MUI, montadas como wScreens de `backend-plus`.
 
-```
-C:\Users\GCBA\Documents\GitHub\frontend-inventario
-```
-
-Cuando se trate de cambios en UI moderna (React, Vite, MUI, react-redux), trabajar en esa carpeta. El `src/client/` de este repo es la grilla legacy de `backend-plus`.
+El repo `frontend-inventario` **ya no se usa**. No trabajar ahí ni tomarlo como referencia.
 
 ## Comandos útiles
 

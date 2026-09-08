@@ -37,6 +37,27 @@ import { operacionDeActa } from './solicitud-documento';
 import type { TipoDocumentoSolicitud } from './solicitud-documento';
 import { createHash } from 'node:crypto';
 
+function puestoNumerico(valor:unknown):number|null{
+    const texto = String(valor ?? '').trim();
+    if(texto === ''){
+        return null;
+    }
+    const numero = Number(texto);
+    if(!Number.isInteger(numero) || numero < 0){
+        throw new Error('El puesto tiene que ser un número entero');
+    }
+    return numero;
+}
+
+function numeroDeActa(valor:unknown):number{
+    const texto = String(valor ?? '').trim();
+    const numero = Number(texto);
+    if(texto === '' || !Number.isInteger(numero) || numero <= 0){
+        throw new Error('Falta el número de solicitud');
+    }
+    return numero;
+}
+
 type BienAtributoFiltro = {
     atributo?: unknown,
     operador?: unknown,
@@ -176,11 +197,11 @@ export const ProceduresInventario:ProcedureDef[] = [
     {
         action:'solicitud_bienes_agregar',
         parameters:[
-            {name:'acta', typeName:'text'},
+            {name:'acta', typeName:'bigint'},
             {name:'fichas', typeName:'text'},
         ],
         coreFunction:async function(context:ProcedureContext, params:any){
-            const acta = String(params.acta ?? '').trim();
+            const acta = numeroDeActa(params.acta);
             const fichas = JSON.parse(String(params.fichas ?? '[]'));
             if(!Array.isArray(fichas) || fichas.length === 0){
                 throw new Error('No se indicó ningún bien');
@@ -424,10 +445,11 @@ export const ProceduresInventario:ProcedureDef[] = [
     {
         action: 'accion_solicitud_ejecutar',
         parameters:[
-            {name:'acta', typeName:'text'},
+            {name:'acta', typeName:'bigint'},
             {name:'accion', typeName:'text'},
         ],
         coreFunction: async function(context:ProcedureContext, params:any){
+            params.acta = numeroDeActa(params.acta);
             var estadoAccion = await context.client.query(`
                 SELECT ea.estado_destino, m.estado as estado_actual, ea.condicion
                     FROM movimientos_solicitudes m
@@ -502,13 +524,14 @@ export const ProceduresInventario:ProcedureDef[] = [
         action:'archivo_solicitud_subir',
         progress: true,
         parameters:[
-            {name:'acta', typeName:'text'},
+            {name:'acta', typeName:'bigint'},
             {name:'detalle', typeName:'text'},
         ],
         files:{count:1},
         coreFunction: async function(context:ProcedureContext, parameters:any, files?:UploadedFileInfo[]){
             const be = context.be;
             const client = context.client;
+            parameters.acta = numeroDeActa(parameters.acta);
             context.informProgress({message: be.messages.fileUploaded});
             const file = files![0];
             const tipoAdjunto = is.object({archivo: is.string, numero_adjunto: is.number});
@@ -720,7 +743,7 @@ export const ProceduresInventario:ProcedureDef[] = [
     {
         action:'solicitud_documento_emitir',
         parameters:[
-            {name:'acta', typeName:'text'},
+            {name:'acta', typeName:'bigint'},
             {name:'tipo', typeName:'text'},
             {name:'representante', typeName:'text'},
             {name:'caracter_representante', typeName:'text'},
@@ -734,7 +757,7 @@ export const ProceduresInventario:ProcedureDef[] = [
             if(context.user.rol === 'lectura'){
                 throw new Error('No tiene permisos para emitir documentos');
             }
-            const acta = String(params.acta ?? '').trim();
+            const acta = numeroDeActa(params.acta);
             const tipo = String(params.tipo ?? '').trim() as TipoDocumentoSolicitud;
             if(tipo !== 'comodato' && tipo !== 'acta'){
                 throw new Error(`Tipo de documento no válido: ${params.tipo}`);
@@ -831,7 +854,7 @@ export const ProceduresInventario:ProcedureDef[] = [
             const generado = await generarDocumentoSolicitud({
                 tipo,
                 cabecera:{
-                    acta,
+                    acta:String(acta),
                     fecha:solicitud.fecha_creacion,
                     representante:firmante?.nombre ?? texto(params.representante),
                     caracterRepresentante:caracterDelFirmante,
@@ -878,7 +901,7 @@ export const ProceduresInventario:ProcedureDef[] = [
         action:'solicitud_documento_firmado_subir',
         progress: true,
         parameters:[
-            {name:'acta', typeName:'text'},
+            {name:'acta', typeName:'bigint'},
             {name:'tipo', typeName:'text'},
             {name:'version', typeName:'bigint'},
         ],
@@ -890,7 +913,7 @@ export const ProceduresInventario:ProcedureDef[] = [
                 await fs.remove(file.path);
                 throw new Error('No tiene permisos para cargar documentos');
             }
-            const acta = String(params.acta ?? '').trim();
+            const acta = numeroDeActa(params.acta);
             const tipo = String(params.tipo ?? '').trim();
             const version = Number(params.version);
 
@@ -983,7 +1006,7 @@ export const ProceduresInventario:ProcedureDef[] = [
             {name:'sector', typeName:'text'},
             {name:'sede', typeName:'text'},
             {name:'espacio', typeName:'text'},
-            {name:'accion', typeName:'text'},
+            {name:'puesto', typeName:'integer'},
             {name:'detalle', typeName:'text'},
         ],
         proceedLabel:'mover',
@@ -1025,6 +1048,7 @@ export const ProceduresInventario:ProcedureDef[] = [
                 sector:texto(params.sector),
                 sede:texto(params.sede),
                 espacio:texto(params.espacio),
+                puesto:puestoNumerico(params.puesto),
             };
             if(Object.keys(destino).every(k => (destino as any)[k] == null)){
                 throw new Error('Hay que indicar al menos un dato de destino');
@@ -1032,9 +1056,9 @@ export const ProceduresInventario:ProcedureDef[] = [
 
             const insertados = await client.query(`
                 insert into movimientos_bien
-                    (ficha, orden, acta, tipo_asignacion, modalidad_uso, responsable,
-                     sector, sede, espacio, accion, detalle, usuario_creacion)
-                    select f.ficha, 0, null, $2, $3, $4, $5, $6, $7, $8, $9, $10
+                    (ficha, orden, tipo_asignacion, modalidad_uso, responsable,
+                     sector, sede, espacio, puesto, detalle, usuario_creacion)
+                    select f.ficha, 0, $2, $3, $4, $5, $6, $7, $8, $9, $10
                         from unnest($1::text[]) AS f(ficha)
                         where exists (select 1 from bienes b where b.ficha = f.ficha)
                     returning ficha
@@ -1046,7 +1070,7 @@ export const ProceduresInventario:ProcedureDef[] = [
                 destino.sector,
                 destino.sede,
                 destino.espacio,
-                texto(params.accion),
+                destino.puesto,
                 texto(params.detalle),
                 context.username,
             ]).fetchAll();
@@ -1064,7 +1088,6 @@ export const ProceduresInventario:ProcedureDef[] = [
     {
         action:'solicitud_crear_desde_bienes',
         parameters:[
-            {name:'acta', typeName:'text'},
             {name:'fichas', typeName:'text'},
             {name:'tipo_asignacion', typeName:'text'},
             {name:'modalidad_uso', typeName:'text'},
@@ -1072,6 +1095,8 @@ export const ProceduresInventario:ProcedureDef[] = [
             {name:'sector', typeName:'text'},
             {name:'sede', typeName:'text'},
             {name:'espacio', typeName:'text'},
+            {name:'puesto', typeName:'integer'},
+            {name:'accion', typeName:'text'},
             {name:'detalle', typeName:'text'},
         ],
         proceedLabel:'crear',
@@ -1081,10 +1106,6 @@ export const ProceduresInventario:ProcedureDef[] = [
                 throw new Error('No tiene permisos para crear solicitudes');
             }
 
-            const acta = String(params.acta ?? '').trim();
-            if(acta === ''){
-                throw new Error('Hay que indicar el número de acta');
-            }
             const texto = (valor:unknown) => {
                 const t = String(valor ?? '').trim();
                 return t === '' ? null : t;
@@ -1106,30 +1127,25 @@ export const ProceduresInventario:ProcedureDef[] = [
                 throw new Error('No hay bienes seleccionados');
             }
 
-            const yaExiste = await client.query(
-                `SELECT 1 FROM movimientos_solicitudes WHERE acta = $1`, [acta]
-            ).fetchAll();
-            if(yaExiste.rows.length){
-                throw new Error(`Ya existe una solicitud con el acta ${acta}`);
-            }
-
             const cabecera = await client.query(`
                 insert into movimientos_solicitudes
-                    (acta, tipo_asignacion, modalidad_uso, responsable, sector, sede, espacio,
-                     detalle, usuario_creacion)
-                    values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                    (tipo_asignacion, modalidad_uso, responsable, sector, sede, espacio,
+                     puesto, accion, detalle, usuario_creacion)
+                    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                     returning acta, estado
             `, [
-                acta,
                 texto(params.tipo_asignacion),
                 texto(params.modalidad_uso),
                 texto(params.responsable),
                 texto(params.sector),
                 texto(params.sede),
                 texto(params.espacio),
+                puestoNumerico(params.puesto),
+                texto(params.accion),
                 texto(params.detalle),
                 context.username,
             ]).fetchUniqueRow();
+            const acta = cabecera.row.acta;
 
             const detalle = await client.query(`
                 insert into movimientos_solicitud_bien (acta, ficha, usuario_creacion)

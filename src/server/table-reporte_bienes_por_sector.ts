@@ -7,7 +7,7 @@ export function reporte_bienes_por_sector(_context:TableContext):TableDefinition
     return {
         name:'reporte_bienes_por_sector',
         elementName:'sector',
-        title:'Bienes por sector patrimonial',
+        title:'Bienes por sector',
         editable:false,
         allow:{insert:false, update:false, delete:false, deleteAll:false},
         fields:[
@@ -15,7 +15,9 @@ export function reporte_bienes_por_sector(_context:TableContext):TableDefinition
             {name:'cantidad'           , typeName:'bigint' , title:'en el sector'},
             {name:'cantidad_dependientes'      , typeName:'bigint' , title:'con dependientes'},
             {name:'sectores_dependientes'      , typeName:'bigint' , title:'sectores a cargo'},
-            {name:'responsables'       , typeName:'bigint' , title:'responsables'},
+            {name:'personas'              , typeName:'bigint' , title:'personas del sector'},
+            {name:'personas_dependientes' , typeName:'bigint' , title:'personas con dependientes'},
+            {name:'responsables'       , typeName:'bigint' , title:'responsables con bienes'},
             {name:'sedes'              , typeName:'bigint' , title:'sedes'},
             {name:'espacios_propios'      , typeName:'bigint' , title:'espacios del sector'},
             {name:'espacios_dependientes' , typeName:'bigint' , title:'espacios con dependientes'},
@@ -30,6 +32,8 @@ export function reporte_bienes_por_sector(_context:TableContext):TableDefinition
                 abr:'B', label:'Bienes del sector'},
             {table:'sectores', fields:[{source:'sector', target:'pertenece_a'}],
                 abr:'Sec', label:'Sectores que dependen'},
+            {table:'responsables', fields:['sector'],
+                abr:'Per', label:'Personal del sector'},
             {table:'espacios', fields:['sector'],
                 abr:'Esp', label:'Espacios del sector'},
             {table:'reporte_bienes_dependientes', fields:[{source:'sector', target:'depende_de'}],

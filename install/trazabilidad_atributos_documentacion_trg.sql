@@ -227,7 +227,7 @@ DECLARE
   v_ficha text;
   v_orden bigint;
   v_accion text;
-  v_acta text;
+  v_acta bigint;
   v_numero bigint;
   v_valor_anterior text;
   v_valor_nuevo text;

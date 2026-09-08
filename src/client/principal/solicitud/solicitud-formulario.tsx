@@ -29,9 +29,9 @@ import {SolicitudDocumentos} from './solicitud-documentos';
 const ESTADO_EDITABLE = 'B';
 
 const CAMPOS_CABECERA = [
-    'acta', 'tipo_asignacion', 'modalidad_uso',
-    'responsable', 'sector', 'sede', 'espacio',
-    'enusode_responsable', 'usuario_final', 'solicitado_por', 'firmado_por', 'detalle',
+    'acta', 'accion', 'tipo_asignacion', 'modalidad_uso',
+    'responsable', 'sector', 'sede', 'espacio', 'puesto',
+    'enusode_responsable', 'usuario_final', 'autorizado_por', 'firmado_por', 'detalle',
 ];
 
 declare module 'frontend-plus' {

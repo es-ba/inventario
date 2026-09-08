@@ -16,6 +16,12 @@ function columnasDeReferencia(base:TableDefinition, columna:string):string[]{
     return [columna, ...(fk.displayFields ?? []).map(campo => `${alias}__${campo}`)];
 }
 
+function columnasOcultas(base:TableDefinition, vinculo:VinculoConElBien):string[]{
+    return [vinculo.columna, ...vinculo.columnasConstantes].flatMap(
+        columna => columnasDeReferencia(base, columna)
+    );
+}
+
 function misBienes(context:TableContext, vinculo:VinculoConElBien):TableDefinition{
     const base = reporte_bienes_listado(context);
     return {
@@ -26,7 +32,7 @@ function misBienes(context:TableContext, vinculo:VinculoConElBien):TableDefiniti
             ...base.sql,
             where:`"${vinculo.mio.tabla}".${vinculo.columna} = ${MI_RESPONSABLE}`,
         },
-        hiddenColumns:columnasDeReferencia(base, vinculo.columna),
+        hiddenColumns:columnasOcultas(base, vinculo),
     };
 }
 
