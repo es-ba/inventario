@@ -72,21 +72,31 @@ export function vinculoConElBien(rol:VinculoConElBien['rol']):VinculoConElBien{
     return vinculo;
 }
 
-const CONTADOR_A_CARGO = vinculoConElBien('cargo').contador;
-
 export const sqlBienesPorSector = `
 WITH RECURSIVE ${ARBOL_DE_SECTORES},
 por_sector AS (
     SELECT
-        coalesce(nullif(btrim(r.sector), ''), '${SIN_ASIGNAR}') AS sector,
+        coalesce(nullif(btrim(v.sector), ''), '${SIN_ASIGNAR}') AS sector,
         count(DISTINCT nullif(btrim(v.responsable), '')) AS responsables,
         count(DISTINCT nullif(btrim(v.sede), '')) AS sedes,
         count(DISTINCT nullif(btrim(v.espacio), '')) AS espacios,
         ${MEDIDAS}
     FROM (${sqlBienes}) v
-    LEFT JOIN responsables r ON r.responsable = v.responsable
     WHERE ${SOLO_ALTA}
-    GROUP BY coalesce(nullif(btrim(r.sector), ''), '${SIN_ASIGNAR}')
+    GROUP BY coalesce(nullif(btrim(v.sector), ''), '${SIN_ASIGNAR}')
+),
+sectores_del_reporte AS (
+    SELECT sector FROM sectores
+    UNION
+    SELECT sector FROM por_sector
+),
+totales_directos AS (
+    SELECT s.sector,
+        coalesce(g.responsables, 0) AS responsables,
+        coalesce(g.sedes, 0) AS sedes,
+        coalesce(g.espacios, 0) AS espacios,
+        coalesce(g.cantidad, 0) AS cantidad
+    FROM sectores_del_reporte s LEFT JOIN por_sector g USING (sector)
 )
 SELECT
     p.sector,
@@ -114,7 +124,7 @@ SELECT
         FROM por_sector d
         WHERE d.sector = p.sector
            OR ${perteneceASql('d.sector', 'p.sector')}) AS cantidad_dependientes
-FROM por_sector p
+FROM totales_directos p
 `;
 
 export const sqlBienesPorEspacio = `
@@ -247,16 +257,53 @@ LEFT JOIN responsables r ON r.responsable = v.responsable
 WHERE ${SOLO_ALTA}
 `;
 
+export const sqlBienesBaja = `
+SELECT
+    v.ficha,
+    v.activo AS activo,
+    ${textoONulo('v.detalle')} AS detalle,
+    ${textoONulo('v.marca')} AS marca,
+    ${textoONulo('v.modelo')} AS modelo,
+    ${textoONulo('v.serie')} AS serie,
+    ${textoONulo('v.estado_baja')} AS estado_baja,
+    ${textoONulo('v.motivo_baja')} AS motivo_baja,
+    v.fecha_solicitud AS fecha_solicitud,
+    v.fecha_finalizacion AS fecha_finalizacion,
+    ${textoONulo('v.autorizado_por')} AS autorizado_por,
+    ${textoONulo('v.documento_respaldo')} AS documento_respaldo,
+    ${textoONulo('v.solicitado_por')} AS solicitado_por,
+    ${textoONulo('v.revisado_por')} AS revisado_por,
+    v.fecha_revision AS fecha_revision,
+    ${textoONulo('v.motivo_rechazo')} AS motivo_rechazo,
+    ${textoONulo('v.motivo_restauracion')} AS motivo_restauracion,
+    ${textoONulo('v.restaurado_por')} AS restaurado_por,
+    v.fecha_restauracion AS fecha_restauracion,
+    coalesce(nullif(btrim(v.sector), ''), '${SIN_ASIGNAR}') AS sector,
+    ${textoONulo('v.sede')} AS sede,
+    ${textoONulo('v.espacio')} AS espacio,
+    ${vinculoConElBien('cargo').expresion} AS responsable
+FROM (${sqlBienes}) v
+WHERE v.estado_baja IS NOT NULL OR NOT ${SOLO_ALTA}
+`;
+
 export const sqlBienesConDependientes = `
 WITH RECURSIVE ${ARBOL_DE_SECTORES}
 SELECT
     a.sector AS depende_de,
     ${textoONulo('a.responsable')} AS jefe,
+    a.sector = l.sector AS directo,
     l.*
 FROM (${sqlBienesListado}) l
-JOIN responsables r ON r.responsable = l.responsable
-JOIN sector_arbol sa ON sa.sector = r.sector
+JOIN sector_arbol sa ON sa.sector = l.sector
 JOIN sectores a ON a.sector = sa.ancestro
+`;
+
+// Un jefe puede dirigir sectores superpuestos en el organigrama.
+export const sqlBienesSectoresACargo = `
+SELECT DISTINCT ON (jefe, ficha) d.*
+FROM (${sqlBienesConDependientes}) d
+WHERE jefe IS NOT NULL
+ORDER BY jefe, ficha, directo DESC, depende_de
 `;
 
 export const sqlBienesPorResponsable = `
@@ -282,8 +329,7 @@ ${VINCULOS_CON_EL_BIEN.map(vinculo =>
 
 dependientes AS (
     SELECT j.jefe,
-           count(*) AS personas,
-           coalesce(sum(o.${CONTADOR_A_CARGO}), 0) AS cantidad
+           count(*) AS personas
         FROM (
             SELECT DISTINCT s.responsable AS jefe, sub.responsable AS dependiente
                 FROM sectores s
@@ -292,8 +338,18 @@ dependientes AS (
                 WHERE s.responsable IS NOT NULL
                   AND sub.responsable IS DISTINCT FROM s.responsable
         ) j
-        LEFT JOIN por_responsable o ON o.responsable = j.dependiente
         GROUP BY j.jefe
+),
+
+bienes_de_sectores AS (
+    SELECT s.responsable AS jefe,
+        count(DISTINCT v.ficha) FILTER (WHERE v.sector = s.sector) AS directos,
+        count(DISTINCT v.ficha) AS cantidad
+    FROM (${sqlBienes}) v
+    JOIN sector_arbol sa ON sa.sector = ${textoONulo('v.sector')}
+    JOIN sectores s ON s.sector = sa.ancestro
+    WHERE ${SOLO_ALTA} AND s.responsable IS NOT NULL
+    GROUP BY s.responsable
 ),
 
 personas AS (
@@ -309,8 +365,10 @@ ${VINCULOS_CON_EL_BIEN.map(vinculo =>
     coalesce(c.sectores, 0)           AS sectores,
     coalesce(c.sedes, 0)              AS sedes,
     coalesce(d.personas, 0)           AS personas_dependientes,
-    coalesce(c.${CONTADOR_A_CARGO}, 0) + coalesce(d.cantidad, 0) AS cantidad_dependientes
+    coalesce(bs.directos, 0) AS cantidad_sector,
+    coalesce(bs.cantidad, 0) AS cantidad_dependientes
 FROM personas pe
 LEFT JOIN por_responsable c ON c.responsable = pe.responsable
 LEFT JOIN dependientes d ON d.jefe = pe.responsable
+LEFT JOIN bienes_de_sectores bs ON bs.jefe = pe.responsable
 `;

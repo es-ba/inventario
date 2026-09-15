@@ -161,7 +161,7 @@ export function SolicitudDocumentos({acta}:{acta:string}){
             mostrarMensaje(resultado.message);
             await cargar();
         }catch(err){
-            mostrarError(err, 'No se pudo cargar el documento firmado');
+            mostrarError(err, 'No se pudo registrar el documento recibido');
         }finally{
             setSubiendoEn(null);
             destino.current = null;
@@ -174,8 +174,8 @@ export function SolicitudDocumentos({acta}:{acta:string}){
     const eliminar = React.useCallback(async (fila:Fila) => {
         const etiqueta = ETIQUETA[String(fila.tipo) as TipoDocumento] ?? String(fila.tipo);
         const aviso = fila.archivo_firmado != null
-            ? `El ${etiqueta.toLowerCase()} versión ${fila.version} tiene cargado el archivo`
-                + ' firmado. Si lo borrás se pierde también ese archivo. ¿Seguir?'
+            ? `El ${etiqueta.toLowerCase()} versión ${fila.version} tiene un documento recibido.`
+                + ' Si lo borrás se elimina también ese archivo. ¿Seguir?'
             : `¿Borrar el ${etiqueta.toLowerCase()} versión ${fila.version}?`;
         if(!window.confirm(aviso)){
             return;
@@ -236,7 +236,7 @@ export function SolicitudDocumentos({acta}:{acta:string}){
                             <TableCell>versión</TableCell>
                             <TableCell>código</TableCell>
                             <TableCell>emitido</TableCell>
-                            <TableCell>firmado</TableCell>
+                            <TableCell>recibido</TableCell>
                             <TableCell align="right">acciones</TableCell>
                         </TableRow>
                     </TableHead>
@@ -256,13 +256,13 @@ export function SolicitudDocumentos({acta}:{acta:string}){
                                             <IconButton size="small"><Download/></IconButton>
                                         </Link>
                                         {tieneFirmado
-                                            ? <Link href={urlDescarga(fila, true)} download title="descargar firmado">
+                                            ? <Link href={urlDescarga(fila, true)} download title="descargar recibido">
                                                 <IconButton size="small" color="success"><Download/></IconButton>
                                             </Link>
                                             : null}
                                         <IconButton
                                             size="small"
-                                            title={tieneFirmado ? 'reemplazar el firmado' : 'cargar el firmado'}
+                                            title={tieneFirmado ? 'reemplazar el documento recibido' : 'recibir documento'}
                                             disabled={subiendoEn === clave}
                                             onClick={() => {
                                                 destino.current = fila;

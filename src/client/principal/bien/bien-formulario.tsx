@@ -12,7 +12,7 @@ import {
     Tabs,
     Typography,
 } from '@mui/material';
-import {Block, Edit, ExpandMore} from '@mui/icons-material';
+import {Edit, ExpandMore} from '@mui/icons-material';
 import type {FieldDefinition, FixedFields, TableDefinition} from 'frontend-plus';
 
 import {useAvisos, useConexion} from '../base/contexto-base';
@@ -25,7 +25,7 @@ import {useRowEditor} from '../base/use-row-editor';
 import type {Fila} from '../base/tipos-tabla';
 import {AdjuntosBien} from './adjuntos-bien';
 import {BienHeader, ResumenDelBien} from './bien-header';
-import {BajaBienes} from '../baja-bienes';
+import {AccionesBaja} from '../baja/acciones-baja';
 import {prepararEtiquetasCodigosBarra} from '../../../common/codigos-barra';
 import {imprimirEtiquetasCodigosBarra} from '../imprimir-codigos-barra';
 
@@ -214,7 +214,6 @@ export function BienFormulario({
     const [solapa, setSolapa] = React.useState(0);
     const [seccionAbierta, setSeccionAbierta] = React.useState<string>(SECCIONES[0].titulo);
     const [editando, setEditando] = React.useState(!ficha);
-    const [bajaAbierta, setBajaAbierta] = React.useState(false);
     const [version, setVersion] = React.useState(0);
 
     React.useEffect(() => {
@@ -352,16 +351,8 @@ export function BienFormulario({
             {!editando
                 ? <>
                     <Stack direction="row" justifyContent="flex-end" spacing={1} sx={{mb:1}}>
-                        {}
-                        {!editor.soloLectura && guardado && editor.row.activo !== false
-                            ? <Button
-                                variant="outlined"
-                                color="error"
-                                startIcon={<Block/>}
-                                onClick={() => setBajaAbierta(true)}
-                            >
-                                dar de baja
-                            </Button>
+                        {guardado
+                            ? <AccionesBaja fila={editor.row} onAplicada={() => setVersion(v => v + 1)}/>
                             : null}
                         {!editor.soloLectura
                             ? <Button variant="outlined" startIcon={<Edit/>} onClick={() => setEditando(true)}>
@@ -439,16 +430,5 @@ export function BienFormulario({
                     </Alert>}
             </TabPanel>
         )}
-
-        <BajaBienes
-            abierto={bajaAbierta}
-            conn={conn}
-            fichas={fichaActual ? [fichaActual] : []}
-            onCerrar={() => setBajaAbierta(false)}
-            onAplicada={(mensaje) => {
-                mostrarMensaje(mensaje);
-                setVersion(v => v + 1);
-            }}
-        />
     </Box>;
 }

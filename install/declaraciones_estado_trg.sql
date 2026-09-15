@@ -139,7 +139,7 @@ BEGIN
       LIMIT 1
   ) ult ON true
   WHERE ult.responsable = new.responsable
-    AND coalesce(upper(btrim(b.activo)), '') <> 'BAJA';
+    AND b.activo IS TRUE;
 
   RETURN new;
 END;
@@ -153,11 +153,11 @@ CREATE TRIGGER declaraciones_cargar_bienes_trg
   EXECUTE FUNCTION declaraciones_cargar_bienes_trg();
 
 
--- Inmutabilidad de los documentos emitidos y firmados.
+-- Inmutabilidad de los documentos emitidos y recibidos.
 --
 -- IMPORTANTE: NO colgar archivo_borrar_trg de declaraciones_documentos. Ese trigger
 -- encola el archivo físico para que el cron de las 23:58 lo borre ante cualquier UPDATE
--- o DELETE. Un documento firmado digitalmente es evidencia y no se borra nunca.
+-- o DELETE. Un documento recibido es evidencia y no se borra nunca.
 
 CREATE OR REPLACE FUNCTION declaraciones_documentos_inmutable_trg()
   RETURNS trigger

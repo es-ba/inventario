@@ -14,6 +14,9 @@ export function estados_baja(context:TableContext):TableDefinition{
             {name:'descripcion' , typeName:'text'},
             {name:'identificador' , typeName:'text'},
         ],
-        primaryKey:['estado_baja']
+        primaryKey:['estado_baja'],
+        detailTables:[
+            {table:'estados_baja_acciones', fields:['estado_origen'], abr:'a', label:'acciones'},
+        ],
     };
 }

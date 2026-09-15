@@ -12,7 +12,7 @@ export function declaraciones_documentos(_context:TableContext):TableDefinition{
         fields:[
             {name:'declaracion'            , typeName:'bigint'   , nullable:false, editable:false},
             {name:'version'                , typeName:'bigint'   , nullable:false, editable:false},
-            {name:'tipo'                   , typeName:'text'     , nullable:false, editable:false, options:['emitido','firmado']},
+            {name:'tipo'                   , typeName:'text'     , nullable:false, editable:false, options:['emitido','recibido','firmado']},
             {name:'archivo'                , typeName:'text'     , nullable:false, editable:false},
             {name:'hash_sha256'            , typeName:'text'     , nullable:false, editable:false, title:'hash del archivo'},
             {name:'codigo_contenido'       , typeName:'text'     , nullable:true , editable:false, title:'código impreso'},

@@ -8,6 +8,7 @@ import { rm } from "fs/promises";
 import * as MiniTools from "mini-tools";
 
 import {ProceduresInventario} from "./procedures-principal";
+import {ProceduresBajas} from "./procedures-bajas";
 import { roles } from "./table-roles";
 import { bienes } from './table-bienes';
 import { usuarios   } from './table-usuarios';
@@ -23,6 +24,7 @@ import { tipo_sector } from "./table-tipo_sector";
 import { sectores } from './table-sectores';
 import { categoria_bien } from "./table-categoria_bien";
 import { estados_baja } from "./table-estados_baja";
+import { estados_baja_acciones } from "./table-estados_baja_acciones";
 import { estados_bien } from "./table-estados_bien";
 import { marcas } from "./table-marcas";
 import { modalidad_uso } from "./table-modalidad_uso";
@@ -59,7 +61,8 @@ import { reporte_bienes_por_sector } from "./table-reporte_bienes_por_sector";
 import { reporte_bienes_por_responsable } from "./table-reporte_bienes_por_responsable";
 import { reporte_bienes_por_espacio } from "./table-reporte_bienes_por_espacio";
 import { reporte_bienes_listado } from "./table-reporte_bienes_listado";
-import { reporte_bienes_dependientes } from "./table-reporte_bienes_dependientes";
+import { bienes_baja } from "./table-bienes_baja";
+import { reporte_bienes_dependientes, reporte_bienes_sectores_a_cargo } from "./table-reporte_bienes_dependientes";
 import { mis_bienes_a_cargo, mis_bienes_asignados } from "./table-mis_bienes";
 import { parque_tecnologico } from "./table-parque_tecnologico";
 import { setAtributosDeBienes, VINCULOS_CON_EL_BIEN } from "./reportes-bienes";
@@ -184,7 +187,8 @@ export class AppInventario extends AppBackend{
                     fechaParaNombre(result.row.fecha),
                     result.row.responsable_nombre,
                     `v${req.query.version}`,
-                    req.query.tipo === 'firmado' ? 'firmado' : '',
+                    req.query.tipo === 'recibido' ? 'recibido'
+                        : req.query.tipo === 'firmado' ? 'firmado' : '',
                 ])));
                 MiniTools.serveFile(path, {})(req, res);
             });
@@ -200,8 +204,8 @@ export class AppInventario extends AppBackend{
                         WHERE sd.acta = $1 AND sd.tipo = $2 AND sd.version = $3`,
                     [req.query.acta, req.query.tipo, req.query.version]
                 ).fetchUniqueRow();
-                const firmado = req.query.firmado === 'true';
-                const cual = firmado ? result.row.archivo_firmado : result.row.archivo;
+                const recibido = req.query.firmado === 'true';
+                const cual = recibido ? result.row.archivo_firmado : result.row.archivo;
                 if(cual == null){
                     res.status(404).send('El documento pedido no está cargado');
                     return;
@@ -211,7 +215,7 @@ export class AppInventario extends AppBackend{
                     accion,
                     `acta ${req.query.acta}`,
                     `v${req.query.version}`,
-                    firmado ? 'firmado' : '',
+                    recibido ? 'recibido' : '',
                 ])));
                 MiniTools.serveFile(`local-attachments/${cual}`, {})(req, res);
             });
@@ -236,7 +240,8 @@ export class AppInventario extends AppBackend{
         var be = this;
         return [
             ...await super.getProcedures(),
-            ...ProceduresInventario
+            ...ProceduresInventario,
+            ...ProceduresBajas,
         ].map(be.procedureDefCompleter, be);
     }
 
@@ -262,6 +267,9 @@ export class AppInventario extends AppBackend{
 
     override getMenu(context: Context): MenuDefinition {
         const puedeGuardar = !!context.forDump || puedeElRol(context.user?.rol, 'puede_guardar');
+        const puedeGestionarBajas = puedeGuardar
+            || puedeElRol(context.user?.rol, 'puede_aprobar_baja')
+            || puedeElRol(context.user?.rol, 'puede_restaurar_baja');
         var menuContent: MenuInfoBase[] = [
             {menuType:'principal', name:'principal', label:'principal'     },
             {menuType: 'menu', name: 'mis_bienes', label: 'mis bienes', menuContent:
@@ -277,15 +285,20 @@ export class AppInventario extends AppBackend{
             ]},            
         ];
 
-        if(puedeGuardar){
-            menuContent.push(
-                {menuType: 'menu', name: 'operaciones', label: 'operaciones', menuContent: [
+        if(puedeGuardar || puedeGestionarBajas){
+            const operaciones:MenuInfoBase[] = [];
+            if(puedeGuardar){
+                operaciones.push(
                     {menuType: 'table', name: 'declaraciones', label: 'declaraciones'},
                     {menuType: 'solicitudes', name: 'solicitudes_movimiento', label: 'solicitudes de movimiento'},
                     {menuType: 'table', name: 'movimientos_solicitudes_acciones', label: 'solicitudes (con acciones)'},
                     {menuType: 'table', name: 'movimientos_solicitudes', label: 'solicitudes (sólo datos)'},
-                ]}
-            );
+                );
+            }
+            if(puedeGestionarBajas){
+                operaciones.push({menuType: 'bajas', name: 'proceso_baja', label: 'proceso de baja'});
+            }
+            menuContent.push({menuType: 'menu', name: 'operaciones', label: 'operaciones', menuContent:operaciones});
         }
 
         menuContent.push(
@@ -341,6 +354,8 @@ export class AppInventario extends AppBackend{
                           {menuType: 'table', name: 'estado_ordencompra', label: 'estados de OC'},
                           {menuType: 'table', name: 'estados', label: 'estados de movimientos'},
                           {menuType: 'table', name: 'motivos_baja', label: 'motivos de baja'},
+                          {menuType: 'table', name: 'estados_baja', label: 'estados de baja'},
+                          {menuType: 'table', name: 'estados_baja_acciones', label: 'transiciones de baja'},
                           {menuType: 'table', name: 'estados_acciones', label: 'estados de acciones'},
                       {menuType: 'table', name: 'estados_declaracion', label: 'estados de declaración'},
                       ]},                    
@@ -380,6 +395,7 @@ export class AppInventario extends AppBackend{
             bienes_atributo_valores,
             bien_atributo,
             estados_baja,
+            estados_baja_acciones,
             estados_movimiento,
             estados_bien,
             acciones,
@@ -394,7 +410,9 @@ export class AppInventario extends AppBackend{
             reporte_bienes_por_responsable,
             reporte_bienes_por_espacio,
             reporte_bienes_listado,
+            bienes_baja,
             reporte_bienes_dependientes,
+            reporte_bienes_sectores_a_cargo,
             mis_bienes_a_cargo,
             mis_bienes_asignados,
             parque_tecnologico,

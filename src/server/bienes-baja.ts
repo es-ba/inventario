@@ -19,7 +19,12 @@ function fallar(mensaje:string):never{
 }
 
 export function normalizarFichas(fichas:unknown):string[]{
-    const lista = typeof fichas === 'string' ? JSON.parse(fichas) : fichas;
+    let lista:unknown;
+    try{
+        lista = typeof fichas === 'string' ? JSON.parse(fichas) : fichas;
+    }catch(_err){
+        fallar('La lista de bienes no es un JSON válido.');
+    }
     if(!Array.isArray(lista)){
         fallar('No se recibió la lista de bienes.');
     }
@@ -58,4 +63,8 @@ export function describirBaja(pedidas:number, dadasDeBaja:number):string{
     }
     return `Se dieron de baja ${cuantos}.`
         + (yaEstaban > 0 ? ` ${yaEstaban} ya estaban de baja y no se tocaron.` : '');
+}
+
+export function describirSolicitudBaja(cantidad:number):string{
+    return `Se solicitó la baja de ${cantidad} ${cantidad === 1 ? 'bien' : 'bienes'}. Permanecen activos hasta su aprobación.`;
 }

@@ -31,7 +31,6 @@ import { generarDeclaracionPdf } from './declaracion-pdf-render';
 import { DocumentoEmitido, analizarFirmaPdf, verificarDeclaracionFirmada } from './declaracion-verificacion';
 import { setAtributosDeBienes } from './reportes-bienes';
 import { describirPlan, planificarEdicionMasiva } from './bienes-edicion-masiva';
-import { describirBaja, planificarBaja } from './bienes-baja';
 import { generarDocumentoSolicitud } from './solicitud-documento-render';
 import { operacionDeActa } from './solicitud-documento';
 import type { TipoDocumentoSolicitud } from './solicitud-documento';
@@ -134,7 +133,8 @@ export const ProceduresInventario:ProcedureDef[] = [
                 `select u.usuario, u.rol, u.nombre, u.apellido, u.responsable,
                         r.sector,
                         roles.puede_ver_todo, roles.puede_ver_propio, roles.puede_ver_dependientes,
-                        roles.puede_ver_claves, roles.puede_restaurar_baja, roles.puede_eliminar,
+                        roles.puede_ver_claves, roles.puede_aprobar_baja,
+                        roles.puede_restaurar_baja, roles.puede_eliminar,
                         roles.puede_guardar, roles.puede_mover
                     from usuarios u
                         inner join roles using(rol)
@@ -212,11 +212,18 @@ export const ProceduresInventario:ProcedureDef[] = [
             }
 
             const existe = await context.client.query(
-                `SELECT acta FROM movimientos_solicitudes WHERE acta = $1`,
+                `SELECT acta FROM movimientos_solicitudes WHERE acta = $1 AND estado = 'B' FOR UPDATE`,
                 [acta]
             ).fetchAll();
             if(!existe.rows.length){
-                throw new Error(`No existe la solicitud ${acta}`);
+                throw new Error(`No existe la solicitud ${acta} o ya salió de borrador`);
+            }
+
+            const disponibles = await context.client.query(
+                `SELECT ficha FROM bienes WHERE ficha = ANY($1::text[]) AND activo ORDER BY ficha FOR UPDATE`, [lista]
+            ).fetchAll();
+            if(disponibles.rows.length !== new Set(lista).size){
+                throw new Error('Uno o más bienes no existen, no están visibles o están inactivos');
             }
 
             const result = await context.client.query(`
@@ -455,6 +462,7 @@ export const ProceduresInventario:ProcedureDef[] = [
                     FROM movimientos_solicitudes m
                     JOIN estados_acciones ea ON ea.estado = m.estado
                     WHERE m.acta = $1 AND ea.eaccion = $2
+                    FOR UPDATE OF m
             `, [params.acta, params.accion]).fetchUniqueRow();
             
             if(!estadoAccion.row){
@@ -925,7 +933,6 @@ export const ProceduresInventario:ProcedureDef[] = [
                 await fs.remove(file.path);
                 throw new Error(`No existe el documento ${tipo} v${version} de la solicitud ${acta}`);
             }
-
             const subido = await fs.readFile(file.path);
             const analisis = analizarFirmaPdf(subido);
             if(!analisis.esPdf){
@@ -933,8 +940,10 @@ export const ProceduresInventario:ProcedureDef[] = [
                 throw new Error('El archivo no es un PDF.');
             }
 
-            const extension = (file.originalFilename ?? '').split('.').pop() ?? 'pdf';
-            const archivo = `solicitudes/${acta}/${tipo}-v${version}-firmado.${extension}`;
+            const resultadoRecepcion = analisis.firmaDetectada
+                ? 'firma_detectada_no_verificada'
+                : 'sin_firma_digital_detectada';
+            const archivo = `solicitudes/${acta}/${tipo}-v${version}-recibido.pdf`;
             await fs.move(file.path, `local-attachments/${archivo}`, {overwrite:true});
             try{
                 await client.query(`
@@ -943,56 +952,24 @@ export const ProceduresInventario:ProcedureDef[] = [
                             hash_firmado = $5,
                             fecha_firmado = current_timestamp,
                             usuario_firmado = $6,
-                            firmante_declarado = $7
+                            firmante_declarado = $7,
+                            resultado_recepcion = $8
                         where acta = $1 AND tipo = $2 AND version = $3
                 `, [acta, tipo, version, archivo,
                     createHash('sha256').update(subido).digest('hex'), context.username,
-                    analisis.firmanteDeclarado]).execute();
+                    analisis.firmanteDeclarado, resultadoRecepcion]).execute();
             }catch(err){
                 await fs.remove(`local-attachments/${archivo}`);
                 throw err;
             }
 
             const reemplazo = existente.rows[0].archivo_firmado
-                ? ' Reemplaza al archivo que ya estaba cargado.'
+                ? ' Reemplaza al archivo recibido anteriormente.'
                 : '';
             return {
-                message:`Se cargó el ${tipo} firmado de la solicitud ${acta}.${reemplazo}`,
+                message:`Se recibió el ${tipo} de la solicitud ${acta}.`
+                    + ` Quedó pendiente de validación (${resultadoRecepcion}).${reemplazo}`,
                 acta, tipo, version, archivo,
-            };
-        }
-    },
-    {
-        action:'bienes_dar_de_baja',
-        parameters:[
-            {name:'fichas', typeName:'text'},
-            {name:'motivo_baja', typeName:'text'},
-        ],
-        proceedLabel:'dar de baja',
-        coreFunction: async function(context:ProcedureContext, params:any){
-            const client = context.client;
-            if(context.user.rol === 'lectura'){
-                throw new Error('No tiene permisos para dar de baja bienes');
-            }
-
-            const motivos = await client.query(`SELECT motivo_baja FROM motivos_baja`).fetchAll();
-            const plan = planificarBaja(
-                {fichas:params.fichas, motivo:params.motivo_baja},
-                motivos.rows.map((fila:any) => String(fila.motivo_baja)),
-            );
-
-            const result = await client.query(`
-                UPDATE bienes
-                    SET activo = false, motivo_baja = $1
-                    WHERE ficha = ANY($2::text[])
-                      AND activo
-                    RETURNING ficha
-            `, [plan.motivo, plan.fichas]).fetchAll();
-
-            return {
-                message:describirBaja(plan.fichas.length, result.rows.length),
-                pedidos:plan.fichas.length,
-                dados_de_baja:result.rows.length,
             };
         }
     },
@@ -1008,6 +985,7 @@ export const ProceduresInventario:ProcedureDef[] = [
             {name:'espacio', typeName:'text'},
             {name:'puesto', typeName:'integer'},
             {name:'detalle', typeName:'text'},
+            {name:'campos_vaciar', typeName:'text'},
         ],
         proceedLabel:'mover',
         coreFunction: async function(context:ProcedureContext, params:any){
@@ -1041,39 +1019,42 @@ export const ProceduresInventario:ProcedureDef[] = [
                 throw new Error('No hay bienes seleccionados');
             }
 
-            const destino = {
+            const destino = Object.fromEntries(Object.entries({
                 tipo_asignacion:texto(params.tipo_asignacion),
                 modalidad_uso:texto(params.modalidad_uso),
                 responsable:texto(params.responsable),
-                sector:texto(params.sector),
-                sede:texto(params.sede),
-                espacio:texto(params.espacio),
+                sector:texto(params.sector), sede:texto(params.sede), espacio:texto(params.espacio),
                 puesto:puestoNumerico(params.puesto),
-            };
-            if(Object.keys(destino).every(k => (destino as any)[k] == null)){
+            }).filter(([_k, valor]) => valor != null));
+            const camposVaciar = JSON.parse(String(params.campos_vaciar || '[]'));
+            if(!Array.isArray(camposVaciar)){
+                throw new Error('No se pudo leer la lista de campos a vaciar');
+            }
+            if(Object.keys(destino).length === 0 && camposVaciar.length === 0){
                 throw new Error('Hay que indicar al menos un dato de destino');
+            }
+
+            const disponibles = await client.query(
+                `SELECT ficha FROM bienes WHERE ficha = ANY($1::text[]) AND activo ORDER BY ficha FOR UPDATE`, [unicas]
+            ).fetchAll();
+            if(disponibles.rows.length !== unicas.length){
+                throw new Error('Uno o más bienes no existen, no están visibles o están inactivos');
             }
 
             const insertados = await client.query(`
                 insert into movimientos_bien
-                    (ficha, orden, tipo_asignacion, modalidad_uso, responsable,
-                     sector, sede, espacio, puesto, detalle, usuario_creacion)
-                    select f.ficha, 0, $2, $3, $4, $5, $6, $7, $8, $9, $10
+                    (ficha, orden, tipo_asignacion, modalidad_uso, responsable, sector,
+                     sede, espacio, puesto, enusode, enusode_responsable, detalle, usuario_creacion)
+                    select f.ficha, 0,
+                           d.destino->>'tipo_asignacion', d.destino->>'modalidad_uso',
+                           d.destino->>'responsable', d.destino->>'sector', d.destino->>'sede',
+                           d.destino->>'espacio', nullif(d.destino->>'puesto','')::integer,
+                           d.destino->>'enusode', d.destino->>'enusode_responsable', $4, $5
                         from unnest($1::text[]) AS f(ficha)
-                        where exists (select 1 from bienes b where b.ficha = f.ficha)
+                        cross join lateral (select resolver_destino(f.ficha, $2::jsonb, $3::jsonb) destino) d
                     returning ficha
-            `, [
-                unicas,
-                destino.tipo_asignacion,
-                destino.modalidad_uso,
-                destino.responsable,
-                destino.sector,
-                destino.sede,
-                destino.espacio,
-                destino.puesto,
-                texto(params.detalle),
-                context.username,
-            ]).fetchAll();
+            `, [unicas, JSON.stringify(destino), JSON.stringify(camposVaciar),
+                texto(params.detalle), context.username]).fetchAll();
 
             const noEncontrados = unicas.length - insertados.rows.length;
             return {
@@ -1098,6 +1079,7 @@ export const ProceduresInventario:ProcedureDef[] = [
             {name:'puesto', typeName:'integer'},
             {name:'accion', typeName:'text'},
             {name:'detalle', typeName:'text'},
+            {name:'campos_vaciar', typeName:'text'},
         ],
         proceedLabel:'crear',
         coreFunction: async function(context:ProcedureContext, params:any){
@@ -1127,11 +1109,23 @@ export const ProceduresInventario:ProcedureDef[] = [
                 throw new Error('No hay bienes seleccionados');
             }
 
+            const camposVaciar = JSON.parse(String(params.campos_vaciar || '[]'));
+            if(!Array.isArray(camposVaciar)){
+                throw new Error('No se pudo leer la lista de campos a vaciar');
+            }
+
+            const disponibles = await client.query(
+                `SELECT ficha FROM bienes WHERE ficha = ANY($1::text[]) AND activo ORDER BY ficha FOR UPDATE`, [unicas]
+            ).fetchAll();
+            if(disponibles.rows.length !== unicas.length){
+                throw new Error('Uno o más bienes no existen, no están visibles o están inactivos');
+            }
+
             const cabecera = await client.query(`
                 insert into movimientos_solicitudes
                     (tipo_asignacion, modalidad_uso, responsable, sector, sede, espacio,
-                     puesto, accion, detalle, usuario_creacion)
-                    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                     puesto, accion, detalle, usuario_creacion, campos_vaciar)
+                    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb)
                     returning acta, estado
             `, [
                 texto(params.tipo_asignacion),
@@ -1144,6 +1138,7 @@ export const ProceduresInventario:ProcedureDef[] = [
                 texto(params.accion),
                 texto(params.detalle),
                 context.username,
+                JSON.stringify(camposVaciar),
             ]).fetchUniqueRow();
             const acta = cabecera.row.acta;
 
@@ -1252,7 +1247,7 @@ export const ProceduresInventario:ProcedureDef[] = [
 
             if(context.user.rol === 'lectura'){
                 await fs.remove(file.path);
-                throw new Error('No tiene permisos para cargar documentos firmados');
+                throw new Error('No tiene permisos para cargar documentos recibidos');
             }
             context.informProgress({message: be.messages.fileUploaded});
 
@@ -1267,11 +1262,11 @@ export const ProceduresInventario:ProcedureDef[] = [
             if(!bloqueo.rows.length){
                 await rechazar(`No existe la declaración ${declaracion}`);
             }
-            const {estado, responsable} = bloqueo.rows[0];
+            const {estado} = bloqueo.rows[0];
             if(estado !== 'EMITIDA'){
                 await rechazar(
                     `La declaración ${declaracion} está en estado ${estado}.`
-                    + ` Sólo se puede cargar la firma de una declaración EMITIDA.`
+                    + ` Sólo se puede recibir un documento de una declaración EMITIDA.`
                 );
             }
 
@@ -1303,29 +1298,29 @@ export const ProceduresInventario:ProcedureDef[] = [
 
             const yaFirmado = await client.query(`
                 SELECT 1 FROM declaraciones_documentos
-                    WHERE declaracion = $1 AND version = $2 AND tipo = 'firmado'
+                    WHERE declaracion = $1 AND version = $2 AND tipo IN ('firmado', 'recibido')
             `, [declaracion, versionVigente]).fetchAll();
             if(yaFirmado.rows.length){
                 await rechazar(
                     `La versión ${versionVigente} de la declaración ${declaracion}`
-                    + ` ya tiene cargado su documento firmado.`
+                    + ` ya tiene una recepción cargada.`
                 );
             }
 
             const subido = await fs.readFile(file.path);
             const verificacion = verificarDeclaracionFirmada({subido, emitidos, versionVigente});
-            if(!verificacion.ok){
+            if(['no_es_pdf', 'version_anterior', 'no_corresponde'].includes(verificacion.codigo)){
                 await rechazar(verificacion.mensaje);
             }
 
-            const archivo = `declaraciones/${declaracion}/v${versionVigente}-firmado.pdf`;
-            await fs.move(file.path, `local-attachments/${archivo}`, {overwrite:true});
+            const archivo = `declaraciones/${declaracion}/v${versionVigente}-recibido.pdf`;
+            await fs.move(file.path, `local-attachments/${archivo}`, {overwrite:false});
             try{
                 await client.query(`
                     insert into declaraciones_documentos
                         (declaracion, version, tipo, archivo, hash_sha256, usuario,
                          firmante_declarado, resultado_verificacion)
-                        values ($1, $2, 'firmado', $3, $4, $5, $6, $7)
+                        values ($1, $2, 'recibido', $3, $4, $5, $6, $7)
                 `, [
                     declaracion,
                     versionVigente,
@@ -1335,13 +1330,6 @@ export const ProceduresInventario:ProcedureDef[] = [
                     verificacion.firmanteDeclarado,
                     verificacion.codigo,
                 ]).execute();
-                await client.query(`
-                    update declaraciones
-                        set estado = 'FIRMADA',
-                            fecha_firma = current_date,
-                            firmado_por = coalesce(firmado_por, $2)
-                        where declaracion = $1
-                `, [declaracion, responsable]).execute();
             }catch(err){
                 await fs.remove(`local-attachments/${archivo}`);
                 throw err;
@@ -1353,7 +1341,7 @@ export const ProceduresInventario:ProcedureDef[] = [
                         ? ` El PDF declara como firmante a "${verificacion.firmanteDeclarado}"`
                             + ` (dato informativo, no validado criptográficamente).`
                         : '')
-                    + ` La declaración ${declaracion} queda FIRMADA.`,
+                    + ` La recepción quedó pendiente de validación y la declaración permanece EMITIDA.`,
                 declaracion,
                 version: versionVigente,
                 archivo,

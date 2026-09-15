@@ -36,6 +36,7 @@ export function movimientos_bien(context:TableContext):TableDefinition{
             {name:'usuario_modificacion'        , typeName:'text'    , nullable:true, editable:false},
             {name:'autorizado_por'              , typeName:'text'    , nullable:true},
             {name:'firmado_por'                 , typeName:'text'    , nullable:true},
+            {name:'acta_origen'                 , typeName:'bigint'  , nullable:true, editable:false},
         ],
         primaryKey:['ficha', 'orden'],
         sortColumns:[{column:'orden', order:-1}], 
@@ -53,7 +54,9 @@ export function movimientos_bien(context:TableContext):TableDefinition{
                 displayFields:['descripcion']},
             {references:'tipo_asignacion', fields:['tipo_asignacion'], displayFields:['descripcion']},
             {references:'modalidad_uso', fields:['modalidad_uso'], displayFields:['descripcion']},
+            {references:'movimientos_solicitudes', fields:[{source:'acta_origen', target:'acta'}], alias:'solicitud_origen'},
         ],
+        constraints:[{constraintType:'unique', fields:['acta_origen', 'ficha']}],
         sql:{
             policies:getPolicies(be)
         }

@@ -39,6 +39,8 @@ export function movimientos_solicitudes(context:TableContext):TableDefinition{
             {name:'usuario_modificacion'        , typeName:'text'    , nullable:true},
             {name:'autorizado_por'              , typeName:'text'    , nullable:true},
             {name:'firmado_por'                 , typeName:'text'    , nullable:true},
+            {name:'campos_vaciar'               , typeName:'jsonb'   , nullable:false, defaultDbValue:"'[]'::jsonb", editable:false, inTable:false},
+            {name:'acta_rectificada'            , typeName:'bigint'  , nullable:true},
         ],
         primaryKey:['acta'],
         foreignKeys:[
@@ -55,10 +57,12 @@ export function movimientos_solicitudes(context:TableContext):TableDefinition{
             {references:'tipo_asignacion', fields:['tipo_asignacion'], displayFields:['descripcion']},
             {references:'modalidad_uso', fields:['modalidad_uso'], displayFields:['descripcion']},
             {references:'estados', fields:['estado'], displayFields:['desc_estado']},
+            {references:'movimientos_solicitudes', fields:[{source:'acta_rectificada', target:'acta'}], alias:'rectificada'},
         ],
         detailTables:[
             {table:'movimientos_solicitud_bien', fields:['acta'], abr:'B'},
-            {table:'adjuntos_solicitudes', fields:['acta'], abr:'Adj', label:'Adjuntos'}
+            {table:'adjuntos_solicitudes', fields:['acta'], abr:'Adj', label:'Adjuntos'},
+            {table:'movimientos_bien', fields:[{source:'acta', target:'acta_origen'}], abr:'Mov', label:'Movimientos resultantes'}
         ],
         sql:{
             policies:getPolicies(be)

@@ -1,39 +1,21 @@
 import * as React from 'react';
-import {
-    AppBar,
-    IconButton,
-    Paper,
-    Toolbar,
-    Typography,
-} from '@mui/material';
+import {AppBar, IconButton, Paper, Toolbar, Typography} from '@mui/material';
 import {Menu as MenuIcon} from '@mui/icons-material';
-import type {Connector, FixedFields} from 'frontend-plus';
-import {BusquedaBienes} from './principal/busqueda-bienes';
-import {BienFormulario} from './principal/bien/bien-formulario';
-import './ws-solicitudes';
-import './ws-bajas';
+import type {Connector} from 'frontend-plus';
+
 import {
     renderConnectedAppInventario,
     unmountConnectedAppInventario,
 } from './principal/render-connected-app-inventario';
+import {BajasListado} from './principal/baja/bajas-listado';
+import {BienFormulario} from './principal/bien/bien-formulario';
 
 type Vista =
-    {nombre:'busqueda'}
-    | {nombre:'bien', ficha?:string};
+    {nombre:'listado'}
+    | {nombre:'bien', ficha:string};
 
-function PantallaPrincipal({
-    conn,
-    fixedFields,
-}:{
-    conn:Connector;
-    fixedFields:FixedFields;
-}){
-    const [vista, setVista] = React.useState<Vista>({nombre:'busqueda'});
-
-    const volverAlMenu = () => {
-        unmountConnectedAppInventario();
-        location.hash = '';
-    };
+function PantallaBajas(){
+    const [vista, setVista] = React.useState<Vista>({nombre:'listado'});
 
     return <Paper square elevation={0} sx={{minHeight:'100vh'}}>
         <AppBar position="static">
@@ -43,35 +25,35 @@ function PantallaPrincipal({
                     edge="start"
                     aria-label="volver al menú"
                     title="Volver al menú"
-                    onClick={volverAlMenu}
+                    onClick={() => {
+                        unmountConnectedAppInventario();
+                        location.hash = '';
+                    }}
                     sx={{mr:2}}
                 >
                     <MenuIcon/>
                 </IconButton>
                 <Typography variant="h6" component="h1">
                     {vista.nombre === 'bien'
-                        ? `Inventario - Bien ${vista.ficha ?? 'nuevo'}`
-                        : 'Inventario - Principal'}
+                        ? `Baja - Bien ${vista.ficha}`
+                        : 'Proceso de baja'}
                 </Typography>
             </Toolbar>
         </AppBar>
         {vista.nombre === 'bien'
             ? <BienFormulario
                 ficha={vista.ficha}
-                onVolver={() => setVista({nombre:'busqueda'})}
+                onVolver={() => setVista({nombre:'listado'})}
             />
-            : <BusquedaBienes
-                conn={conn}
-                fixedFields={fixedFields}
+            : <BajasListado
                 onAbrirBien={ficha => setVista({nombre:'bien', ficha})}
-                onNuevoBien={() => setVista({nombre:'bien', ficha:undefined})}
             />
         }
     </Paper>;
 }
 
 // @ts-ignore backend-plus amplía dinámicamente el mapa de wScreens.
-myOwn.wScreens.principal = function principal(addrParams:any){
+myOwn.wScreens.bajas = function bajas(addrParams:any){
     const layout = document.getElementById('total-layout');
     if(layout == null){
         throw new Error('No se encontró el contenedor total-layout');
@@ -80,7 +62,6 @@ myOwn.wScreens.principal = function principal(addrParams:any){
         myOwn as never as Connector,
         {...addrParams},
         layout,
-        ({conn, fixedFields}) =>
-            <PantallaPrincipal conn={conn} fixedFields={fixedFields}/>
+        () => <PantallaBajas/>
     );
 };

@@ -2,11 +2,13 @@ import * as React from 'react';
 import {
     Alert,
     Button,
+    Checkbox,
     CircularProgress,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
+    FormControlLabel,
     Stack,
     TextField,
     ToggleButton,
@@ -31,6 +33,7 @@ declare module 'frontend-plus' {
             espacio:string,
             puesto:string,
             detalle:string,
+            campos_vaciar:string,
         }) => Promise<{
             message:string,
             movimientos:number,
@@ -47,6 +50,7 @@ declare module 'frontend-plus' {
             puesto:string,
             accion:string,
             detalle:string,
+            campos_vaciar:string,
         }) => Promise<{
             message:string,
             acta:string,
@@ -113,14 +117,17 @@ export function MoverBienes({
     const [modo, setModo] = React.useState<'acta'|'directo'>('acta');
     const [detalle, setDetalle] = React.useState('');
     const [cabecera, setCabecera] = React.useState<Cabecera>(CABECERA_VACIA);
+    const [camposVaciar, setCamposVaciar] = React.useState<(keyof Cabecera)[]>([]);
     const [error, setError] = React.useState<string|null>(null);
     const [trabajando, setTrabajando] = React.useState(false);
 
     const ponerCampo = React.useCallback(
-        (nombre:string, valor:unknown) => setCabecera(previa => ({
-            ...previa,
-            [nombre]:valor == null ? '' : String(valor),
-        })),
+        (nombre:string, valor:unknown) => {
+            setCabecera(previa => ({...previa, [nombre]:valor == null ? '' : String(valor)}));
+            if(valor != null && String(valor).trim() !== ''){
+                setCamposVaciar(previos => previos.filter(campo => campo !== nombre));
+            }
+        },
         [],
     );
 
@@ -129,11 +136,13 @@ export function MoverBienes({
             setModo('acta');
             setDetalle('');
             setCabecera(CABECERA_VACIA);
+            setCamposVaciar([]);
             setError(null);
         }
     }, [abierto]);
 
-    const hayDestino = CAMPOS_DE_DESTINO.some(campo => String(cabecera[campo] ?? '').trim() !== '');
+    const hayDestino = camposVaciar.length > 0
+        || CAMPOS_DE_DESTINO.some(campo => String(cabecera[campo] ?? '').trim() !== '');
     const puedeCrear = hayDestino && fichas.length > 0;
 
     const crear = React.useCallback(async () => {
@@ -144,6 +153,7 @@ export function MoverBienes({
             const comun = {
                 fichas:JSON.stringify(fichas),
                 detalle:detalle.trim(),
+                campos_vaciar:JSON.stringify(camposVaciar),
                 ...destino,
             };
             const resultado = modo === 'directo'
@@ -187,13 +197,34 @@ export function MoverBienes({
             </Typography>
 
             <Stack spacing={2}>
-                {(modo === 'acta' ? [CAMPO_ACCION, ...CAMPOS] : CAMPOS).map(campo => <FormFieldRenderer
-                    key={campo.name}
-                    field={campo}
-                    row={cabecera as unknown as Fila}
-                    setField={ponerCampo}
-                    size="small"
-                />)}
+                {(modo === 'acta' ? [CAMPO_ACCION, ...CAMPOS] : CAMPOS).map(campo => {
+                    const admiteVaciar = campo.name !== 'accion';
+                    const vaciar = camposVaciar.includes(campo.name as keyof Cabecera);
+                    return <Stack key={campo.name} direction="row" spacing={1} alignItems="center">
+                        <Stack sx={{flex:1}}>
+                            <FormFieldRenderer
+                                field={campo}
+                                row={cabecera as unknown as Fila}
+                                setField={ponerCampo}
+                                size="small"
+                            />
+                        </Stack>
+                        {admiteVaciar ? <FormControlLabel
+                            label="vaciar"
+                            control={<Checkbox
+                                size="small"
+                                checked={vaciar}
+                                onChange={(_evento, marcado) => {
+                                    const nombre = campo.name as keyof Cabecera;
+                                    setCamposVaciar(previos => marcado
+                                        ? [...previos.filter(c => c !== nombre), nombre]
+                                        : previos.filter(c => c !== nombre));
+                                    if(marcado){ ponerCampo(campo.name, ''); }
+                                }}
+                            />}
+                        /> : null}
+                    </Stack>;
+                })}
                 <TextField
                     label="detalle"
                     value={detalle}

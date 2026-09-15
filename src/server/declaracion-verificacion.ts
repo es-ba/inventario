@@ -30,7 +30,7 @@ export type DocumentoEmitido = {
 };
 
 export type CodigoVerificacion =
-    'firmado_ok'
+    'no_verificable'
     | 'no_es_pdf'
     | 'sin_firma'
     | 'version_anterior'
@@ -81,7 +81,18 @@ export function analizarFirmaPdf(buffer:Buffer):AnalisisFirma{
         : null;
 
     const tieneDiccionarioSig = /\/Type\s*\/Sig\b/.test(texto) || /\/FT\s*\/Sig\b/.test(texto);
-    const firmaDetectada = Boolean(byteRange) && (Boolean(subFilter) || tieneDiccionarioSig);
+    // Sólo detecta una estructura candidata. Ni estos marcadores ni la cobertura
+    // de bytes prueban la firma CMS, el certificado o el contenido visual del PDF.
+    const rangoCoherente = byteRange != null
+        && byteRange.every(Number.isSafeInteger)
+        && byteRange[0] === 0 && byteRange[1] > 0
+        && byteRange[2] > byteRange[1] && byteRange[3] > 0
+        && byteRange[2] + byteRange[3] === buffer.length;
+    const hueco = rangoCoherente ? texto.slice(byteRange![1], byteRange![2]) : '';
+    const huecoEsContents = /^<[\da-fA-F\s]+>$/.test(hueco)
+        && /\/Contents\s*$/.test(texto.slice(0, byteRange![1]));
+    const firmaDetectada = rangoCoherente && huecoEsContents
+        && Boolean(subFilter) && tieneDiccionarioSig;
 
     let firmanteDeclarado:string|null = null;
     if(firmaDetectada){
@@ -148,8 +159,7 @@ export function verificarDeclaracionFirmada(opts:{
             ...base,
             ok:false,
             codigo:'sin_firma',
-            mensaje:'El PDF no tiene una firma digital.'
-                + ' Puede que se haya subido el documento tal como se descargó, sin firmar.',
+            mensaje:'No se detectó una estructura de firma digital verificable en el PDF.',
         };
     }
 
@@ -159,11 +169,12 @@ export function verificarDeclaracionFirmada(opts:{
     if(comparacionVigente?.coincide){
         return {
             ...base,
-            ok:true,
-            codigo:'firmado_ok',
+            ok:false,
+            codigo:'no_verificable',
             versionCoincidente:versionVigente,
             comparacion:comparacionVigente,
-            mensaje:`Firma verificada sobre la versión ${versionVigente}.`,
+            mensaje:`Se detectó una estructura de firma y el prefijo de la versión ${versionVigente}.`
+                + ' La firma, el certificado y los cambios posteriores no fueron validados criptográficamente.',
         };
     }
 
@@ -178,7 +189,7 @@ export function verificarDeclaracionFirmada(opts:{
             codigo:'version_anterior',
             versionCoincidente:anterior.version,
             comparacion:comparacionVigente,
-            mensaje:`El archivo firmado corresponde a la versión ${anterior.version},`
+            mensaje:`El archivo recibido corresponde a la versión ${anterior.version},`
                 + ` que fue reemplazada por la versión ${versionVigente}.`
                 + ` Hay que firmar el documento vigente.`,
         };
@@ -197,7 +208,7 @@ export function verificarDeclaracionFirmada(opts:{
         ok:false,
         codigo:'no_corresponde',
         comparacion:comparacionVigente,
-        mensaje:`El PDF está firmado pero no es el documento que emitió el sistema:`
+        mensaje:`El PDF no conserva el documento que emitió el sistema:`
             + ` ${detalle}.`,
     };
 }

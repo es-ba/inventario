@@ -160,6 +160,7 @@ export const info_usuario = {
         puede_ver_propio: is.nullable.boolean,
         puede_ver_dependientes: is.nullable.boolean,
         puede_ver_claves: is.nullable.boolean,
+        puede_aprobar_baja: is.nullable.boolean,
         puede_restaurar_baja: is.nullable.boolean,
         puede_eliminar: is.nullable.boolean,
         puede_guardar: is.nullable.boolean,

@@ -35,12 +35,14 @@ const CAMPO_MOTIVO = {
 
 export function BajaBienes({
     abierto,
+    directa = false,
     conn,
     fichas,
     onCerrar,
     onAplicada,
 }:{
     abierto:boolean,
+    directa?:boolean,
     conn:Connector,
     fichas:string[],
     onCerrar:() => void,
@@ -61,7 +63,12 @@ export function BajaBienes({
         setTrabajando(true);
         setError(null);
         try{
-            const resultado = await conn.ajax.bienes_dar_de_baja({
+            const resultado = directa ? await conn.ajax.bienes_baja_accion({
+                fichas:JSON.stringify(fichas),
+                accion:'aprobar_directa',
+                motivo:motivo,
+                documento_respaldo:null,
+            }) : await conn.ajax.bienes_dar_de_baja({
                 fichas:JSON.stringify(fichas),
                 motivo_baja:motivo,
             });
@@ -72,17 +79,18 @@ export function BajaBienes({
         }finally{
             setTrabajando(false);
         }
-    }, [conn, fichas, motivo, onAplicada, onCerrar]);
+    }, [conn, fichas, motivo, directa, onAplicada, onCerrar]);
 
     const cuantos = `${fichas.length} ${fichas.length === 1 ? 'bien' : 'bienes'}`;
 
     return <Dialog open={abierto} onClose={onCerrar} maxWidth="xs" fullWidth>
-        <DialogTitle>Dar de baja {cuantos}</DialogTitle>
+        <DialogTitle>{directa ? 'Dar de baja directamente' : 'Solicitar baja de'} {cuantos}</DialogTitle>
         <DialogContent dividers>
             <Stack spacing={2}>
                 <Alert severity="warning">
-                    Los bienes pasan a estado BAJA. Los que ya estén de baja no se tocan:
-                    volver a darlos de baja pisaría el motivo original.
+                    {directa
+                        ? 'Los bienes seleccionados pasarán a inactivos al confirmar.'
+                        : 'Se solicita la baja de los bienes seleccionados. Permanecen activos hasta que una persona autorizada apruebe la solicitud.'}
                 </Alert>
                 <FormFieldRenderer
                     field={CAMPO_MOTIVO}
@@ -102,7 +110,7 @@ export function BajaBienes({
                 startIcon={trabajando ? <CircularProgress size={16}/> : undefined}
                 onClick={() => void darDeBaja()}
             >
-                dar de baja
+                {directa ? 'dar de baja directamente' : 'solicitar baja'}
             </Button>
         </DialogActions>
     </Dialog>;

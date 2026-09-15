@@ -12,8 +12,8 @@ export function reporte_bienes_por_sector(_context:TableContext):TableDefinition
         allow:{insert:false, update:false, delete:false, deleteAll:false},
         fields:[
             {name:'sector'               , typeName:'text'   , title:'sector'},
-            {name:'cantidad'           , typeName:'bigint' , title:'en el sector'},
-            {name:'cantidad_dependientes'      , typeName:'bigint' , title:'con dependientes'},
+            {name:'cantidad'           , typeName:'bigint' , title:'directos'},
+            {name:'cantidad_dependientes'      , typeName:'bigint' , title:'incluyendo subsectores'},
             {name:'sectores_dependientes'      , typeName:'bigint' , title:'sectores a cargo'},
             {name:'personas'              , typeName:'bigint' , title:'personas del sector'},
             {name:'personas_dependientes' , typeName:'bigint' , title:'personas con dependientes'},
@@ -28,8 +28,8 @@ export function reporte_bienes_por_sector(_context:TableContext):TableDefinition
             {references:'sectores', fields:['sector'], displayFields:['nombre_sector', 'sigla']},
         ],
         detailTables:[
-            {table:'reporte_bienes_listado', fields:[{source:'sector', target:'sector_responsable'}],
-                abr:'B', label:'Bienes del sector'},
+            {table:'reporte_bienes_listado', fields:['sector'],
+                abr:'B', label:'Bienes directos'},
             {table:'sectores', fields:[{source:'sector', target:'pertenece_a'}],
                 abr:'Sec', label:'Sectores que dependen'},
             {table:'responsables', fields:['sector'],
@@ -37,7 +37,7 @@ export function reporte_bienes_por_sector(_context:TableContext):TableDefinition
             {table:'espacios', fields:['sector'],
                 abr:'Esp', label:'Espacios del sector'},
             {table:'reporte_bienes_dependientes', fields:[{source:'sector', target:'depende_de'}],
-                abr:'Dep', label:'Bienes con dependientes'},
+                abr:'Dep', label:'Bienes incluyendo subsectores'},
         ],
         sortColumns:[{column:'cantidad', order:-1}],
         sql:{

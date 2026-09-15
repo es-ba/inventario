@@ -230,9 +230,9 @@ const ACCIONES_DECLARACION:AccionDeclaracion[] = [
         },
     },
     {
-        nombre:'subir firmado',
+        nombre:'recibir documento',
         estados:['EMITIDA'],
-        ayuda:'Carga el PDF con la firma digital del responsable',
+        ayuda:'Recibe el PDF y registra las comprobaciones disponibles',
         direccion:'avance',
         ejecutar: async (declaracion, refrescar) => {
             my.dialogUpload(
@@ -244,8 +244,8 @@ const ACCIONES_DECLARACION:AccionDeclaracion[] = [
                 },
                 false,
                 {
-                    importDataFromFile:'Seleccione el PDF firmado digitalmente',
-                    import:'Cargar'
+                    importDataFromFile:'Seleccione el PDF recibido',
+                    import:'Recibir'
                 }
             );
             return null;

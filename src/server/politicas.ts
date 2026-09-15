@@ -9,6 +9,8 @@ const PUEDE_VER_PROPIO = capacidad('puede_ver_propio');
 const PUEDE_VER_DEPENDIENTES = capacidad('puede_ver_dependientes');
 const PUEDE_GUARDAR = capacidad('puede_guardar');
 const PUEDE_ELIMINAR = capacidad('puede_eliminar');
+const PUEDE_APROBAR_BAJA = capacidad('puede_aprobar_baja');
+const PUEDE_RESTAURAR_BAJA = capacidad('puede_restaurar_baja');
 
 export const MI_RESPONSABLE = `nullif(get_app_user('responsable'), '')`;
 
@@ -72,7 +74,18 @@ export function politicasResponsables():PoliticasDeTabla{
 }
 
 export function politicasBienes(columnaFicha:string = 'ficha'):PoliticasDeTabla{
-    return conVisibilidad(visibilidadDeBienes(columnaFicha));
+    const visibilidad = visibilidadDeBienes(columnaFicha);
+    const accionBaja = `nullif(current_setting('inventario.baja_accion', true), '')`;
+    const modificacion = `(${PUEDE_GUARDAR}`
+        + ` OR (${accionBaja} IN ('aprobar', 'aprobar_directa', 'rechazar') AND ${PUEDE_APROBAR_BAJA})`
+        + ` OR (${accionBaja} = 'restaurar' AND ${PUEDE_RESTAURAR_BAJA}))`;
+    const modificacionVisible = `${modificacion} AND ${visibilidad}`;
+    return {
+        select:{using:visibilidad},
+        insert:{check:`(${PUEDE_GUARDAR}) AND ${visibilidad}`},
+        update:{using:modificacionVisible, check:modificacionVisible},
+        delete:{using:`(${PUEDE_ELIMINAR}) AND ${visibilidad}`},
+    };
 }
 
 export function sqlVisibilidad(columnaFicha:string = 'ficha'):string{

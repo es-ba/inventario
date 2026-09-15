@@ -292,6 +292,7 @@ export function BusquedaBienes({
     const [edicionMasivaAbierta, setEdicionMasivaAbierta] = React.useState(false);
     const [moverAbierto, setMoverAbierto] = React.useState(false);
     const [bajaAbierta, setBajaAbierta] = React.useState(false);
+    const [bajaDirecta, setBajaDirecta] = React.useState(false);
     const [avisoMasivo, setAvisoMasivo] = React.useState<string|null>(null);
     const requestSequence = React.useRef(0);
 
@@ -662,9 +663,18 @@ export function BusquedaBienes({
                         color="error"
                         startIcon={<Block/>}
                         disabled={rowSelectionModel.length === 0}
-                        onClick={() => setBajaAbierta(true)}
+                        onClick={() => { setBajaDirecta(false); setBajaAbierta(true); }}
                     >
-                        Dar de baja
+                        Solicitar baja
+                    </Button> : null}
+                    {permisos.aprobarBaja ? <Button
+                        size="small"
+                        color="error"
+                        startIcon={<Block/>}
+                        disabled={rowSelectionModel.length === 0}
+                        onClick={() => { setBajaDirecta(true); setBajaAbierta(true); }}
+                    >
+                        Baja directa
                     </Button> : null}
                     {permisos.mover ? <Button
                         size="small"
@@ -842,6 +852,7 @@ export function BusquedaBienes({
         />
         <BajaBienes
             abierto={bajaAbierta}
+            directa={bajaDirecta}
             conn={conn}
             fichas={filasSeleccionadasEnOrden(rowSelectionModel, selectedRows)
                 .map(fila => String(fila.ficha))}

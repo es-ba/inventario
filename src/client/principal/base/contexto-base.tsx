@@ -20,7 +20,7 @@ const SIN_PERMISOS:InfoUsuario = {
     usuario:'', rol:'',
     nombre:null, apellido:null, responsable:null, sector:null,
     puede_ver_todo:false, puede_ver_propio:false, puede_ver_dependientes:false,
-    puede_ver_claves:false, puede_restaurar_baja:false, puede_eliminar:false,
+    puede_ver_claves:false, puede_aprobar_baja:false, puede_restaurar_baja:false, puede_eliminar:false,
     puede_guardar:false, puede_mover:false,
 };
 
@@ -117,6 +117,7 @@ export type Permisos = {
     guardar:boolean,
     eliminar:boolean,
     mover:boolean,
+    aprobarBaja:boolean,
     restaurarBaja:boolean,
     verClaves:boolean,
 };
@@ -127,6 +128,7 @@ export function usePermisos():Permisos{
         guardar:!!info.puede_guardar,
         eliminar:!!info.puede_eliminar,
         mover:!!info.puede_mover,
+        aprobarBaja:!!info.puede_aprobar_baja,
         restaurarBaja:!!info.puede_restaurar_baja,
         verClaves:!!info.puede_ver_claves,
     }), [info]);

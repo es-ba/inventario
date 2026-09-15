@@ -16,6 +16,7 @@ export function roles(context:TableContext):TableDefinition{
             {name:'puede_ver_propio' , typeName:'boolean'},
             {name:'puede_ver_dependientes' , typeName:'boolean'},
             {name:'puede_ver_claves' , typeName:'boolean'},
+            {name:'puede_aprobar_baja', typeName:'boolean'},
             {name:'puede_restaurar_baja' , typeName:'boolean'},
             {name:'puede_eliminar' , typeName:'boolean'},
             {name:'puede_guardar' , typeName:'boolean'},

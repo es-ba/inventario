@@ -1,10 +1,13 @@
 
 CREATE or REPLACE FUNCTION get_next_movimiento_number(b_ficha text) RETURNS bigint
-  LANGUAGE SQL SECURITY DEFINER
+  LANGUAGE plpgsql SECURITY DEFINER
 AS
-$SQL$
-  SELECT coalesce((SELECT max(orden + 1) FROM movimientos_bien WHERE ficha = b_ficha), 1)
-$SQL$;
+$BODY$
+BEGIN
+  PERFORM pg_advisory_xact_lock(hashtextextended(b_ficha, 0));
+  RETURN coalesce((SELECT max(orden + 1) FROM movimientos_bien WHERE ficha = b_ficha), 1);
+END;
+$BODY$;
 
 CREATE OR REPLACE FUNCTION movimientos_bien_pk_trg()
     RETURNS trigger
@@ -13,7 +16,7 @@ AS $BODY$
 declare
   v_ultimo bigint;
 begin
-  if new.orden <> 0 then
+  if coalesce(new.orden, 0) <> 0 then
     null;
   else
    	new.orden := get_next_movimiento_number(new.ficha);
@@ -22,6 +25,7 @@ begin
 end;
 $BODY$;
 
+DROP TRIGGER IF EXISTS movimientos_bien_pk_trg ON movimientos_bien;
 CREATE TRIGGER movimientos_bien_pk_trg
    before INSERT 
    ON movimientos_bien

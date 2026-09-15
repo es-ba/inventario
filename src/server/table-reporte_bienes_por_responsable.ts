@@ -16,7 +16,8 @@ export function reporte_bienes_por_responsable(_context:TableContext):TableDefin
                 {name:vinculo.contador, typeName:'bigint' as const, title:vinculo.titulo}
             )),
             {name:'personas_dependientes', typeName:'bigint', title:'personas a cargo'},
-            {name:'cantidad_dependientes', typeName:'bigint' , title:'con dependientes'},
+            {name:'cantidad_sector', typeName:'bigint', title:'directos en sectores a cargo'},
+            {name:'cantidad_dependientes', typeName:'bigint' , title:'sectores a cargo incluyendo subsectores'},
             {name:'sectores'              , typeName:'bigint' , title:'sectores'},
             {name:'sedes'              , typeName:'bigint' , title:'sedes'},
         ],
@@ -31,8 +32,10 @@ export function reporte_bienes_por_responsable(_context:TableContext):TableDefin
                 abr:vinculo.detalle.abr,
                 label:vinculo.detalle.label,
             })),
-            {table:'reporte_bienes_dependientes', fields:[{source:'responsable', target:'jefe'}],
-                abr:'Dep', label:'Bienes con dependientes'},
+            {table:'reporte_bienes_sectores_a_cargo', fields:[{source:'responsable', target:'jefe'}, {target:'directo', value:true}],
+                abr:'Dir', label:'Bienes directos de sectores a cargo'},
+            {table:'reporte_bienes_sectores_a_cargo', fields:[{source:'responsable', target:'jefe'}],
+                abr:'Dep', label:'Bienes de sectores a cargo incluyendo subsectores'},
         ],
         sortColumns:[{column:'cantidad', order:-1}],
         sql:{
