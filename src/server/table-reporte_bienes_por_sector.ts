@@ -12,6 +12,7 @@ export function reporte_bienes_por_sector(_context:TableContext):TableDefinition
         allow:{insert:false, update:false, delete:false, deleteAll:false},
         fields:[
             {name:'sector'               , typeName:'text'   , title:'sector'},
+            {name:'responsable'          , typeName:'text'   , title:'responsable del sector', nullable:true},
             {name:'cantidad'           , typeName:'bigint' , title:'directos'},
             {name:'cantidad_dependientes'      , typeName:'bigint' , title:'incluyendo subsectores'},
             {name:'sectores_dependientes'      , typeName:'bigint' , title:'sectores a cargo'},
@@ -26,6 +27,7 @@ export function reporte_bienes_por_sector(_context:TableContext):TableDefinition
         primaryKey:['sector'],
         foreignKeys:[
             {references:'sectores', fields:['sector'], displayFields:['nombre_sector', 'sigla']},
+            {references:'responsables', fields:['responsable'], displayFields:['apellido', 'nombre']},
         ],
         detailTables:[
             {table:'reporte_bienes_listado', fields:['sector'],
