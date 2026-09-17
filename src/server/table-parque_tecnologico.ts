@@ -35,7 +35,8 @@ export function parque_tecnologico(_context:TableContext):TableDefinition{
             {name:'sector'        , typeName:'text', title:'sector'       , nullable:true},
             {name:'sede'        , typeName:'text', title:'sede'       , nullable:true},
             {name:'espacio'     , typeName:'text', title:'espacio'    , nullable:true},
-            {name:'responsable' , typeName:'text', title:'responsable', nullable:true},
+            {name:'responsable' , typeName:'text', title:'responsable del sector', nullable:true},
+            {name:'responsable_directo', typeName:'text', title:'responsable directo', nullable:true},
         ],
         primaryKey:['ficha'],
         foreignKeys:[
@@ -47,6 +48,8 @@ export function parque_tecnologico(_context:TableContext):TableDefinition{
             {references:'sedes'       , fields:['sede']       , displayFields:['descripcion']},
             {references:'espacios'    , fields:['espacio']    , displayFields:['numero', 'denominacion']},
             {references:'responsables', fields:['responsable'], displayFields:['apellido', 'nombre']},
+            {references:'responsables', fields:[{source:'responsable_directo', target:'responsable'}],
+                alias:'responsable_directo', displayFields:['apellido', 'nombre']},
         ],
         sortColumns:[{column:'ficha', order:1}],
         sql:{

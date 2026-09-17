@@ -18,6 +18,7 @@ import {
 import type {Connector, FieldDefinition} from 'frontend-plus';
 
 import {FormFieldRenderer} from './base/form-field-renderer';
+import {useDestinoDelSector} from './base/destino-del-sector';
 import type {Fila} from './base/tipos-tabla';
 
 
@@ -72,8 +73,8 @@ const CAMPO_ACCION =
     campoDeReferencia('accion'         , 'acción'             , 'acciones_movimiento', 'accion_movimiento');
 
 const CAMPOS = [
+    campoDeReferencia('sector'         , 'sector'             , 'sectores'       , 'sector'),
     campoDeReferencia('responsable'    , 'responsable'        , 'responsables'   , 'responsable'),
-    campoDeReferencia('sector'           , 'sector'               , 'sectores'          , 'sector'),
     campoDeReferencia('sede'           , 'sede'               , 'sedes'          , 'sede'),
     campoDeReferencia('espacio'        , 'espacio'            , 'espacios'       , 'espacio'),
     {name:'puesto', typeName:'integer', title:'puesto'} as unknown as FieldDefinition,
@@ -121,14 +122,24 @@ export function MoverBienes({
     const [error, setError] = React.useState<string|null>(null);
     const [trabajando, setTrabajando] = React.useState(false);
 
+    const {admitirPara, destinoAlCambiarSector} = useDestinoDelSector(cabecera.sector);
+
     const ponerCampo = React.useCallback(
         (nombre:string, valor:unknown) => {
-            setCabecera(previa => ({...previa, [nombre]:valor == null ? '' : String(valor)}));
-            if(valor != null && String(valor).trim() !== ''){
-                setCamposVaciar(previos => previos.filter(campo => campo !== nombre));
+            const texto = valor == null ? '' : String(valor);
+            const cambios:Partial<Cabecera> = {[nombre]:texto};
+            if(nombre === 'sector' && texto !== cabecera.sector){
+                Object.assign(cambios, destinoAlCambiarSector(texto, cabecera));
+            }
+            setCabecera(previa => ({...previa, ...cambios}));
+            const completos = Object.entries(cambios)
+                .filter(([_campo, dato]) => String(dato ?? '').trim() !== '')
+                .map(([campo]) => campo);
+            if(completos.length){
+                setCamposVaciar(previos => previos.filter(campo => !completos.includes(campo)));
             }
         },
-        [],
+        [cabecera, destinoAlCambiarSector],
     );
 
     React.useEffect(() => {
@@ -206,6 +217,7 @@ export function MoverBienes({
                                 field={campo}
                                 row={cabecera as unknown as Fila}
                                 setField={ponerCampo}
+                                admitir={admitirPara(campo.name)}
                                 size="small"
                             />
                         </Stack>

@@ -116,7 +116,7 @@ export function useRowEditor({
             const esPk = primaryKey.indexOf(field.name) >= 0 || Boolean(field.isPk);
             const actual = normalizarValor(row[field.name]);
             if(esAlta){
-                if(!estaVacio(actual) || esPk){
+                if(!estaVacio(actual) || (esPk && !loCompletaLaBase(field))){
                     resultado[field.name] = actual ?? null;
                 }
                 return;

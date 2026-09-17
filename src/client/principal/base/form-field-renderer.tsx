@@ -31,6 +31,8 @@ export type FormFieldRendererProps = {
     multiline?:boolean,
     minRows?:number,
     size?:'small'|'medium',
+    excluidos?:Set<string>,
+    admitir?:(fila:Fila) => boolean,
 };
 
 function paresDeReferencia(field:FieldDefinition):{source:string, target:string}[]{
@@ -60,6 +62,28 @@ export function ordenarPorPertenencia(opciones:Fila[], columna:string, propios:S
     return [...propias, ...opciones.filter(fila => !esPropia(fila))];
 }
 
+export function sinExcluidos(filas:Fila[], columna:string, excluidos:Set<string>|undefined):Fila[]{
+    if(!excluidos || excluidos.size === 0){
+        return filas;
+    }
+    return filas.filter(fila => !excluidos.has(String(fila[columna] ?? '')));
+}
+
+export function dependientesDeReferencia(
+    fields:{name:string, referencesFields?:{source:string, target:string}[]}[],
+):Map<string, string[]>{
+    const dependientes = new Map<string, string[]>();
+    for(const field of fields){
+        for(const {source} of field.referencesFields ?? []){
+            if(source === field.name){
+                continue;
+            }
+            dependientes.set(source, [...(dependientes.get(source) ?? []), field.name]);
+        }
+    }
+    return dependientes;
+}
+
 export function opcionesDeReferencia(
     filas:Fila[],
     condiciones:{source:string, target:string}[],
@@ -74,7 +98,7 @@ export function opcionesDeReferencia(
     }));
 }
 
-function CampoReferencia({field, row, setField, disabled, error, size}:FormFieldRendererProps){
+function CampoReferencia({field, row, setField, disabled, error, size, excluidos, admitir}:FormFieldRendererProps){
     const {filas, cargando} = useDatosReferencial(field.references);
     const {definicion} = useEstructuraTabla(field.references);
 
@@ -102,16 +126,19 @@ function CampoReferencia({field, row, setField, disabled, error, size}:FormField
     );
 
     const condiciones = pares.filter(par => par.source !== field.name);
+    const columnaPropia = pares.find(par => par.source === field.name)?.target ?? field.name;
     const claveCondiciones = JSON.stringify(condiciones.map(({source}) => row[source] ?? null));
     const opciones = React.useMemo(
         () => {
-            const permitidas = opcionesDeReferencia(filas, condiciones, row);
+            const sinExcluir = sinExcluidos(
+                opcionesDeReferencia(filas, condiciones, row), columnaPropia, excluidos);
+            const permitidas = admitir ? sinExcluir.filter(admitir) : sinExcluir;
             return agrupa
                 ? ordenarPorPertenencia(permitidas, pertenencia.columna, propios)
                 : permitidas;
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [filas, claveCondiciones, agrupa, propios],
+        [filas, claveCondiciones, agrupa, propios, excluidos, admitir],
     );
 
     const seleccionada = filas.find(

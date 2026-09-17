@@ -22,7 +22,7 @@ export function movimientos_solicitudes_acciones(context:TableContext):TableDefi
         }
     });
     
-    tableDef.hiddenColumns = ['acciones'];
+    tableDef.hiddenColumns = [...(tableDef.hiddenColumns ?? []), 'acciones'];
     tableDef.refrescable = true;
     tableDef.selfRefresh = true;
     

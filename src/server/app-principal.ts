@@ -291,8 +291,7 @@ export class AppInventario extends AppBackend{
                 operaciones.push(
                     {menuType: 'table', name: 'declaraciones', label: 'declaraciones'},
                     {menuType: 'solicitudes', name: 'solicitudes_movimiento', label: 'solicitudes de movimiento'},
-                    {menuType: 'table', name: 'movimientos_solicitudes_acciones', label: 'solicitudes (con acciones)'},
-                    {menuType: 'table', name: 'movimientos_solicitudes', label: 'solicitudes (sólo datos)'},
+                    {menuType: 'table', name: 'movimientos_solicitudes_acciones', label: 'solicitudes'},
                 );
             }
             if(puedeGestionarBajas){

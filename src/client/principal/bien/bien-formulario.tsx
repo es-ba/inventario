@@ -67,6 +67,7 @@ const CAMPOS_MULTILINEA = new Set(['observacion', 'detalle', 'aclaracion', 'cond
 declare module 'frontend-plus' {
     interface BEAPI {
         bien_resumen:(params:{ficha:string}) => Promise<ResumenDelBien>;
+        ficha_sugerir:(params:Record<string, never>) => Promise<string>;
     }
 }
 
@@ -157,6 +158,31 @@ function VistaDatos({definicion, row}:{definicion:TableDefinition, row:Fila}){
     </Stack>;
 }
 
+function SugerirFicha({onSugerida}:{onSugerida:(ficha:string) => void}){
+    const conn = useConexion();
+    const {mostrarError} = useAvisos();
+    const [buscando, setBuscando] = React.useState(false);
+
+    return <Button
+        variant="outlined"
+        sx={{height:56, whiteSpace:'nowrap'}}
+        disabled={buscando}
+        startIcon={buscando ? <CircularProgress size={16}/> : undefined}
+        onClick={async () => {
+            setBuscando(true);
+            try{
+                onSugerida(await conn.ajax.ficha_sugerir({}));
+            }catch(err){
+                mostrarError(err, 'No se pudo sugerir una ficha');
+            }finally{
+                setBuscando(false);
+            }
+        }}
+    >
+        sugerir
+    </Button>;
+}
+
 function SeccionDeCampos({
     definicion,
     campos,
@@ -179,19 +205,25 @@ function SeccionDeCampos({
                 return null;
             }
             const esMultilinea = CAMPOS_MULTILINEA.has(nombre);
+            const renderer = <FormFieldRenderer
+                field={field}
+                row={editor.row}
+                setField={editor.setField}
+                error={editor.errores[field.name]}
+                disabled={nombre === 'ficha' && fichaBloqueada}
+                multiline={esMultilinea}
+                minRows={2}
+            />;
             return <Box
                 key={nombre}
                 sx={esMultilinea ? {gridColumn:{sm:'span 2', lg:'span 3'}} : undefined}
             >
-                <FormFieldRenderer
-                    field={field}
-                    row={editor.row}
-                    setField={editor.setField}
-                    error={editor.errores[field.name]}
-                    disabled={nombre === 'ficha' && fichaBloqueada}
-                    multiline={esMultilinea}
-                    minRows={2}
-                />
+                {nombre === 'ficha' && !fichaBloqueada && !editor.soloLectura
+                    ? <Stack direction="row" spacing={1} alignItems="flex-start">
+                        <Box sx={{flex:1}}>{renderer}</Box>
+                        <SugerirFicha onSugerida={valor => editor.setField('ficha', valor)}/>
+                    </Stack>
+                    : renderer}
             </Box>;
         })}
     </Box>;
@@ -306,7 +338,14 @@ export function BienFormulario({
     const solapasDeDetalle:{etiqueta:string, contenido:React.ReactNode}[] = [
         {
             etiqueta:'Atributos',
-            contenido:<DetailTable tabla="bien_atributo" camposFijos={{ficha:fichaActual}} titulo="Atributos del bien"/>,
+            contenido:<DetailTable
+                tabla="bien_atributo"
+                camposFijos={{ficha:fichaActual}}
+                titulo="Atributos del bien"
+                textoAlta="asignar atributo"
+                tituloAlta="Asignar atributo"
+                tituloEdicion="Editar asignación"
+            />,
         },
         {
             etiqueta:'Movimientos',

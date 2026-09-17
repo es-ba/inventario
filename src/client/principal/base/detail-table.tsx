@@ -16,7 +16,7 @@ import type {FieldDefinition, FixedFields, TableDefinition} from 'frontend-plus'
 import {useAvisos, useConexion, usePermisos} from './contexto-base';
 import {useEstructuraTabla} from './cache-tablas';
 import {formatearValor} from './formato-valores';
-import {FormFieldRenderer} from './form-field-renderer';
+import {FormFieldRenderer, dependientesDeReferencia} from './form-field-renderer';
 import {useRowEditor} from './use-row-editor';
 import {bienesGridLocaleText} from '../localizacion-grid';
 import {Fila, mensajeDeError} from './tipos-tabla';
@@ -36,6 +36,9 @@ export type DetailTableProps = {
     anchoPanel?:number,
     columnasOcultas?:string[],
     soloLectura?:boolean,
+    textoAlta?:string,
+    tituloAlta?:string,
+    tituloEdicion?:string,
 };
 
 export function DetailTable({
@@ -45,6 +48,9 @@ export function DetailTable({
     anchoPanel = 480,
     columnasOcultas,
     soloLectura: soloLecturaPedida = false,
+    textoAlta = 'nuevo',
+    tituloAlta,
+    tituloEdicion,
 }:DetailTableProps){
     const conn = useConexion();
     const {mostrarError} = useAvisos();
@@ -147,7 +153,7 @@ export function DetailTable({
                         setPanelAbierto(true);
                     }}
                 >
-                    nuevo
+                    {textoAlta}
                 </Button>}
             </Stack>
         </Toolbar>
@@ -186,6 +192,9 @@ export function DetailTable({
                     onCerrar={cerrarPanel}
                     onGuardado={despuesDeGuardar}
                     soloLectura={soloLectura}
+                    filasExistentes={filas}
+                    tituloAlta={tituloAlta}
+                    tituloEdicion={tituloEdicion}
                 />
                 : null}
         </Drawer>
@@ -200,6 +209,9 @@ function PanelDeRegistro({
     onCerrar,
     onGuardado,
     soloLectura,
+    filasExistentes,
+    tituloAlta,
+    tituloEdicion,
 }:{
     tabla:string,
     definicion:TableDefinition,
@@ -208,6 +220,9 @@ function PanelDeRegistro({
     onCerrar:() => void,
     onGuardado:() => void,
     soloLectura:boolean,
+    filasExistentes:Fila[],
+    tituloAlta?:string,
+    tituloEdicion?:string,
 }){
     const conn = useConexion();
     const {mostrarError} = useAvisos();
@@ -250,6 +265,32 @@ function PanelDeRegistro({
         [definicion.fields, nombresFijos],
     );
 
+    const dependientes = React.useMemo(
+        () => dependientesDeReferencia(definicion.fields),
+        [definicion.fields],
+    );
+    const {row:filaEditada, setField} = editor;
+    const asignar = React.useCallback((nombre:string, valor:unknown) => {
+        if(filaEditada[nombre] !== valor){
+            (dependientes.get(nombre) ?? []).forEach(dependiente => setField(dependiente, null));
+        }
+        setField(nombre, valor);
+    }, [dependientes, filaEditada, setField]);
+
+    const clavesLibres = (definicion.primaryKey ?? []).filter(pk => nombresFijos.indexOf(pk) < 0);
+    const campoUnico = clavesLibres.length === 1 ? clavesLibres[0] : undefined;
+    const usados = React.useMemo(() => {
+        if(campoUnico == null){
+            return undefined;
+        }
+        const propio = esAlta || !filaInicial ? undefined : String(filaInicial[campoUnico] ?? '');
+        return new Set(filasExistentes
+            .map(fila => String(fila[campoUnico] ?? ''))
+            .filter(valor => valor !== '' && valor !== propio));
+    }, [campoUnico, esAlta, filaInicial, filasExistentes]);
+
+    const nombreElemento = definicion.elementName ?? definicion.name ?? tabla;
+
     const borrar = React.useCallback(async () => {
         if(!filaInicial){
             return;
@@ -274,7 +315,9 @@ function PanelDeRegistro({
     return <Box sx={{display:'flex', flexDirection:'column', height:'100%'}}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{mb:2}}>
             <Typography variant="h6">
-                {esAlta ? 'Nuevo' : 'Editar'} {definicion.elementName ?? definicion.name ?? tabla}
+                {esAlta
+                    ? (tituloAlta ?? `Nuevo ${nombreElemento}`)
+                    : (tituloEdicion ?? `Editar ${nombreElemento}`)}
             </Typography>
             <IconButton onClick={onCerrar} size="small"><Close/></IconButton>
         </Stack>
@@ -284,9 +327,10 @@ function PanelDeRegistro({
                 key={field.name}
                 field={field}
                 row={editor.row}
-                setField={editor.setField}
+                setField={asignar}
                 error={editor.errores[field.name]}
                 disabled={soloLectura}
+                excluidos={field.name === campoUnico ? usados : undefined}
             />)}
         </Stack>
 

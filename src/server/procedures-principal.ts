@@ -167,6 +167,16 @@ export const ProceduresInventario:ProcedureDef[] = [
         }
     },
     {
+        action:'ficha_sugerir',
+        parameters:[],
+        coreFunction:async function(context:ProcedureContext){
+            const result = await context.client.query(
+                `select ficha_sugerida() as ficha`, []
+            ).fetchUniqueValue();
+            return result.value as string;
+        }
+    },
+    {
         action:'espacios_del_sector',
         parameters:[
             {name:'sector', typeName:'text'},

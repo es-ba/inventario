@@ -3,12 +3,11 @@
 import {TableDefinition, TableContext} from "./types-principal";
 
 export function bien_atributo(context:TableContext):TableDefinition{
-    var admin = context.user.rol === 'admin';
     return {
         name:'bien_atributo',
         elementName:'atributo',
         title:'Atributos',
-        editable:admin,
+        editable:context.es.administrativo,
         fields:[
             {name:'ficha'    , typeName:'text'},
             {name:'atributo' , typeName:'text'},

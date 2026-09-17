@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Box, Button, Chip, CircularProgress, Stack, Typography} from '@mui/material';
+import {Box, Button, Chip, CircularProgress, Stack} from '@mui/material';
 import {Add, Refresh} from '@mui/icons-material';
 import {DataGrid, GridColDef, GridRowParams} from '@mui/x-data-grid';
 import type {FixedFields} from 'frontend-plus';
@@ -128,9 +128,6 @@ export function SolicitudesListado({
 
     return <Box sx={{p:{xs:1, md:2}}}>
         <Stack direction="row" alignItems="center" spacing={2} sx={{mb:2}}>
-            <Typography variant="h6" sx={{fontWeight:600}}>
-                Solicitudes de movimiento
-            </Typography>
             <Box sx={{flex:1}}/>
             <Button startIcon={<Refresh/>} onClick={() => void cargar()} disabled={cargando}>
                 actualizar

@@ -47,8 +47,8 @@ export const VINCULOS_CON_EL_BIEN:readonly VinculoConElBien[] = [
         columna:'responsable',
         columnasConstantes:['sector_responsable'],
         contador:'cantidad',
-        expresion:`coalesce(${textoONulo('v.responsable')}, '${SIN_ASIGNAR}')`,
-        titulo:'a cargo',
+        expresion:`coalesce(${textoONulo('s.responsable')}, '${SIN_ASIGNAR}')`,
+        titulo:'a cargo por sector',
         detalle:{abr:'B', label:'Bienes a cargo'},
         mio:{tabla:'mis_bienes_a_cargo', title:'Bienes a mi cargo', label:'a mi cargo'},
     },
@@ -77,11 +77,12 @@ WITH RECURSIVE ${ARBOL_DE_SECTORES},
 por_sector AS (
     SELECT
         coalesce(nullif(btrim(v.sector), ''), '${SIN_ASIGNAR}') AS sector,
-        count(DISTINCT nullif(btrim(v.responsable), '')) AS responsables,
+        count(DISTINCT nullif(btrim(s.responsable), '')) AS responsables,
         count(DISTINCT nullif(btrim(v.sede), '')) AS sedes,
         count(DISTINCT nullif(btrim(v.espacio), '')) AS espacios,
         ${MEDIDAS}
     FROM (${sqlBienes}) v
+    LEFT JOIN sectores s ON s.sector = v.sector
     WHERE ${SOLO_ALTA}
     GROUP BY coalesce(nullif(btrim(v.sector), ''), '${SIN_ASIGNAR}')
 ),
@@ -132,10 +133,11 @@ SELECT g.*, e.sector
     FROM (
         SELECT
             coalesce(${textoONulo('v.espacio')}, '${SIN_ASIGNAR}') AS espacio,
-            count(DISTINCT nullif(btrim(v.responsable), '')) AS responsables,
+            count(DISTINCT nullif(btrim(s.responsable), '')) AS responsables,
             count(DISTINCT nullif(btrim(v.sector), '')) AS sectores,
             ${MEDIDAS}
         FROM (${sqlBienes}) v
+        LEFT JOIN sectores s ON s.sector = v.sector
         WHERE ${SOLO_ALTA}
         GROUP BY coalesce(${textoONulo('v.espacio')}, '${SIN_ASIGNAR}')
     ) g
@@ -219,8 +221,10 @@ SELECT
     ${textoONulo('v.sector')} AS sector,
     ${textoONulo('v.sede')} AS sede,
     ${textoONulo('v.espacio')} AS espacio,
-    ${textoONulo('v.responsable')} AS responsable${seleccionAtributos}
+    ${textoONulo('s.responsable')} AS responsable,
+    ${textoONulo('v.responsable')} AS responsable_directo${seleccionAtributos}
 FROM (${sqlBienes}) v
+LEFT JOIN sectores s ON s.sector = v.sector
 ${pivot}
 WHERE ${SOLO_ALTA}
   AND btrim(coalesce(v.rubro, '')) = '3'
@@ -248,12 +252,14 @@ SELECT
     ${textoONulo('v.sede')} AS sede,
     ${textoONulo('v.espacio')} AS espacio,
     ${vinculoConElBien('cargo').expresion} AS responsable,
+    ${textoONulo('v.responsable')} AS responsable_directo,
     ${textoONulo('v.tipo_asignacion')} AS tipo_asignacion,
     ${textoONulo('v.modalidad_uso')} AS modalidad_uso,
     ${textoONulo('v.enusode')} AS enusode,
     ${vinculoConElBien('asignado').expresion} AS enusode_responsable
 FROM (${sqlBienes}) v
-LEFT JOIN responsables r ON r.responsable = v.responsable
+LEFT JOIN sectores s ON s.sector = v.sector
+LEFT JOIN responsables r ON r.responsable = s.responsable
 WHERE ${SOLO_ALTA}
 `;
 
@@ -281,8 +287,10 @@ SELECT
     coalesce(nullif(btrim(v.sector), ''), '${SIN_ASIGNAR}') AS sector,
     ${textoONulo('v.sede')} AS sede,
     ${textoONulo('v.espacio')} AS espacio,
-    ${vinculoConElBien('cargo').expresion} AS responsable
+    ${vinculoConElBien('cargo').expresion} AS responsable,
+    ${textoONulo('v.responsable')} AS responsable_directo
 FROM (${sqlBienes}) v
+LEFT JOIN sectores s ON s.sector = v.sector
 WHERE v.estado_baja IS NOT NULL OR NOT ${SOLO_ALTA}
 `;
 
@@ -317,6 +325,7 @@ ${VINCULOS_CON_EL_BIEN.map(vinculo =>
         count(DISTINCT nullif(btrim(v.sector), '')) AS sectores,
         count(DISTINCT nullif(btrim(v.sede), '')) AS sedes
     FROM (${sqlBienes}) v
+    LEFT JOIN sectores s ON s.sector = v.sector
     CROSS JOIN LATERAL (VALUES
 ${VINCULOS_CON_EL_BIEN.map(vinculo =>
 `        ('${vinculo.rol}', ${vinculo.expresion})`

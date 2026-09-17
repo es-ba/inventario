@@ -25,8 +25,8 @@ export function movimientos_solicitudes(context:TableContext):TableDefinition{
             {name:'accion'                      , typeName:'text'    },
             {name:'modalidad_uso'               , typeName:'text'    },
             {name:'estado'                      , typeName:'text'    , defaultDbValue:"'B'", editable:false},
+            {name:'sector'                      , typeName:'text'    , nullable:true},
             {name:'responsable'                 , typeName:'text'    , nullable:true},
-            {name:'sector'                        , typeName:'text'    , nullable:true},
             {name:'sede'                        , typeName:'text'    , nullable:true},
             {name:'espacio'                     , typeName:'text'    , nullable:true},
             {name:'puesto'                      , typeName:'integer' , nullable:true},
@@ -39,7 +39,7 @@ export function movimientos_solicitudes(context:TableContext):TableDefinition{
             {name:'usuario_modificacion'        , typeName:'text'    , nullable:true},
             {name:'autorizado_por'              , typeName:'text'    , nullable:true},
             {name:'firmado_por'                 , typeName:'text'    , nullable:true},
-            {name:'campos_vaciar'               , typeName:'jsonb'   , nullable:false, defaultDbValue:"'[]'::jsonb", editable:false, inTable:false},
+            {name:'campos_vaciar'               , typeName:'jsonb'   , nullable:false, defaultDbValue:"'[]'::jsonb", editable:false},
             {name:'acta_rectificada'            , typeName:'bigint'  , nullable:true},
         ],
         primaryKey:['acta'],
@@ -47,6 +47,10 @@ export function movimientos_solicitudes(context:TableContext):TableDefinition{
             {references:'responsables', fields:['responsable'], displayFields:['apellido', 'nombre']},
             {references:'responsables', fields:[{source:'enusode_responsable', target:'responsable'}],
                 alias:'enusode_responsable', displayFields:['apellido', 'nombre']},
+            {references:'responsables', fields:[{source:'autorizado_por', target:'responsable'}],
+                alias:'autorizado_por', displayFields:['apellido', 'nombre']},
+            {references:'responsables', fields:[{source:'firmado_por', target:'responsable'}],
+                alias:'firmado_por', displayFields:['apellido', 'nombre']},
             {references:'usuarios', fields:[{source:'usuario_creacion' , target:'usuario'}], alias: 'usuario_creacion'},
             {references:'usuarios', fields:[{source:'usuario_modificacion' , target:'usuario'}], alias: 'usuario_modificacion'},
             {references:'sectores', fields:['sector'], displayFields:['sigla']},
@@ -64,6 +68,7 @@ export function movimientos_solicitudes(context:TableContext):TableDefinition{
             {table:'adjuntos_solicitudes', fields:['acta'], abr:'Adj', label:'Adjuntos'},
             {table:'movimientos_bien', fields:[{source:'acta', target:'acta_origen'}], abr:'Mov', label:'Movimientos resultantes'}
         ],
+        hiddenColumns:['campos_vaciar', 'usuario_final'],
         sql:{
             policies:getPolicies(be)
         }

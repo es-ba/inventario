@@ -19,9 +19,9 @@ export function movimientos_solicitud_bien(context:TableContext):TableDefinition
             {name:'ficha'                       , typeName:'text'    , nullable:false},
             {name:'observaciones'               , typeName:'text'    , nullable:true},
             {name:'verificado'                  , typeName:'boolean' , nullable:true, defaultValue:false},
-            {name:'destino'                     , typeName:'jsonb'   , nullable:true, editable:false, inTable:false},
-            {name:'origen'                      , typeName:'jsonb'   , nullable:true, editable:false, inTable:false},
-            {name:'orden_origen'                , typeName:'bigint'  , nullable:true, editable:false, inTable:false},
+            {name:'destino'                     , typeName:'jsonb'   , nullable:true, editable:false},
+            {name:'origen'                      , typeName:'jsonb'   , nullable:true, editable:false},
+            {name:'orden_origen'                , typeName:'bigint'  , nullable:true, editable:false},
             {name:'fecha_creacion'              , typeName:'date'    , nullable:false, defaultDbValue:'current_date', editable:false},
             {name:'fecha_modificacion'          , typeName:'date'    , nullable:true, editable:false},
             {name:'usuario_creacion'            , typeName:'text'    , nullable:true, editable:false},
@@ -37,6 +37,7 @@ export function movimientos_solicitud_bien(context:TableContext):TableDefinition
         detailTables:[
             {table:'bienes', fields:['ficha'], abr:'B'}
         ],
+        hiddenColumns:['destino', 'origen', 'orden_origen'],
         sql:{policies:getPolicies(be)},
     };
 }

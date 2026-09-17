@@ -19,6 +19,7 @@ import {useEstructuraTabla} from '../base/cache-tablas';
 import {AdjuntosPanel} from '../base/adjuntos-panel';
 import {FormFieldRenderer} from '../base/form-field-renderer';
 import {TabPanel, propsDeSolapa} from '../base/tab-panel';
+import {useDestinoDelSector} from '../base/destino-del-sector';
 import {useRowEditor} from '../base/use-row-editor';
 import type {Fila} from '../base/tipos-tabla';
 import {SolicitudAcciones, accionesDe, etiquetaDeAccion} from './solicitud-acciones';
@@ -30,8 +31,8 @@ const ESTADO_EDITABLE = 'B';
 
 const CAMPOS_CABECERA = [
     'acta', 'accion', 'tipo_asignacion', 'modalidad_uso',
-    'responsable', 'sector', 'sede', 'espacio', 'puesto',
-    'enusode_responsable', 'usuario_final', 'autorizado_por', 'firmado_por', 'detalle',
+    'sector', 'responsable', 'sede', 'espacio', 'puesto',
+    'enusode_responsable', 'autorizado_por', 'firmado_por', 'detalle',
 ];
 
 declare module 'frontend-plus' {
@@ -101,6 +102,18 @@ export function SolicitudFormulario({
         definicion:definicionSegura,
         filaInicial,
     });
+
+    const {admitirPara, destinoAlCambiarSector} = useDestinoDelSector(editor.row.sector);
+    const {row:filaEditada, setField} = editor;
+    const asignarCampo = React.useCallback((nombre:string, valor:unknown) => {
+        const cambiaSector = nombre === 'sector' && (filaEditada.sector ?? null) !== (valor ?? null);
+        setField(nombre, valor);
+        if(cambiaSector){
+            const {responsable, espacio} = destinoAlCambiarSector(valor, filaEditada);
+            setField('responsable', responsable || null);
+            setField('espacio', espacio || null);
+        }
+    }, [filaEditada, setField, destinoAlCambiarSector]);
 
     const subirAdjunto = React.useCallback(
         (archivo:File) => conn.ajax.archivo_solicitud_subir({
@@ -192,7 +205,8 @@ export function SolicitudFormulario({
                         <FormFieldRenderer
                             field={field}
                             row={editor.row}
-                            setField={editor.setField}
+                            setField={asignarCampo}
+                            admitir={admitirPara(nombre)}
                             error={editor.errores[field.name]}
                             disabled={!editable || (nombre === 'acta' && guardada)}
                             multiline={esDetalle}
