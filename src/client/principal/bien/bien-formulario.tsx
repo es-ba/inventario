@@ -24,6 +24,7 @@ import {TabPanel, propsDeSolapa} from '../base/tab-panel';
 import {useRowEditor} from '../base/use-row-editor';
 import type {Fila} from '../base/tipos-tabla';
 import {AdjuntosBien} from './adjuntos-bien';
+import {AuditoriaBien} from './auditoria-bien';
 import {BienHeader, ResumenDelBien} from './bien-header';
 import {AccionesBaja} from '../baja/acciones-baja';
 import {prepararEtiquetasCodigosBarra} from '../../../common/codigos-barra';
@@ -357,7 +358,7 @@ export function BienFormulario({
         },
         {
             etiqueta:'Auditoría',
-            contenido:<DetailTable tabla="historial_evento_bien" camposFijos={{ficha:fichaActual}} titulo="Eventos" soloLectura/>,
+            contenido:<AuditoriaBien ficha={fichaActual}/>,
         },
         {
             etiqueta:'Declaraciones',

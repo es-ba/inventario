@@ -19,6 +19,10 @@ export function historial_evento_bien(context: TableContext): TableDefinition {
             { name: 'origen', typeName: 'text' }
         ],
         primaryKey: ['ficha', 'orden'],
+        sortColumns: [{ column: 'orden', order: -1 }],
+        detailTables: [
+            { table: 'historial_bienes', fields: ['ficha', 'orden'], abr: 'C', label: 'Cambios' },
+        ],
         foreignKeys: [
             { references: 'bienes', fields: ['ficha'] },
         ],

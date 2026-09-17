@@ -35,9 +35,6 @@ export function espacios(context:TableContext):TableDefinition{
             {references:'sectores', fields:['sector'], displayFields:['sigla']},
             {references:'sedes', fields:['sede']}
         ],
-        detailTables:[
-            {table:'historial_evento_bien', fields:['ficha'], abr:'Au', label:'Auditoria'},
-        ],
         constraints:[
             {constraintType:'unique', fields:['espacio']}
         ],

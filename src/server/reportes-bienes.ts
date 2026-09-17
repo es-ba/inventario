@@ -101,6 +101,7 @@ totales_directos AS (
 )
 SELECT
     p.sector,
+    ${textoONulo('se.responsable')} AS responsable,
     p.responsables,
     p.sedes,
     p.espacios,
@@ -126,6 +127,7 @@ SELECT
         WHERE d.sector = p.sector
            OR ${perteneceASql('d.sector', 'p.sector')}) AS cantidad_dependientes
 FROM totales_directos p
+LEFT JOIN sectores se ON se.sector = p.sector
 `;
 
 export const sqlBienesPorEspacio = `
@@ -352,7 +354,6 @@ dependientes AS (
 
 bienes_de_sectores AS (
     SELECT s.responsable AS jefe,
-        count(DISTINCT v.ficha) FILTER (WHERE v.sector = s.sector) AS directos,
         count(DISTINCT v.ficha) AS cantidad
     FROM (${sqlBienes}) v
     JOIN sector_arbol sa ON sa.sector = ${textoONulo('v.sector')}
@@ -374,7 +375,6 @@ ${VINCULOS_CON_EL_BIEN.map(vinculo =>
     coalesce(c.sectores, 0)           AS sectores,
     coalesce(c.sedes, 0)              AS sedes,
     coalesce(d.personas, 0)           AS personas_dependientes,
-    coalesce(bs.directos, 0) AS cantidad_sector,
     coalesce(bs.cantidad, 0) AS cantidad_dependientes
 FROM personas pe
 LEFT JOIN por_responsable c ON c.responsable = pe.responsable
