@@ -8,6 +8,8 @@ import {
     Stack,
     Tab,
     Tabs,
+    ToggleButton,
+    ToggleButtonGroup,
     Typography,
 } from '@mui/material';
 import {
@@ -64,6 +66,8 @@ import type {
     BienesBusquedaRow,
 } from '../../common/contracts';
 import {selectBienesGridFields} from '../../common/bienes-busqueda';
+import type {GrupoFiltro} from '../../common/bienes-agrupar';
+import {ResumenBienes} from './resumen-bienes';
 import {
     filasSeleccionadasEnOrden,
     prepararEtiquetasCodigosBarra,
@@ -294,6 +298,10 @@ export function BusquedaBienes({
     const [bajaAbierta, setBajaAbierta] = React.useState(false);
     const [bajaDirecta, setBajaDirecta] = React.useState(false);
     const [avisoMasivo, setAvisoMasivo] = React.useState<string|null>(null);
+    const [vista, setVista] = React.useState<'listado'|'resumen'>('listado');
+    const [resumenAbierto, setResumenAbierto] = React.useState(false);
+    const [grupoFiltro, setGrupoFiltro] =
+        React.useState<{partes:GrupoFiltro[], textos:string[], etiquetas:string[]}|null>(null);
     const requestSequence = React.useRef(0);
 
     const clearSelection = React.useCallback(() => {
@@ -400,15 +408,22 @@ export function BusquedaBienes({
             sortModel:sortModel
                 .filter(sort => sort.sort != null)
                 .map(sort => ({field:sort.field, sort:sort.sort as 'asc'|'desc'})),
+            ...(grupoFiltro ? {grupoFiltro:grupoFiltro.partes} : {}),
         };
     }, [
         appliedFilters,
         appliedLogicOperator,
         filterModel,
+        grupoFiltro,
         paginationModel,
         sortModel,
         tab,
     ]);
+
+    const consultaResumen = React.useMemo<BienesBusquedaRequest>(() => {
+        const {grupoFiltro:_grupo, ...resto} = buildRequest();
+        return {...resto, page:0, pageSize:25, sortModel:[]};
+    }, [buildRequest]);
 
     const loadRows = React.useCallback(async () => {
         const sequence = ++requestSequence.current;
@@ -434,10 +449,10 @@ export function BusquedaBienes({
     }, [buildRequest, conn]);
 
     React.useEffect(() => {
-        if(hasSearched){
+        if(hasSearched && vista === 'listado'){
             void loadRows();
         }
-    }, [hasSearched, loadRows, searchVersion]);
+    }, [hasSearched, loadRows, searchVersion, vista]);
 
     const exportRows = React.useCallback(async () => {
         setLoading(true);
@@ -714,19 +729,35 @@ export function BusquedaBienes({
     }
 
     return <Box sx={{p:{xs:1, md:2}}}>
-        <Tabs
-            value={tab}
-            onChange={(_event, value:number) => {
-                clearSelection();
-                setTab(value);
-                setPaginationModel(current => ({...current, page:0}));
-            }}
-            sx={{mb:2}}
-        >
-            <Tab label="Bienes activos"/>
-            <Tab label="Bienes en baja"/>
-            <Tab label="Todos"/>
-        </Tabs>
+        <Stack direction="row" alignItems="center" spacing={2} sx={{mb:2}} flexWrap="wrap" useFlexGap>
+            <Tabs
+                value={tab}
+                onChange={(_event, value:number) => {
+                    clearSelection();
+                    setTab(value);
+                    setPaginationModel(current => ({...current, page:0}));
+                }}
+            >
+                <Tab label="Bienes activos"/>
+                <Tab label="Bienes en baja"/>
+                <Tab label="Todos"/>
+            </Tabs>
+            <Box sx={{flex:1}}/>
+            <ToggleButtonGroup
+                exclusive
+                size="small"
+                value={vista}
+                onChange={(_event, valor:'listado'|'resumen'|null) => {
+                    if(valor){
+                        setVista(valor);
+                        if(valor === 'resumen'){ setResumenAbierto(true); }
+                    }
+                }}
+            >
+                <ToggleButton value="listado">listado</ToggleButton>
+                <ToggleButton value="resumen">resumen</ToggleButton>
+            </ToggleButtonGroup>
+        </Stack>
 
         <FiltrosCompuestos
             filters={filters}
@@ -773,11 +804,50 @@ export function BusquedaBienes({
             {avisoMasivo}
         </Alert>}
 
+        {vista === 'listado' && grupoFiltro
+            ? <Stack direction="row" spacing={1} alignItems="center" sx={{mb:1}}>
+                <Chip
+                    color="primary"
+                    variant="outlined"
+                    label={grupoFiltro.partes
+                        .map((_parte, i) => `${grupoFiltro.etiquetas[i]}: ${grupoFiltro.textos[i]}`)
+                        .join(' · ')}
+                    onDelete={() => {
+                        clearSelection();
+                        setGrupoFiltro(null);
+                        setPaginationModel(current => ({...current, page:0}));
+                    }}
+                />
+                {resumenAbierto
+                    ? <Button size="small" onClick={() => setVista('resumen')}>volver al resumen</Button>
+                    : null}
+            </Stack>
+            : null}
+
         {!hasSearched
             ? <Alert severity="info">
                 Configurá los filtros y pulsá Buscar para consultar bienes.
             </Alert>
-            : <Box sx={{
+            : <>
+            {resumenAbierto
+                ? <Box sx={{display:vista === 'resumen' ? 'block' : 'none'}}>
+                    <ResumenBienes
+                        conn={conn}
+                        consulta={consultaResumen}
+                        version={searchVersion}
+                        visible={vista === 'resumen'}
+                        grupoActivo={grupoFiltro?.partes ?? null}
+                        onElegirGrupo={(partes, textos, etiquetas) => {
+                            clearSelection();
+                            setGrupoFiltro({partes, textos, etiquetas});
+                            setPaginationModel(current => ({...current, page:0}));
+                            setVista('listado');
+                        }}
+                    />
+                </Box>
+                : null}
+            {vista === 'listado'
+            ? <Box sx={{
                 height:'calc(100vh - 330px)',
                 minHeight:480,
                 width:'100%',
@@ -823,6 +893,8 @@ export function BusquedaBienes({
                     localeText={bienesGridLocaleText}
                 />
             </Box>
+            : null}
+            </>
         }
         {fixedFields.length > 0 && <Box sx={{display:'none'}} data-fixed-fields={fixedFields.length}/>}
         <EdicionMasivaBienes

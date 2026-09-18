@@ -4,6 +4,11 @@ import {
     BienesBusquedaOperator,
     BienesBusquedaRequest,
 } from '../common/contracts';
+import {
+    DimensionAgrupar,
+    GrupoFiltro,
+    MAXIMO_DIMENSIONES,
+} from '../common/bienes-agrupar';
 
 export type BienesBusquedaFieldInfo = {
     typeName: string;
@@ -16,6 +21,7 @@ export type BienesBusquedaQueryOptions = {
     resolveSqlFieldName?: (publicName:string) => string;
     allowedAttributes?: Record<string, BienesBusquedaFieldInfo>;
     withoutPagination?: boolean;
+    dimensiones?: Readonly<Record<string, DimensionSql>>;
 };
 
 export type BienesBusquedaQueries = {
@@ -42,6 +48,59 @@ const OPERATORS = new Set<BienesBusquedaOperator>([
 ]);
 
 const PAGE_SIZES = new Set([10, 25, 50, 100]);
+
+export type DimensionSql = (addValue: (value: unknown) => string) => {valor: string, texto: string};
+
+function opcional<K extends string, V>(clave: K, valor: V | undefined): Partial<Record<K, V>> {
+    return valor === undefined ? {} : {[clave]: valor} as Record<K, V>;
+}
+
+function parseDimension(value: unknown): DimensionAgrupar {
+    if (typeof value !== 'string' || value.trim() === '' || value.length > 200) {
+        throw new Error(`No se puede agrupar por: ${String(value)}`);
+    }
+    return value;
+}
+
+function parseAgruparPor(value: unknown): DimensionAgrupar[] | undefined {
+    if (value == null) {
+        return undefined;
+    }
+    if (!Array.isArray(value)) {
+        throw new Error('agruparPor debe ser una lista');
+    }
+    const dimensiones = value.map(parseDimension);
+    if (dimensiones.length > MAXIMO_DIMENSIONES) {
+        throw new Error(`Se puede agrupar por hasta ${MAXIMO_DIMENSIONES} dimensiones`);
+    }
+    if (new Set(dimensiones).size !== dimensiones.length) {
+        throw new Error('No se puede agrupar dos veces por la misma dimensión');
+    }
+    return dimensiones;
+}
+
+function parseGrupoFiltro(value: unknown): GrupoFiltro[] | undefined {
+    if (value == null) {
+        return undefined;
+    }
+    if (!Array.isArray(value)) {
+        throw new Error('grupoFiltro debe ser una lista');
+    }
+    if (value.length > MAXIMO_DIMENSIONES) {
+        throw new Error(`El grupo tiene más de ${MAXIMO_DIMENSIONES} dimensiones`);
+    }
+    return value.map((item) => {
+        if (item == null || typeof item !== 'object') {
+            throw new Error('Cada parte del grupo debe ser un objeto');
+        }
+        const parte = item as Record<string, unknown>;
+        const valor = parte.valor;
+        if (valor != null && typeof valor !== 'string') {
+            throw new Error('El valor del grupo debe ser texto o nulo');
+        }
+        return {dimension: parseDimension(parte.dimension), valor: valor ?? null};
+    });
+}
 
 function parseFilter(value: unknown): BienesBusquedaFilter {
     if (value == null || typeof value !== 'object') {
@@ -138,6 +197,8 @@ export function parseBienesBusquedaRequest(value: unknown): BienesBusquedaReques
         page,
         pageSize: pageSize as BienesBusquedaRequest['pageSize'],
         sortModel,
+        ...opcional('agruparPor', parseAgruparPor(request.agruparPor)),
+        ...opcional('grupoFiltro', parseGrupoFiltro(request.grupoFiltro)),
     };
 }
 
@@ -348,11 +409,10 @@ function quickSearchSql(
     }).join(' AND ')})`;
 }
 
-export function buildBienesBusquedaQueries(
-    requestValue: BienesBusquedaRequest | unknown,
+function buildFiltradoCte(
+    request: BienesBusquedaRequest,
     options: BienesBusquedaQueryOptions,
-): BienesBusquedaQueries {
-    const request = parseBienesBusquedaRequest(requestValue);
+): {cte: string, filterValues: unknown[], addValue: (value: unknown) => string} {
     const filterValues: unknown[] = [];
     const addValue = (value: unknown): string => {
         filterValues.push(value);
@@ -379,6 +439,40 @@ export function buildBienesBusquedaQueries(
     if (quickCondition) {
         where.push(quickCondition);
     }
+    for (const {dimension, valor} of request.grupoFiltro ?? []) {
+        const expresion = sqlDeDimension(dimension, options, addValue).valor;
+        where.push(valor == null
+            ? `(${expresion}) IS NULL`
+            : `(${expresion}) = ${addValue(valor)}::text`);
+    }
+    const cte = `WITH bienes_filtrados AS (
+        SELECT b.*
+          FROM (${options.baseSql}) b
+         WHERE ${where.join('\n           AND ')}
+    )`;
+    return {cte, filterValues, addValue};
+}
+
+function sqlDeDimension(
+    dimension: DimensionAgrupar,
+    options: BienesBusquedaQueryOptions,
+    addValue: (value: unknown) => string,
+): {valor: string, texto: string} {
+    const armar = options.dimensiones && Object.prototype.hasOwnProperty.call(options.dimensiones, dimension)
+        ? options.dimensiones[dimension]
+        : undefined;
+    if (!armar) {
+        throw new Error(`No se puede agrupar por: ${dimension}`);
+    }
+    return armar(addValue);
+}
+
+export function buildBienesBusquedaQueries(
+    requestValue: BienesBusquedaRequest | unknown,
+    options: BienesBusquedaQueryOptions,
+): BienesBusquedaQueries {
+    const request = parseBienesBusquedaRequest(requestValue);
+    const {cte, filterValues} = buildFiltradoCte(request, options);
     const requestedSorts = request.sortModel.length
         ? request.sortModel
         : [{field: 'ficha', sort: 'asc' as const}];
@@ -391,11 +485,6 @@ export function buildBienesBusquedaQueries(
         }
         return `bf.${quoteIdentifier(sqlFieldName(field, options))} ${sort.toUpperCase()}`;
     }).join(', ');
-    const cte = `WITH bienes_filtrados AS (
-        SELECT b.*
-          FROM (${options.baseSql}) b
-         WHERE ${where.join('\n           AND ')}
-    )`;
     const countSql = `${cte}
         SELECT count(*)::integer AS total
           FROM bienes_filtrados`;
@@ -429,6 +518,41 @@ export function buildBienesBusquedaQueries(
         dataValues,
         countValues: [...filterValues],
     };
+}
+
+export type BienesAgrupadoQuery = {
+    dimensiones: DimensionAgrupar[];
+    sql: string;
+    values: unknown[];
+};
+
+export function buildBienesAgrupadoQuery(
+    requestValue: BienesBusquedaRequest | unknown,
+    options: BienesBusquedaQueryOptions,
+): BienesAgrupadoQuery {
+    const request = parseBienesBusquedaRequest(requestValue);
+    const dimensiones = request.agruparPor ?? [];
+    if (dimensiones.length === 0) {
+        throw new Error('Hay que indicar por qué agrupar');
+    }
+    const {cte, filterValues, addValue} = buildFiltradoCte(request, options);
+    const columnas = dimensiones.map((dimension, i) => {
+        const {valor, texto} = sqlDeDimension(dimension, options, addValue);
+        return `${valor} AS valor_${i},\n               ${texto} AS texto_${i}`;
+    }).join(',\n               ');
+    const valores = dimensiones.map((_dimension, i) => `d.valor_${i}`);
+    const textos = dimensiones.map((_dimension, i) => `min(d.texto_${i})`);
+    const sql = `${cte}
+        SELECT jsonb_build_array(${valores.join(', ')}) AS valores,
+               jsonb_build_array(${textos.join(', ')}) AS textos,
+               count(*)::integer AS cantidad
+          FROM bienes_filtrados b
+          CROSS JOIN LATERAL (
+            SELECT ${columnas}
+          ) d
+         GROUP BY ${valores.join(', ')}
+         ORDER BY cantidad DESC, ${textos.map(texto => `${texto} NULLS LAST`).join(', ')}`;
+    return {dimensiones, sql, values: filterValues};
 }
 
 function csvCell(value: unknown): string {

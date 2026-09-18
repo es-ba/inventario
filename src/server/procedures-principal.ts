@@ -6,6 +6,7 @@ import { ProcedureContext, ProcedureDef, UploadedFileInfo } from './types-princi
 import {
     BienesAtributosOpcionesResponse,
     BienesAtributoValoresOpcionesResponse,
+    BienesBuscarAgrupadoParameters,
     BienesBuscarAvanzadoParameters,
     BienesBusquedaExportarParameters,
     BienesBusquedaResponse,
@@ -13,10 +14,14 @@ import {
 } from '../common/contracts';
 import {selectBienesGridFields} from '../common/bienes-busqueda';
 import {
+    BienesBusquedaQueryOptions,
+    buildBienesAgrupadoQuery,
     buildBienesBusquedaQueries,
     parseBienesBusquedaRequest,
     rowsToCsv,
 } from './bienes-busqueda-query';
+import type {BienesAgrupadoFila, BienesAgrupadoResponse, BienesDimensionesResponse} from '../common/bienes-agrupar';
+import {DefinicionDeTabla, armarCatalogoDeDimensiones} from './bienes-dimensiones';
 import {
     normalizeBienesPresentationRows,
     resolveBienesPresentationSqlFieldName,
@@ -97,15 +102,15 @@ function tipoAtributoParaBusqueda(value:unknown):string{
     return 'text';
 }
 
-async function prepararBusquedaBienes(context:ProcedureContext, consulta:unknown, withoutPagination = false){
-    const request = parseBienesBusquedaRequest(consulta);
+async function opcionesBusquedaBienes(context:ProcedureContext, withoutPagination = false){
     const tableDef = bienes(context);
     const allowedFields = Object.fromEntries(
         tableDef.fields.map(field => [field.name, {typeName:field.typeName}])
     );
     const attributesResult = await context.client.query(`
-        SELECT atributo, tipo_valor
+        SELECT atributo, nombre, tipo_valor
           FROM bienes_atributos
+         ORDER BY atributo
     `).fetchAll();
     const allowedAttributes = Object.fromEntries(
         attributesResult.rows.map(row => [
@@ -113,14 +118,33 @@ async function prepararBusquedaBienes(context:ProcedureContext, consulta:unknown
             {typeName:tipoAtributoParaBusqueda(row.tipo_valor)}
         ])
     );
-    const queries = buildBienesBusquedaQueries(request, {
+    const catalogo = armarCatalogoDeDimensiones(
+        tableDef as unknown as DefinicionDeTabla,
+        nombre => {
+            const definir = context.be.tableStructures[nombre];
+            return definir ? definir(context) as unknown as DefinicionDeTabla : undefined;
+        },
+        attributesResult.rows.map(row => ({
+            atributo:String(row.atributo),
+            nombre:row.nombre == null ? null : String(row.nombre),
+        })),
+    );
+    const options:BienesBusquedaQueryOptions = {
         baseSql:sqlBienes,
         visibilitySql:sqlVisibilidad('b.ficha'),
         allowedFields,
         resolveSqlFieldName:resolveBienesPresentationSqlFieldName,
         allowedAttributes,
         withoutPagination,
-    });
+        dimensiones:catalogo.sql,
+    };
+    return {tableDef, options, catalogo};
+}
+
+async function prepararBusquedaBienes(context:ProcedureContext, consulta:unknown, withoutPagination = false){
+    const request = parseBienesBusquedaRequest(consulta);
+    const {tableDef, options} = await opcionesBusquedaBienes(context, withoutPagination);
+    const queries = buildBienesBusquedaQueries(request, options);
     return {request, tableDef, queries};
 }
 
@@ -398,6 +422,38 @@ export const ProceduresInventario:ProcedureDef[] = [
             return {
                 fileName:`bienes-${new Date().toISOString().slice(0, 10)}.csv`,
                 csv:rowsToCsv(rows, fields),
+            };
+        }
+    },
+    {
+        action:'bienes_dimensiones_agrupar',
+        parameters:[],
+        coreFunction:async function(context:ProcedureContext):Promise<BienesDimensionesResponse>{
+            const {catalogo} = await opcionesBusquedaBienes(context, true);
+            return {dimensiones:catalogo.disponibles};
+        }
+    },
+    {
+        action:'bienes_buscar_agrupado',
+        parameters:[
+            {name:'consulta', typeName:'text'},
+        ],
+        coreFunction:async function(
+            context:ProcedureContext,
+            params:BienesBuscarAgrupadoParameters,
+        ):Promise<BienesAgrupadoResponse>{
+            const {options} = await opcionesBusquedaBienes(context, true);
+            const consulta = buildBienesAgrupadoQuery(params.consulta, options);
+            const result = await context.client.query(consulta.sql, consulta.values).fetchAll();
+            const rows:BienesAgrupadoFila[] = result.rows.map(row => ({
+                valores:row.valores as (string|null)[],
+                textos:row.textos as (string|null)[],
+                cantidad:Number(row.cantidad),
+            }));
+            return {
+                dimensiones:consulta.dimensiones,
+                rows,
+                total:rows.reduce((suma, row) => suma + row.cantidad, 0),
             };
         }
     },
@@ -1136,7 +1192,8 @@ export const ProceduresInventario:ProcedureDef[] = [
                     (tipo_asignacion, modalidad_uso, responsable, sector, sede, espacio,
                      puesto, accion, detalle, usuario_creacion, campos_vaciar)
                     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb)
-                    returning acta, estado
+                    returning acta, estado,
+                        (select e.desc_estado from estados e where e.estado = movimientos_solicitudes.estado) as desc_estado
             `, [
                 texto(params.tipo_asignacion),
                 texto(params.modalidad_uso),
@@ -1164,7 +1221,7 @@ export const ProceduresInventario:ProcedureDef[] = [
             return {
                 message: `Se creó la solicitud ${acta} con ${detalle.rows.length} bienes`
                     + (noEncontrados > 0 ? ` (${noEncontrados} no se encontraron)` : '')
-                    + `, en estado ${cabecera.row.estado}.`
+                    + `, en estado ${cabecera.row.desc_estado ?? cabecera.row.estado}.`
                     + ` Los movimientos se generan cuando la solicitud llegue al final del circuito.`,
                 acta,
                 estado:cabecera.row.estado,

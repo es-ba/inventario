@@ -48,24 +48,17 @@ export function useRowEditor({
     const [original, setOriginal] = React.useState<Fila>(() => filaInicial ?? {});
     const [modificado, setModificado] = React.useState(false);
 
-    const huella = React.useMemo(() => {
-        if(!filaInicial){
-            return 'alta';
-        }
-        return primaryKey.map(pk => `${pk}=${String(filaInicial[pk] ?? '')}`).join('|');
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filaInicial, primaryKey.join(',')]);
-    const [huellaCargada, setHuellaCargada] = React.useState(huella);
+    const [filaCargada, setFilaCargada] = React.useState(filaInicial);
 
     React.useEffect(() => {
-        if(huella === huellaCargada){
+        if(filaInicial === filaCargada){
             return;
         }
         setRow(filaInicial ?? {[MARCA_NUEVA]:true});
         setOriginal(filaInicial ?? {});
         setModificado(false);
-        setHuellaCargada(huella);
-    }, [huella, huellaCargada, filaInicial]);
+        setFilaCargada(filaInicial);
+    }, [filaInicial, filaCargada]);
 
     const esAlta = React.useMemo(() => {
         if(row[MARCA_NUEVA]){

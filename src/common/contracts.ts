@@ -1,5 +1,6 @@
 
 import {DefinedType, is} from 'guarantee-type';
+import type {DimensionAgrupar, GrupoFiltro} from './bienes-agrupar';
 
 export type DireccionAccion = 'avance' | 'retroceso' | 'blanqueo'
 
@@ -58,6 +59,8 @@ export type BienesBusquedaRequest = {
     page: number;
     pageSize: 10 | 25 | 50 | 100;
     sortModel: BienesBusquedaSort[];
+    agruparPor?: DimensionAgrupar[];
+    grupoFiltro?: GrupoFiltro[];
 };
 
 const bienAtributoResumenDescription = {
@@ -125,6 +128,15 @@ export type BienesBusquedaExportarParameters = DefinedType<
 >;
 export type BienesBusquedaExportResponse = DefinedType<
     typeof bienes_busqueda_exportar.result
+>;
+
+export const bienes_buscar_agrupado = {
+    procedure:'bienes_buscar_agrupado',
+    parameters:is.object({consulta:is.string}),
+};
+
+export type BienesBuscarAgrupadoParameters = DefinedType<
+    typeof bienes_buscar_agrupado.parameters
 >;
 
 export type BienesAtributoOpcion = {
