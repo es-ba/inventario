@@ -92,6 +92,25 @@ export function sqlVisibilidad(columnaFicha:string = 'ficha'):string{
     return visibilidadDeBienes(columnaFicha);
 }
 
+const PUEDE_CONTROLAR = capacidad('puede_controlar');
+
+export function politicasControles(visibilidad:string):PoliticasDeTabla{
+    return {
+        select:{using:visibilidad},
+        insert:{check:`(${PUEDE_CONTROLAR}) AND ${visibilidad}`},
+        update:{using:`(${PUEDE_ELIMINAR}) AND ${visibilidad}`, check:`(${PUEDE_ELIMINAR}) AND ${visibilidad}`},
+        delete:{using:`(${PUEDE_ELIMINAR}) AND ${visibilidad}`},
+    };
+}
+
+export function politicasControlesBien(columnaFicha:string = 'ficha'):PoliticasDeTabla{
+    return politicasControles(visibilidadDeBienes(columnaFicha));
+}
+
+export function politicasControlesBienItems():PoliticasDeTabla{
+    return politicasControles(`control IN (SELECT control FROM controles_bien)`);
+}
+
 const PUEDE_VER_CLAVES = capacidad('puede_ver_claves');
 
 export function politicasClaves():PoliticasDeTabla{

@@ -71,6 +71,13 @@ import { jerarquias } from "./table-jerarquias";
 import { adjuntos_bienes } from "./table-adjuntos_bienes";
 import { adjuntos_solicitudes } from "./table-adjuntos_solicitudes";
 import { archivos_borrar } from "./table-archivos_borrar";
+import { items_control } from "./table-items_control";
+import { items_control_opciones } from "./table-items_control_opciones";
+import { items_control_grupos } from "./table-items_control_grupos";
+import { controles_bien } from "./table-controles_bien";
+import { controles_bien_items } from "./table-controles_bien_items";
+import { bienes_control } from "./table-bienes_control";
+import { ProceduresControles } from "./procedures-controles";
 
 import {contentDisposition, fechaParaNombre, nombreDeArchivo} from './nombre-archivo';
 import {staticConfigYaml} from './def-config';
@@ -242,6 +249,7 @@ export class AppInventario extends AppBackend{
             ...await super.getProcedures(),
             ...ProceduresInventario,
             ...ProceduresBajas,
+            ...ProceduresControles,
         ].map(be.procedureDefCompleter, be);
     }
 
@@ -282,10 +290,11 @@ export class AppInventario extends AppBackend{
                 {menuType: 'table', name: 'bienes', label: 'todos', selectedByDefault: true},
                 {menuType: 'table', name: 'bienes_activos', table: 'bienes', label: 'bienes en alta', ff: {activo: true}},
                 {menuType: 'table', name: 'bienes_inactivos', table: 'bienes', label: 'bienes en baja', ff: {activo: false}},
-            ]},            
+            ]},
         ];
 
-        if(puedeGuardar || puedeGestionarBajas){
+        const puedeControlar = !!context.forDump || puedeElRol(context.user?.rol, 'puede_controlar');
+        if(puedeGuardar || puedeGestionarBajas || puedeControlar){
             const operaciones:MenuInfoBase[] = [];
             if(puedeGuardar){
                 operaciones.push(
@@ -296,6 +305,12 @@ export class AppInventario extends AppBackend{
             }
             if(puedeGestionarBajas){
                 operaciones.push({menuType: 'bajas', name: 'proceso_baja', label: 'proceso de baja'});
+            }
+            if(puedeControlar){
+                operaciones.push(
+                    {menuType: 'controles', name: 'control_bienes', label: 'control de bienes'},
+                    {menuType: 'table', name: 'bienes_control', label: 'control de bienes (grilla)'},
+                );
             }
             menuContent.push({menuType: 'menu', name: 'operaciones', label: 'operaciones', menuContent:operaciones});
         }
@@ -357,7 +372,12 @@ export class AppInventario extends AppBackend{
                           {menuType: 'table', name: 'estados_baja_acciones', label: 'transiciones de baja'},
                           {menuType: 'table', name: 'estados_acciones', label: 'estados de acciones'},
                       {menuType: 'table', name: 'estados_declaracion', label: 'estados de declaración'},
-                      ]},                    
+                      ]},
+                    {menuType: 'menu', name: 'config_control_bienes', label: 'control de bienes', menuContent: [
+                        {menuType: 'table', name: 'items_control', label: 'ítems de control'},
+                        {menuType: 'table', name: 'items_control_opciones', label: 'opciones de ítems'},
+                        {menuType: 'table', name: 'items_control_grupos', label: 'grupos de ítems'},                    ]},
+
                     {menuType: 'menu', name: 'sistema', label: 'sistema y seguridad', menuContent: [
                         {menuType: 'table', name: 'usuarios', label: 'gestión de usuarios'},
                         {menuType: 'table', name: 'roles', label: 'roles de acceso'},
@@ -447,7 +467,13 @@ export class AppInventario extends AppBackend{
             movimientos_solicitudes_acciones,
             adjuntos_bienes,
             adjuntos_solicitudes,
-            archivos_borrar
+            archivos_borrar,
+            items_control,
+            items_control_opciones,
+            items_control_grupos,
+            controles_bien,
+            controles_bien_items,
+            bienes_control,
         }
     }
 }

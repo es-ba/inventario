@@ -148,6 +148,12 @@ LEFT JOIN espacios e ON e.espacio = g.espacio
 
 export const CLASES_PARQUE_TECNOLOGICO = ['4', '6'];
 
+export function condicionParqueTecnologico(alias:string):string{
+    return `${alias}.activo`
+        + ` AND btrim(coalesce(${alias}.rubro, '')) = '3'`
+        + ` AND btrim(coalesce(${alias}.clase, '')) IN (${CLASES_PARQUE_TECNOLOGICO.map(c => `'${c}'`).join(', ')})`;
+}
+
 export type AtributoDeGrilla = {atributo:string, nombre:string};
 
 let atributosDeBienes:AtributoDeGrilla[] = [];
@@ -228,9 +234,7 @@ SELECT
 FROM (${sqlBienes}) v
 LEFT JOIN sectores s ON s.sector = v.sector
 ${pivot}
-WHERE ${SOLO_ALTA}
-  AND btrim(coalesce(v.rubro, '')) = '3'
-  AND btrim(coalesce(v.clase, '')) IN (${CLASES_PARQUE_TECNOLOGICO.map(c => `'${c}'`).join(', ')})
+WHERE ${condicionParqueTecnologico('v')}
 `;
 }
 

@@ -30,7 +30,7 @@ export function sectores(context:TableContext):TableDefinition{
         foreignKeys:[
             {references:'sectores', fields:[{source:'pertenece_a', target:'sector'}], alias: 'pertenece_a'},
             {references:'tipo_sector', fields:['tipo_sector'], displayFields:['descripcion']},
-            {references:'responsables', fields:['responsable']},
+            {references:'responsables', fields:['responsable'], displayFields:['apellido', 'nombre']},
         ],
         detailTables:[
             {table:'sectores', fields:[{source:'sector', target:'pertenece_a'}],

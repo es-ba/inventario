@@ -21,7 +21,7 @@ const SIN_PERMISOS:InfoUsuario = {
     nombre:null, apellido:null, responsable:null, sector:null,
     puede_ver_todo:false, puede_ver_propio:false, puede_ver_dependientes:false,
     puede_ver_claves:false, puede_aprobar_baja:false, puede_restaurar_baja:false, puede_eliminar:false,
-    puede_guardar:false, puede_mover:false,
+    puede_guardar:false, puede_mover:false, puede_controlar:false,
 };
 
 type ValorContextoBase = {
@@ -120,6 +120,7 @@ export type Permisos = {
     aprobarBaja:boolean,
     restaurarBaja:boolean,
     verClaves:boolean,
+    controlar:boolean,
 };
 
 export function usePermisos():Permisos{
@@ -131,5 +132,6 @@ export function usePermisos():Permisos{
         aprobarBaja:!!info.puede_aprobar_baja,
         restaurarBaja:!!info.puede_restaurar_baja,
         verClaves:!!info.puede_ver_claves,
+        controlar:!!info.puede_controlar,
     }), [info]);
 }

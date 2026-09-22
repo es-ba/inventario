@@ -72,6 +72,9 @@ install:
       - ../install/bienes_baja_estado_trg.sql
       - ../install/declaraciones_estado_trg.sql
       - ../install/solicitudes_documentos_trg.sql
-logo: 
+logo:
   path: client/img
+inventario:
+  control:
+    dias_vigencia: 365
 `;

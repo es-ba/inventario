@@ -177,6 +177,7 @@ export const info_usuario = {
         puede_eliminar: is.nullable.boolean,
         puede_guardar: is.nullable.boolean,
         puede_mover: is.nullable.boolean,
+        puede_controlar: is.nullable.boolean,
     })
 }
 

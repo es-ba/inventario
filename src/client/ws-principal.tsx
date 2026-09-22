@@ -12,6 +12,7 @@ import {BusquedaBienes} from './principal/busqueda-bienes';
 import {BienFormulario} from './principal/bien/bien-formulario';
 import './ws-solicitudes';
 import './ws-bajas';
+import './ws-controles';
 import {
     renderConnectedAppInventario,
     unmountConnectedAppInventario,

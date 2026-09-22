@@ -21,6 +21,19 @@ export function normalizarFichaEAN13(ficha:unknown):string|null{
     return (`000000000000${text}`).slice(-12);
 }
 
+export function fichaDesdeEAN13(texto:unknown):string|null{
+    const codigo = String(texto ?? '').trim();
+    if(!/^\d{13}$/.test(codigo)){
+        return null;
+    }
+    const digitos = codigo.split('').map(Number);
+    const suma = digitos.slice(0, 12).reduce((total, digito, i) => total + digito * (i % 2 ? 3 : 1), 0);
+    if((10 - suma % 10) % 10 !== digitos[12]){
+        return null;
+    }
+    return codigo.slice(0, 12).replace(/^0+(?=\d)/, '');
+}
+
 export function prepararEtiquetasCodigosBarra(
     rows:readonly BienesBusquedaRow[],
 ):EtiquetaCodigoBarra[]{

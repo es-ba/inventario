@@ -1,0 +1,11 @@
+item|descripcion|tipo_valor|orden|activo
+ENCIENDE|Enciende|si_no|10|true
+PANTALLA|Estado de la pantalla|opcion|20|true
+BATERIA|Estado de la batería|opcion|30|true
+CARGA|Carga correctamente|si_no|40|true
+CARGADOR|Tiene cargador|si_no|50|true
+FUNDA|Tiene funda|si_no|60|true
+CHIP|Chip presente|si_no|70|true
+LINEA_ACTIVA|Línea activa|si_no|80|true
+IMEI_COINCIDE|IMEI coincide con el registrado|si_no|90|true
+VERSION_SO|Versión del sistema operativo|texto|100|true

@@ -46,6 +46,19 @@ export const PERTENENCIA_A_SECTOR:Record<string, {columna:string, sigla:string}>
     espacios:{columna:'espacio', sigla:'sectores__sigla'},
 };
 
+export const COLUMNAS_EXTRA_DE_ETIQUETA:Record<string, string[]> = {
+    sectores:['responsables__apellido', 'responsables__nombre'],
+};
+
+export function camposDeEtiqueta(referencia:string, ...listas:string[][]):string[]{
+    const pertenencia = PERTENENCIA_A_SECTOR[referencia];
+    return [
+        ...([] as string[]).concat(...listas),
+        ...(pertenencia ? [pertenencia.sigla] : []),
+        ...(COLUMNAS_EXTRA_DE_ETIQUETA[referencia] ?? []),
+    ].filter((nombre, i, todos) => nombre && todos.indexOf(nombre) === i);
+}
+
 export const GRUPO_PROPIO = 'del sector';
 export const GRUPO_AJENO = 'otros sectores';
 
@@ -109,10 +122,11 @@ function CampoReferencia({field, row, setField, disabled, error, size, excluidos
 
     const pares = paresDeReferencia(field);
     const camposVisibles = React.useMemo(() => {
-        const objetivos = pares.map(par => par.target);
-        const nombres = definicion?.nameFields ?? [];
-        const unidos = [...objetivos, ...nombres, ...(pertenencia ? [pertenencia.sigla] : [])]
-            .filter((nombre, i, todos) => nombre && todos.indexOf(nombre) === i);
+        const unidos = camposDeEtiqueta(
+            field.references ?? '',
+            pares.map(par => par.target),
+            definicion?.nameFields ?? [],
+        );
         return unidos.length ? unidos : [field.name];
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [definicion, field.name, field.references]);

@@ -37,3 +37,16 @@ El repo `frontend-inventario` **ya no se usa**. No trabajar ahí ni tomarlo como
 ## Adjuntos a bienes
 
 La tabla `adjuntos_bienes` permite asociar N archivos por bien. PK compuesta `(ficha, numero_adjunto)`. El procedure `archivo_subir` recibe el archivo via multipart y lo guarda en `local-attachments/<ficha>/<filename>`. Endpoint de descarga: `GET /download/adjunto_bien?ficha=...&numero_adjunto=...`. Borrado físico diferido por cron a las 23:58 vía tabla `archivos_borrar` + trigger `archivo_borrar_trg`.
+
+## Control de bienes
+
+Registro de controles físicos de los dispositivos del parque tecnológico (mismo alcance que el reporte: en alta, rubro 3, clases 4 y 6; `condicionParqueTecnologico` en `reportes-bienes.ts`).
+
+- Tablas: `controles_bien` (cabecera: fecha, observación, usuario; PK por secuencia) y `controles_bien_items` (valor por ítem). Catálogos: `items_control`, `items_control_opciones`, `items_control_grupos`. Vista `bienes_control` con el último control y la situación `NUNCA`/`VENCIDO`/`VIGENTE`.
+- Alta sólo por el procedure `control_registrar` (`procedures-controles.ts`); la validación es pura en `controles-bien.ts` (`planificarControl`). Requiere la capacidad `puede_controlar`.
+- Vigencia: `inventario.control.dias_vigencia` en `def-config.ts` (365), sobreescribible en `local-config.yaml`.
+- Pantalla React: wScreen `controles` (`ws-controles.tsx`, `principal/control/`).
+- Agregar un ítem: filas en `items_control` (y en `items_control_opciones` si es `opcion`). Limitarlo a grupos: filas en `items_control_grupos`; sin filas aplica a todos. `items_control_grupos.tab` vive en `inventario-data/provisorio` porque referencia `grupos`.
+- Sumar un tipo de ítem: agregarlo a `TIPOS_DE_ITEM` (`src/common/controles.ts`), un `case` en `validarValor` (`controles-bien.ts`) y otro en `ValorDeItem` (`control-bien.tsx`).
+- Grilla de backend-plus: `bienes_control` en el menú "operaciones" ("control de bienes (grilla)"), junto a la pantalla; las dos entradas se ven con `puede_controlar`, para consultar, filtrar y exportar. No permite dar de alta controles.
+- Pantalla: Enter en el buscador abre la ficha; acepta el EAN-13 de la etiqueta (`fichaDesdeEAN13` en `src/common/codigos-barra.ts`). El listado queda montado mientras se ve un bien, así se conservan filtros y página.

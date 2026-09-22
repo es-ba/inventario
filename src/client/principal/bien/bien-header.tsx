@@ -22,7 +22,6 @@ function comoTexto(valor:unknown):string{
 }
 
 const CAMPO_DESCRIPTIVO:Record<string, string> = {
-    responsable:'responsable_nombre',
     sector:'sector_sigla',
     sede:'sede_nombre',
     espacio:'espacio_numero',
@@ -31,6 +30,14 @@ const CAMPO_DESCRIPTIVO:Record<string, string> = {
 function conDescripcion(fila:Fila, campo:string):string{
     const descriptivo = CAMPO_DESCRIPTIVO[campo];
     return (descriptivo ? comoTexto(fila[descriptivo]) : '') || comoTexto(fila[campo]);
+}
+
+export function responsablesDelBien(row:Fila):{delSector:string, directo:string}{
+    const delSector = comoTexto(row.responsable_sector_nombre) || comoTexto(row.responsable_sector);
+    const directo = comoTexto(row.responsable_nombre) || comoTexto(row.responsable);
+    const mismoQueElSector = comoTexto(row.responsable) !== ''
+        && comoTexto(row.responsable) === comoTexto(row.responsable_sector);
+    return {delSector, directo:mismoQueElSector ? '' : directo};
 }
 
 function estaEnAlta(row:Fila):boolean{
@@ -88,7 +95,10 @@ export function BienHeader({
         || comoTexto(row.modelo);
     const enAlta = estaEnAlta(row);
     const categoria = comoTexto(row.categoria);
-    const responsable = conDescripcion(row, 'responsable');
+    const {delSector, directo} = responsablesDelBien(row);
+    const responsable = [delSector, directo ? `directo: ${directo}` : '']
+        .filter(parte => parte !== '')
+        .join(' · ');
     const asignacion = conDescripcion(row, 'tipo_asignacion');
     const ubicacion = [
         conDescripcion(row, 'sector'),

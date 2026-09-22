@@ -39,6 +39,8 @@ SELECT
     ult.enusode_responsable_nombre,
     ult.nombre_sector,
     ult.sector_sigla,
+    ult.responsable_sector,
+    ult.responsable_sector_nombre,
     ult.sede_nombre,
     ult.responsable_nombre,
     ult.espacio_numero,
@@ -64,6 +66,11 @@ LEFT JOIN LATERAL (
         mb.sector,
         ${textoONuloSql('a.nombre_sector')} AS nombre_sector,
         ${textoONuloSql('a.sigla')} AS sector_sigla,
+        ${textoONuloSql('a.responsable')} AS responsable_sector,
+        ${textoONuloSql(`concat_ws(', ',
+            nullif(btrim(rs.apellido), ''),
+            nullif(btrim(rs.nombre), '')
+        )`)} AS responsable_sector_nombre,
         mb.sede,
         ${textoONuloSql('s.descripcion')} AS sede_nombre,
         mb.responsable,
@@ -97,6 +104,7 @@ LEFT JOIN LATERAL (
         ${codigoTextoSql('mb.modalidad_uso', 'mu.descripcion')} AS modalidad_uso_texto
     FROM movimientos_bien mb
     LEFT JOIN sectores a ON a.sector = mb.sector
+    LEFT JOIN responsables rs ON rs.responsable = a.responsable
     LEFT JOIN sedes s ON s.sede = mb.sede
     LEFT JOIN responsables r ON r.responsable = mb.responsable
     LEFT JOIN responsables eur ON eur.responsable = mb.enusode_responsable
@@ -119,8 +127,10 @@ export function bienes(context:TableContext):TableDefinition{
         allow:{ delete:false, deleteAll:false },
         fields:[
             {name:'ficha'                       , typeName:'text'    },
-            {name:'responsable'                 , typeName:'text'    , editable:false, inTable:false},
-            {name:'responsable_nombre'          , typeName:'text'    , editable:false, inTable:false},
+            {name:'responsable_sector'          , typeName:'text'    , editable:false, inTable:false, title:'cód. responsable del sector'},
+            {name:'responsable_sector_nombre'   , typeName:'text'    , editable:false, inTable:false, title:'responsable del sector'},
+            {name:'responsable'                 , typeName:'text'    , editable:false, inTable:false, title:'cód. responsable directo'},
+            {name:'responsable_nombre'          , typeName:'text'    , editable:false, inTable:false, title:'responsable directo'},
             {name:'sector'                        , typeName:'text'    , editable:false, inTable:false},
             {name:'sector_sigla'                  , typeName:'text'    , editable:false, inTable:false},
             {name:'nombre_sector'                 , typeName:'text'    , editable:false, inTable:false},
@@ -203,6 +213,7 @@ export function bienes(context:TableContext):TableDefinition{
             {table:'adjuntos_bienes', fields:['ficha'], abr:'Adj', label:'Adjuntos'},
             {table:'declaraciones_bienes', fields:['ficha'], abr:'Dec', label:'Declaraciones'},
             {table:'claves_bienes', fields:['ficha'], abr:'Cla', label:'Claves'},
+            {table:'controles_bien', fields:['ficha'], abr:'Ctl', label:'Controles'},
         ],
         hiddenColumns: [
             'entidad_prestadora', 'fecha_inicio', 'fecha_fin', 'renovable', 'condiciones',
@@ -216,6 +227,7 @@ export function bienes(context:TableContext):TableDefinition{
             'ordenes_compra__codigo',
             'prd', 'imei', 'linea', 'categoria', 'annio',
             'sede', 'sede_nombre',
+            'responsable_sector',
         ],
         sql:{
             isTable: true,

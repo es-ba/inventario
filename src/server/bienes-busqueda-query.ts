@@ -390,6 +390,8 @@ function quickSearchSql(
         'clase',
         'cuenta',
         'responsable',
+        'responsable_sector',
+        'responsable_sector_nombre',
         'sector',
         'sede',
         'espacio',

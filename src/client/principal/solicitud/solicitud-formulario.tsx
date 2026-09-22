@@ -109,8 +109,7 @@ export function SolicitudFormulario({
         const cambiaSector = nombre === 'sector' && (filaEditada.sector ?? null) !== (valor ?? null);
         setField(nombre, valor);
         if(cambiaSector){
-            const {responsable, espacio} = destinoAlCambiarSector(valor, filaEditada);
-            setField('responsable', responsable || null);
+            const {espacio} = destinoAlCambiarSector(valor, filaEditada);
             setField('espacio', espacio || null);
         }
     }, [filaEditada, setField, destinoAlCambiarSector]);

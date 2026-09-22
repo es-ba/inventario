@@ -14,6 +14,11 @@ $BODY$
       WHERE nullif(get_app_user('sector'), '') IS NOT NULL
         AND sector_pertenece(s.sector, nullif(get_app_user('sector'), ''))
   ),
+  sectores_a_cargo AS (
+    SELECT s.sector
+      FROM sectores s
+      WHERE s.responsable = nullif(get_app_user('responsable'), '')
+  ),
   mis_personas AS (
     SELECT r.responsable
       FROM responsables r
@@ -22,6 +27,7 @@ $BODY$
   ultimo AS (
     SELECT DISTINCT ON (mb.ficha)
            mb.ficha,
+           nullif(btrim(mb.sector), '')              AS sector,
            nullif(btrim(mb.responsable), '')         AS responsable,
            nullif(btrim(mb.enusode_responsable), '') AS enusode_responsable
       FROM movimientos_bien mb
@@ -32,11 +38,13 @@ $BODY$
     CROSS JOIN capacidades c
     WHERE (
             c.propio
-            AND nullif(get_app_user('responsable'), '') IN (u.responsable, u.enusode_responsable)
+            AND (   nullif(get_app_user('responsable'), '') IN (u.responsable, u.enusode_responsable)
+                 OR u.sector IN (SELECT sector FROM sectores_a_cargo))
           )
        OR (
             c.dependientes
             AND (   u.responsable         IN (SELECT responsable FROM mis_personas)
-                 OR u.enusode_responsable IN (SELECT responsable FROM mis_personas))
+                 OR u.enusode_responsable IN (SELECT responsable FROM mis_personas)
+                 OR u.sector              IN (SELECT sector FROM mis_sectores))
           );
 $BODY$;

@@ -196,16 +196,10 @@ export function MoverBienes({
                 <ToggleButton value="directo">directo</ToggleButton>
             </ToggleButtonGroup>
 
-            <Typography variant="body2" color="text.secondary" sx={{mb:2}}>
-                {modo === 'acta'
-                    ? 'Se crea una solicitud de movimiento con los bienes seleccionados,'
-                        + ' con su número de acta asignado automáticamente. Los movimientos'
-                        + ' se registran cuando la solicitud recorra el circuito y llegue'
-                        + ' a Procesada.'
-                    : 'Los movimientos se registran ahora mismo, sin acta y sin pasar por'
-                        + ' el circuito de aprobación. Queda asentado en el historial de'
-                        + ' cada bien.'}
-            </Typography>
+            {modo === 'acta' ? <Typography variant="body2" color="text.secondary" sx={{mb:2}}>
+                Se crea una solicitud de movimiento con los bienes seleccionados.
+                Los movimientos se registran cuando la solicitud se procesa.
+            </Typography> : null}
 
             <Stack spacing={2}>
                 {(modo === 'acta' ? [CAMPO_ACCION, ...CAMPOS] : CAMPOS).map(campo => {
