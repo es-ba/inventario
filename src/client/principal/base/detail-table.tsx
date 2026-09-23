@@ -36,6 +36,7 @@ export type DetailTableProps = {
     anchoPanel?:number,
     columnasOcultas?:string[],
     columnasCalculadas?:string[],
+    columnasExtra?:GridColDef[],
     soloLectura?:boolean,
     textoAlta?:string,
     tituloAlta?:string,
@@ -49,6 +50,7 @@ export function DetailTable({
     anchoPanel = 480,
     columnasOcultas,
     columnasCalculadas,
+    columnasExtra,
     soloLectura: soloLecturaPedida = false,
     textoAlta = 'nuevo',
     tituloAlta,
@@ -109,7 +111,7 @@ export function DetailTable({
             ...(columnasOcultas ?? []),
         ]);
         const calculadas = new Set(columnasCalculadas ?? []);
-        return definicion.fields
+        return [...(columnasExtra ?? []), ...definicion.fields
             .filter(field => !ocultas.has(field.name)
                 && !field.clientSide
                 && (field.inTable !== false || field.referencedName != null || calculadas.has(field.name)))
@@ -119,8 +121,8 @@ export function DetailTable({
                 minWidth:80,
                 sortable:true,
                 valueFormatter:(valor:unknown) => formatearValor(valor),
-            }));
-    }, [columnasCalculadas, columnasOcultas, definicion, nombresFijos]);
+            }))];
+    }, [columnasCalculadas, columnasExtra, columnasOcultas, definicion, nombresFijos]);
 
     const idDeFila = React.useCallback((fila:Fila):string => {
         const pk = definicion?.primaryKey ?? [];

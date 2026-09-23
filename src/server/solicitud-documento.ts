@@ -56,11 +56,11 @@ export type DocumentoParams = {
 };
 
 const ORGANISMO = 'Instituto de Estadística y Censos de la Ciudad Autónoma de Buenos Aires';
-const DEPARTAMENTO = 'Departamento Técnico Legal';
+const DEPARTAMENTO = 'Departamento Patrimonio, Mesa de Entrada y Logística';
 
 export const CODIGO_FORMULARIO:Record<TipoDocumentoSolicitud, string> = {
-    comodato:'F-LEG-04 Rev. 0',
-    acta:'F-751-04 rev.A',
+    comodato:'F-SA-12 Rev. 7',
+    acta:'F-751-04 rev.6',
 };
 
 export const TITULO_DOCUMENTO:Record<TipoDocumentoSolicitud, string> = {
@@ -68,12 +68,8 @@ export const TITULO_DOCUMENTO:Record<TipoDocumentoSolicitud, string> = {
     acta:'Acta de entrega y devolución de equipamiento informático',
 };
 
-export function tituloDocumento(tipo:TipoDocumentoSolicitud, cabecera:CabeceraDocumento):string{
-    if(tipo !== 'acta'){
-        return TITULO_DOCUMENTO[tipo];
-    }
-    const {titulo} = TEXTO_OPERACION[operacionDeActa(cabecera.operacion)];
-    return `Acta de ${titulo} de equipamiento informático`;
+export function tituloDocumento(tipo:TipoDocumentoSolicitud, _cabecera:CabeceraDocumento):string{
+    return TITULO_DOCUMENTO[tipo];
 }
 
 const MESES = [
@@ -142,6 +138,7 @@ export function campo(nombre:string, valor:unknown, largo = 30):Record<string, u
     return {
         text:dato(texto, largo),
         bold:true,
+        noWrap:true,
         link:`${PREFIJO_CAMPO}${encodeURIComponent(nombre)}|${encodeURIComponent(texto)}`,
     };
 }
@@ -191,27 +188,33 @@ export function tablaDeItems(
     items:ItemDocumento[],
     tipo:TipoDocumentoSolicitud = 'comodato',
 ):Record<string, any>{
+    // El formulario reúne FICHA ESTANTE en una columna; tipo_bien no es un estante.
+    const columnas = COLUMNAS_ITEMS.filter(c => c.campo !== 'tipo_bien');
+    const filas = items.map(item => columnas.map(c => textoItem((item as any)[c.campo])));
+    const minimoFilas = tipo === 'comodato' ? 6 : 20;
+    while(filas.length < minimoFilas){
+        filas.push(columnas.map(() => ''));
+    }
     return {
         table:{
             headerRows:1,
             dontBreakRows:true,
-            widths:COLUMNAS_ITEMS.map(c => c.ancho),
+            widths:columnas.map(() => '*'),
+            heights:tipo === 'comodato' ? 14 : 16,
             body:[
-                COLUMNAS_ITEMS.map(c => ({
-                    text:c.campo === 'imei' ? TITULO_IMEI[tipo] : c.titulo,
+                columnas.map(c => ({
+                    text:c.campo === 'imei' ? TITULO_IMEI[tipo]
+                        : c.campo === 'ficha' ? 'FICHA ESTANTE' : c.titulo,
                     style:'encabezadoTabla',
                 })),
-                ...items.map(item =>
-                    COLUMNAS_ITEMS.map(c => textoItem((item as any)[c.campo]))
-                ),
+                ...filas,
             ],
         },
         layout:{
-            hLineWidth:(i:number, node:any) =>
-                i === 0 || i === 1 || i === node.table.body.length ? 0.8 : 0.3,
-            vLineWidth:() => 0.3,
-            hLineColor:() => '#999999',
-            vLineColor:() => '#cccccc',
+            hLineWidth:() => 0.5,
+            vLineWidth:() => 0.5,
+            hLineColor:() => '#000000',
+            vLineColor:() => '#000000',
         },
         margin:[0, 8, 0, 8],
     };
@@ -249,25 +252,25 @@ const CLAUSULAS:{titulo:string, texto:string}[] = [
     {titulo:'SÉPTIMA', texto:'El IDECBA podrá requerir en cualquier momento la devolución del bien objeto de la presente, y EL COMODATARIO deberá efectuar la entrega del mismo dentro de los DOS (2) días hábiles posteriores a la notificación. En ningún supuesto y bajo ningún concepto podrá EL COMODATARIO retener el bien prestado, una vez que el IDECBA solicite su reintegro. En caso de no restitución del bien en el plazo acordado, EL COMODATARIO quedará constituido en mora de pleno derecho, quedando facultado el IDECBA a homologar el presente convenio y solicitar judicialmente su reintegro con la sola presentación del mismo.'},
     {titulo:'OCTAVA', texto:'EL COMODATARIO se compromete a mantener en buen estado de conservación y a utilizar el bien recibido conforme su destino; así como a resguardar el bien entregado y no comercializarlo. En caso de robo o hurto del bien objeto del presente, EL COMODATARIO deberá comunicarse dentro de las veinticuatro (24) horas de acaecido el hecho, con su superior y con el Departamento Técnico Legal dependiente de la Dirección Legal Técnica y de Recursos Humanos del IDECBA, previo a realizar cualquier tipo de denuncia, a fin de ser instruido en el procedimiento que corresponda. El IDECBA podrá, ante la comunicación falsa o ausencia de la misma, iniciar las acciones que pudieren corresponder.'},
     {titulo:'NOVENA', texto:'EL COMODATARIO deberá solicitar oportunamente al IDECBA por cuenta de éste último, las reparaciones necesarias sobre el bien objeto del presente, con el fin de posibilitar una adecuada utilización del mismo.'},
-    {titulo:'DECIMA', texto:'El IDECBA y EL COMODATARIO constituyen domicilio especial en los señalados ut supra, donde tendrán validez todas las notificaciones judiciales y extrajudiciales.'},
+    {titulo:'DECIMA', texto:'El IDECBA y EL COMODATARIO constituyen domicilio especial en los señalados “ut supra”, donde tendrán validez todas las notificaciones judiciales y extrajudiciales.'},
     {titulo:'DECIMOPRIMERA', texto:'Para cualquier cuestión judicial, de común acuerdo las partes quedan sometidas a la competencia de los Juzgados Ordinarios de Primera Instancia con competencia en lo Contencioso Administrativo y Tributario de la Ciudad de Buenos Aires.'},
 ];
 
 const ESTILOS = {
-    codigo:{fontSize:7, color:'#666666'},
+    codigo:{fontSize:9, bold:true},
     organismo:{fontSize:9, bold:true},
-    departamento:{fontSize:8, color:'#444444'},
-    titulo:{fontSize:13, bold:true, alignment:'center' as const, margin:[0, 10, 0, 8]},
-    clausula:{fontSize:8.5, alignment:'justify' as const, margin:[0, 0, 0, 6]},
-    encabezadoTabla:{fontSize:8, bold:true, color:'#ffffff', fillColor:'#4a5568'},
+    departamento:{fontSize:9, bold:true, alignment:'right' as const},
+    titulo:{fontSize:12, bold:true, decoration:'underline', alignment:'center' as const, margin:[0, 16, 0, 20]},
+    clausula:{fontSize:10, lineHeight:1.25, alignment:'justify' as const, margin:[0, 0, 0, 10]},
+    encabezadoTabla:{fontSize:8, bold:true, alignment:'center' as const},
     etiqueta:{fontSize:8, color:'#555555'},
     pie:{fontSize:7, color:'#666666'},
 };
 
 function encabezado(tipo:TipoDocumentoSolicitud, logo?:string|null):unknown{
     const identidad:unknown[] = [];
-    if(logo){
-        identidad.push({image:logo, width:140, margin:[0, 0, 10, 0]});
+    if(logo && tipo === 'comodato'){
+        identidad.push({width:'*', stack:[{image:logo, width:140}]});
     }else{
         identidad.push({width:'*', stack:[
             {text:ORGANISMO, style:'organismo'},
@@ -301,7 +304,7 @@ function bloqueFirma(etiqueta:string):unknown{
                     {text:'_'.repeat(38), style:'pie'},
                     {text:'Aclaración', style:'etiqueta', margin:[0, 2, 0, 0]},
                 ]},
-            ], columnGap:24},
+            ], columnGap:24, margin:[0, 34, 0, 0]},
         ],
     };
 }
@@ -310,12 +313,13 @@ function contenidoComodato(params:DocumentoParams):unknown[]{
     const {cabecera} = params;
     const p = cabecera.persona;
     return [
+        ...(params.logo ? [{text:ORGANISMO, style:'organismo', alignment:'right'}] : []),
         {text:DEPARTAMENTO, style:'departamento'},
         {text:TITULO_DOCUMENTO.comodato, style:'titulo'},
         {
             style:'clausula',
             text:[
-                'Entre el ', ORGANISMO, ', en adelante IDECBA, representada en este acto por ',
+                'Entre el ', ORGANISMO, ', en adelante “IDECBA”, representada en este acto por ',
                 campo('representante', cabecera.representante, 34),
                 ' en su carácter de ',
                 campo('caracter_representante', cabecera.caracterRepresentante, 22),
@@ -327,7 +331,7 @@ function contenidoComodato(params:DocumentoParams):unknown[]{
                 ', situación de revista: ', campo('situacion_revista', p.situacionRevista, 24),
                 ' mail: ', campo('mail', p.mail, 28),
                 ', teléfono: ', campo('telefono', p.telefono, 18),
-                ' en adelante EL COMODATARIO convienen en celebrar el presente COMODATO'
+                ' en adelante “EL COMODATARIO” convienen en celebrar el presente COMODATO'
                 + ' sujeto a las siguientes cláusulas y condiciones:',
             ],
         },
@@ -341,6 +345,7 @@ function contenidoComodato(params:DocumentoParams):unknown[]{
         tablaDeItems(ordenarItems(params.items), 'comodato'),
         ...CLAUSULAS.map(c => ({
             style:'clausula',
+            ...(c.titulo === 'SEXTA' ? {pageBreak:'before'} : {}),
             text:[{text:`${c.titulo}: `, bold:true}, c.texto, ' -'],
         })),
         {
@@ -376,7 +381,7 @@ function contenidoActa(params:DocumentoParams):unknown[]{
                 ' en su carácter de ', campo('caracter', cabecera.persona.caracter, 24),
                 ' de la/ del misma/o, ',
                 {text:TEXTO_OPERACION[operacionDeActa(cabecera.operacion)].frase, bold:true},
-                ' de acuerdo al siguiente detalle:',
+                ` la cantidad de ${items.length} de acuerdo al siguiente detalle:`,
             ],
         },
         tablaDeItems(items, 'acta'),
@@ -389,9 +394,9 @@ export function buildDocumentoSolicitud(params:DocumentoParams):Record<string, a
     const items = ordenarItems(params.items);
     const codigo = calcularCodigoContenido(tipo, cabecera, items, emision.version);
     return {
-        pageSize:'A4',
-        pageOrientation:tipo === 'acta' ? 'landscape' : 'portrait',
-        pageMargins:[36, 36, 36, 48],
+        pageSize:tipo === 'acta' ? 'LETTER' : 'A4',
+        pageOrientation:'portrait',
+        pageMargins:[44, 42, 44, 48],
         info:{
             title:`${tituloDocumento(tipo, cabecera)} - acta ${cabecera.acta} (v${emision.version})`,
             author:`Sistema de inventario - ${ORGANISMO}`,

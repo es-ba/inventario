@@ -14,8 +14,8 @@ type Vista =
     {nombre:'listado'}
     | {nombre:'solicitud', acta?:string};
 
-function PantallaSolicitudes(){
-    const [vista, setVista] = React.useState<Vista>({nombre:'listado'});
+function PantallaSolicitudes({acta}:{acta?:string}){
+    const [vista, setVista] = React.useState<Vista>(acta ? {nombre:'solicitud', acta} : {nombre:'listado'});
 
     return <Paper square elevation={0} sx={{minHeight:'100vh'}}>
         <AppBar position="static">
@@ -62,6 +62,6 @@ myOwn.wScreens.solicitudes = function solicitudes(addrParams:any){
         myOwn as never as Connector,
         {...addrParams},
         layout,
-        () => <PantallaSolicitudes/>
+        () => <PantallaSolicitudes acta={addrParams.acta}/>
     );
 };

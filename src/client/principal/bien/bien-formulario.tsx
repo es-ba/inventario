@@ -7,12 +7,14 @@ import {
     Box,
     Button,
     CircularProgress,
+    IconButton,
     Stack,
     Tab,
     Tabs,
     Typography,
 } from '@mui/material';
-import {Edit, ExpandMore, LocalShipping} from '@mui/icons-material';
+import {Edit, ExpandMore, LocalShipping, OpenInNew} from '@mui/icons-material';
+import type {GridColDef} from '@mui/x-data-grid';
 import type {FieldDefinition, FixedFields, TableDefinition} from 'frontend-plus';
 
 import {useAvisos, useConexion, usePermisos} from '../base/contexto-base';
@@ -28,6 +30,7 @@ import {AuditoriaBien} from './auditoria-bien';
 import {BienHeader, ResumenDelBien} from './bien-header';
 import {AccionesBaja} from '../baja/acciones-baja';
 import {MoverBienes} from '../mover-bienes';
+import {unmountConnectedAppInventario} from '../render-connected-app-inventario';
 import {prepararEtiquetasCodigosBarra} from '../../../common/codigos-barra';
 import {imprimirEtiquetasCodigosBarra} from '../imprimir-codigos-barra';
 
@@ -63,6 +66,25 @@ const SECCIONES:{titulo:string, campos:string[], abiertaPorDefecto?:boolean}[] =
 const CAMPOS_MULTILINEA = new Set(['observacion', 'detalle', 'aclaracion', 'condiciones']);
 
 const COLUMNAS_DE_MOVIMIENTOS = ['responsable_nombre', 'responsable_sector_nombre'];
+
+const COLUMNA_SOLICITUD_ORIGEN:GridColDef[] = [{
+    field:'ir_a_solicitud',
+    headerName:'',
+    width:56,
+    sortable:false,
+    renderCell:({row}) => row.acta_origen == null ? null : <IconButton
+        size="small"
+        title={`Ir a la solicitud ${row.acta_origen}`}
+        aria-label={`ir a la solicitud ${row.acta_origen}`}
+        onClick={evento => {
+            evento.stopPropagation();
+            unmountConnectedAppInventario();
+            location.hash = `w=solicitudes&acta=${encodeURIComponent(String(row.acta_origen))}`;
+        }}
+    >
+        <OpenInNew fontSize="small"/>
+    </IconButton>,
+}];
 
 declare module 'frontend-plus' {
     interface BEAPI {
@@ -363,7 +385,8 @@ export function BienFormulario({
                     </Stack>
                     : null}
                 <DetailTable key={version} tabla="movimientos_bien" camposFijos={{ficha:fichaActual}}
-                    titulo="Movimientos" columnasCalculadas={COLUMNAS_DE_MOVIMIENTOS} soloLectura/>
+                    titulo="" columnasCalculadas={COLUMNAS_DE_MOVIMIENTOS}
+                    columnasExtra={COLUMNA_SOLICITUD_ORIGEN} soloLectura/>
             </>,
         },
         {
