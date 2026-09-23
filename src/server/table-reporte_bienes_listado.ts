@@ -18,7 +18,6 @@ export function reporte_bienes_listado(_context:TableContext):TableDefinition{
             {name:'serie'           , typeName:'text', title:'serie'              , nullable:true},
             {name:'activo'          , typeName:'boolean', title:'activo'          , nullable:false},
             {name:'estado'          , typeName:'text', title:'estado'             , nullable:true},
-            {name:'categoria'       , typeName:'text', title:'categoría'          , nullable:true},
             {name:'tipo_bien'       , typeName:'text', title:'tipo'               , nullable:true},
             {name:'rubro'           , typeName:'text', title:'rubro'              , nullable:true},
             {name:'clase'           , typeName:'text', title:'clase'              , nullable:true},
@@ -38,7 +37,6 @@ export function reporte_bienes_listado(_context:TableContext):TableDefinition{
         foreignKeys:[
             {references:'marcas'         , fields:['marca']          , displayFields:['descripcion']},
             {references:'estados_bien'   , fields:[{source:'estado', target:'estado_bien'}], displayFields:[]},
-            {references:'categoria_bien' , fields:['categoria'], displayFields:['descripcion']},
             {references:'cuentas'        , fields:['rubro', 'clase', 'cuenta'], displayFields:['nombre']},
             {references:'sectores'          , fields:['sector']           , displayFields:['sigla']},
             {references:'sectores', fields:[{source:'sector_responsable', target:'sector'}],

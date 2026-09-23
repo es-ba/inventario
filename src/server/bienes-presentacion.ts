@@ -26,6 +26,10 @@ function internalSqlName(publicName:string):string{
     return `${publicName}_texto`;
 }
 
+function codeFieldName(publicName:string):string{
+    return `${publicName}_codigo`;
+}
+
 export function resolveBienesPresentationSqlFieldName(publicName:string):string{
     return bienesPresentationFieldNames.has(publicName)
         ? internalSqlName(publicName)
@@ -39,6 +43,7 @@ export function normalizeBienesPresentationRow(
     for(const publicName of BIENES_PRESENTATION_FIELDS){
         const internalName = internalSqlName(publicName);
         if(Object.prototype.hasOwnProperty.call(normalized, internalName)){
+            normalized[codeFieldName(publicName)] = normalized[publicName] ?? null;
             normalized[publicName] = normalized[internalName];
             delete normalized[internalName];
         }

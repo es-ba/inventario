@@ -38,6 +38,15 @@ El repo `frontend-inventario` **ya no se usa**. No trabajar ahí ni tomarlo como
 
 La tabla `adjuntos_bienes` permite asociar N archivos por bien. PK compuesta `(ficha, numero_adjunto)`. El procedure `archivo_subir` recibe el archivo via multipart y lo guarda en `local-attachments/<ficha>/<filename>`. Endpoint de descarga: `GET /download/adjunto_bien?ficha=...&numero_adjunto=...`. Borrado físico diferido por cron a las 23:58 vía tabla `archivos_borrar` + trigger `archivo_borrar_trg`.
 
+## Estado del bien
+
+`bienes.estado` lo determina el sistema, no se edita a mano. Valores (catálogo `install/estados_bien.tab`), por precedencia: `BAJA` (inactivo), `BAJA_EN_TRAMITE` (baja SOLICITADA), `EN_MOVIMIENTO` (en una solicitud que no está en `B` ni `Pr`), `ASIGNADO` (último movimiento con sector), `SIN_ASIGNAR`.
+
+- Regla única: `bien_estado_calcular` en `install/bienes_estado.sql`. Los triggers AFTER sobre `movimientos_solicitudes` (cambio de estado) y `movimientos_bien` llaman a `bien_estado_recalcular`.
+- La baja lo calcula en el mismo UPDATE, dentro de `bienes_baja_estado_trg`, que además rechaza cualquier `estado` distinto del calculado.
+- El dump lo recalcula para todos con `install/bienes_estado_inicial.sql`, sin dejar historial. `bienes.tab` no trae la columna `estado`.
+- Sumar una condición nueva: se edita `bien_estado_calcular` y, si depende de otra tabla, se le agrega un trigger que llame a `bien_estado_recalcular`.
+
 ## Control de bienes
 
 Registro de controles físicos de los dispositivos del parque tecnológico (mismo alcance que el reporte: en alta, rubro 3, clases 4 y 6; `condicionParqueTecnologico` en `reportes-bienes.ts`).

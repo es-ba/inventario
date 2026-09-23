@@ -2,15 +2,15 @@
 
 import { TableContext, TableDefinition } from "types-principal";
 
-export function estados_bien(context:TableContext):TableDefinition{
-    var admin = context.user.rol==='admin';
+export function estados_bien(_context:TableContext):TableDefinition{
     return {
         name: 'estados_bien',
         elementName: 'estado_bien',
         title: 'Estados del bien',
-        editable: admin,
+        editable: false,
         fields:[
-            {name:'estado_bien'      , typeName:'text', isName:true},
+            {name:'estado_bien'      , typeName:'text'},
+            {name:'descripcion'      , typeName:'text', isName:true},
         ],
         primaryKey:['estado_bien']
     };

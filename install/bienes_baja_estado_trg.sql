@@ -4,7 +4,7 @@ CREATE OR REPLACE FUNCTION bienes_baja_estado_trg()
 RETURNS trigger LANGUAGE plpgsql AS $BODY$
 DECLARE
   v_accion text := nullif(current_setting('inventario.baja_accion', true), '');
-  v_usuario text := nullif(get_app_user(), '');
+  v_usuario text;
   v_guardar boolean;
   v_transicion estados_baja_acciones%ROWTYPE;
   v_permitido boolean;
@@ -14,7 +14,9 @@ DECLARE
     'restaurado_por','fecha_restauracion'];
   v_permitidos text[];
   v_campo text;
+  v_estado text;
 BEGIN
+  v_estado := bien_estado_calcular(NEW.ficha, NEW.activo, NEW.estado_baja);
   IF TG_OP = 'INSERT' THEN
     IF NEW.activo IS NOT TRUE OR EXISTS (
       SELECT 1 FROM unnest(v_campos) campo
@@ -22,6 +24,18 @@ BEGIN
     ) THEN
       RAISE EXCEPTION 'El bien nuevo debe estar activo y sin datos de baja';
     END IF;
+    IF NEW.estado IS NOT NULL AND NEW.estado IS DISTINCT FROM v_estado THEN
+      RAISE EXCEPTION 'El estado del bien lo determina el sistema (ficha %)', NEW.ficha;
+    END IF;
+    NEW.estado := v_estado;
+    RETURN NEW;
+  END IF;
+
+  IF NEW.estado IS DISTINCT FROM OLD.estado AND NEW.estado IS DISTINCT FROM v_estado THEN
+    RAISE EXCEPTION 'El estado del bien lo determina el sistema (ficha %)', OLD.ficha;
+  END IF;
+  NEW.estado := v_estado;
+  IF v_accion IS NULL AND (to_jsonb(NEW) - 'estado') = (to_jsonb(OLD) - 'estado') THEN
     RETURN NEW;
   END IF;
 
@@ -38,6 +52,7 @@ BEGIN
     RETURN NEW;
   END IF;
 
+  v_usuario := nullif(get_app_user(), '');
   IF v_usuario IS NULL THEN RAISE EXCEPTION 'Falta el usuario de la operación de baja'; END IF;
 
   SELECT * INTO v_transicion
@@ -62,7 +77,7 @@ BEGIN
     RAISE EXCEPTION 'La acción % debe llevar la ficha % al estado configurado', v_accion, OLD.ficha;
   END IF;
 
-  v_permitidos := string_to_array(v_transicion.campos_permitidos, ',');
+  v_permitidos := string_to_array(v_transicion.campos_permitidos, ',') || 'estado'::text;
   IF (to_jsonb(NEW) - v_permitidos) IS DISTINCT FROM (to_jsonb(OLD) - v_permitidos) THEN
     RAISE EXCEPTION 'La operación de baja no permite modificar otros campos de la ficha %', OLD.ficha;
   END IF;

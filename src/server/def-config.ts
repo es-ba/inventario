@@ -65,6 +65,7 @@ install:
       - ../install/responsables_id_trg.sql
       - ../install/ficha_sugerida.sql
       - ../install/movimientos_destino.sql
+      - ../install/bienes_estado.sql
       - ../install/movimientos_solicitudes_estado_trg.sql
       - ../install/solicitudes_integridad_trg.sql
       - ../install/solicitudes_responsable_sector_trg.sql
@@ -72,6 +73,7 @@ install:
       - ../install/bienes_baja_estado_trg.sql
       - ../install/declaraciones_estado_trg.sql
       - ../install/solicitudes_documentos_trg.sql
+      - ../install/bienes_estado_inicial.sql
 logo:
   path: client/img
 inventario:

@@ -25,6 +25,7 @@ const CAMPO_DESCRIPTIVO:Record<string, string> = {
     sector:'sector_sigla',
     sede:'sede_nombre',
     espacio:'espacio_numero',
+    estado:'estados_bien__descripcion',
 };
 
 function conDescripcion(fila:Fila, campo:string):string{
@@ -94,7 +95,7 @@ export function BienHeader({
         || comoTexto(row.observacion)
         || comoTexto(row.modelo);
     const enAlta = estaEnAlta(row);
-    const categoria = comoTexto(row.categoria);
+    const estado = conDescripcion(row, 'estado');
     const {delSector, directo} = responsablesDelBien(row);
     const responsable = [delSector, directo ? `directo: ${directo}` : '']
         .filter(parte => parte !== '')
@@ -136,8 +137,8 @@ export function BienHeader({
                         size="small"
                         color={enAlta ? 'success' : 'default'}
                     />
-                    {categoria
-                        ? <Chip label={categoria} size="small" variant="outlined"/>
+                    {estado
+                        ? <Chip label={estado} size="small" variant="outlined"/>
                         : null}
                 </Stack>
 

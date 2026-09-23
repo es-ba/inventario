@@ -1,6 +1,6 @@
-estado_bien
-NORMAL
-TRANSFERENCIA
-COMODATO
-BAJA
-ACTA
+estado_bien|descripcion
+BAJA|Bien dado de baja
+BAJA_EN_TRAMITE|Baja solicitada, pendiente de aprobación
+EN_MOVIMIENTO|En una solicitud de movimiento sin procesar
+ASIGNADO|Ubicado en un sector
+SIN_ASIGNAR|Sin sector asignado

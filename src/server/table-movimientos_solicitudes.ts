@@ -31,6 +31,7 @@ export function movimientos_solicitudes(context:TableContext):TableDefinition{
             {name:'espacio'                     , typeName:'text'    , nullable:true},
             {name:'puesto'                      , typeName:'integer' , nullable:true},
             {name:'usuario_final'               , typeName:'text'    , nullable:true},
+            {name:'enusode'                     , typeName:'text'    , nullable:true},
             {name:'enusode_responsable'         , typeName:'text'    , nullable:true},
             {name:'detalle'                     , typeName:'text'    , nullable:true},
             {name:'fecha_creacion'              , typeName:'date'    , nullable:false, defaultDbValue:'current_date'},
@@ -39,7 +40,6 @@ export function movimientos_solicitudes(context:TableContext):TableDefinition{
             {name:'usuario_modificacion'        , typeName:'text'    , nullable:true},
             {name:'autorizado_por'              , typeName:'text'    , nullable:true},
             {name:'firmado_por'                 , typeName:'text'    , nullable:true},
-            {name:'campos_vaciar'               , typeName:'jsonb'   , nullable:false, defaultDbValue:"'[]'::jsonb", editable:false},
             {name:'acta_rectificada'            , typeName:'bigint'  , nullable:true},
         ],
         primaryKey:['acta'],
@@ -68,7 +68,7 @@ export function movimientos_solicitudes(context:TableContext):TableDefinition{
             {table:'adjuntos_solicitudes', fields:['acta'], abr:'Adj', label:'Adjuntos'},
             {table:'movimientos_bien', fields:[{source:'acta', target:'acta_origen'}], abr:'Mov', label:'Movimientos resultantes'}
         ],
-        hiddenColumns:['campos_vaciar', 'usuario_final'],
+        hiddenColumns:['usuario_final'],
         sql:{
             policies:getPolicies(be)
         }

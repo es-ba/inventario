@@ -84,6 +84,7 @@ import {imprimirEtiquetasCodigosBarra} from './imprimir-codigos-barra';
 import {unmountConnectedAppInventario} from './render-connected-app-inventario';
 import {EdicionMasivaBienes} from './edicion-masiva-bienes';
 import {MoverBienes} from './mover-bienes';
+import type {Fila} from './base/tipos-tabla';
 import {BajaBienes} from './baja-bienes';
 import {usePermisos} from './base/contexto-base';
 
@@ -913,8 +914,7 @@ export function BusquedaBienes({
         <MoverBienes
             abierto={moverAbierto}
             conn={conn}
-            fichas={filasSeleccionadasEnOrden(rowSelectionModel, selectedRows)
-                .map(fila => String(fila.ficha))}
+            bienes={filasSeleccionadasEnOrden(rowSelectionModel, selectedRows) as unknown as Fila[]}
             onCerrar={() => setMoverAbierto(false)}
             onCreada={(mensaje) => {
                 setAvisoMasivo(mensaje);

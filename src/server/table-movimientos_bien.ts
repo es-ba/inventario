@@ -2,6 +2,24 @@
 
 import {TableDefinition, TableContext, AppBackend} from "./types-principal";
 import {politicasPorElBien} from "./politicas";
+import {textoONuloSql} from "./table-bienes";
+
+export const sqlMovimientosBien = `
+SELECT mb.*,
+    ${textoONuloSql(`concat_ws(', ',
+        nullif(btrim(r.apellido), ''),
+        nullif(btrim(r.nombre), '')
+    )`)} AS responsable_nombre,
+    ${textoONuloSql('s.responsable')} AS responsable_sector,
+    ${textoONuloSql(`concat_ws(', ',
+        nullif(btrim(rs.apellido), ''),
+        nullif(btrim(rs.nombre), '')
+    )`)} AS responsable_sector_nombre
+FROM movimientos_bien mb
+LEFT JOIN responsables r ON r.responsable = mb.responsable
+LEFT JOIN sectores s ON s.sector = mb.sector
+LEFT JOIN responsables rs ON rs.responsable = s.responsable
+`;
 
 export function getPolicies(_be?:AppBackend){
     return politicasPorElBien('ficha');
@@ -22,7 +40,13 @@ export function movimientos_bien(context:TableContext):TableDefinition{
             {name:'accion'                      , typeName:'text'    , nullable:true},
             {name:'modalidad_uso'               , typeName:'text'    , nullable:true},
             {name:'responsable'                 , typeName:'text'    , nullable:true},
+            {name:'responsable_nombre'          , typeName:'text'    , nullable:true, editable:false, inTable:false,
+                title:'responsable directo'},
             {name:'sector'                        , typeName:'text'    , nullable:true},
+            {name:'responsable_sector'          , typeName:'text'    , nullable:true, editable:false, inTable:false,
+                title:'cód. responsable del sector'},
+            {name:'responsable_sector_nombre'   , typeName:'text'    , nullable:true, editable:false, inTable:false,
+                title:'responsable del sector'},
             {name:'sede'                        , typeName:'text'    , nullable:true},
             {name:'espacio'                     , typeName:'text'    , nullable:true},
             {name:'puesto'                      , typeName:'integer' , nullable:true},
@@ -42,7 +66,7 @@ export function movimientos_bien(context:TableContext):TableDefinition{
         sortColumns:[{column:'orden', order:-1}], 
         foreignKeys:[
             {references:'bienes', fields:['ficha']},
-            {references:'responsables', fields:['responsable'], displayFields:['apellido', 'nombre']},
+            {references:'responsables', fields:['responsable'], displayFields:[]},
             {references:'responsables', fields:[{source:'enusode_responsable', target:'responsable'}],
                 alias:'enusode_responsable', displayFields:['apellido', 'nombre']},
             {references:'responsables', fields:[{source:'autorizado_por', target:'responsable'}],
@@ -51,17 +75,20 @@ export function movimientos_bien(context:TableContext):TableDefinition{
                 alias:'firmado_por', displayFields:['apellido', 'nombre']},
             {references:'usuarios', fields:[{source:'usuario_creacion' , target:'usuario'}], alias: 'usuario_creacion'},
             {references:'usuarios', fields:[{source:'usuario_modificacion' , target:'usuario'}], alias: 'usuario_modificacion'},
-            {references:'sectores', fields:['sector'], displayFields:['sigla']},
+            {references:'sectores', fields:['sector'], displayFields:['sigla', 'nombre_sector']},
             {references:'sedes', fields:['sede'], displayFields:['descripcion']},
             {references:'espacios', fields:['espacio'], displayFields:['numero', 'denominacion']},
             {references:'acciones_movimiento', fields:[{source:'accion', target:'accion_movimiento'}],
-                displayFields:['descripcion']},
-            {references:'tipo_asignacion', fields:['tipo_asignacion'], displayFields:['descripcion']},
-            {references:'modalidad_uso', fields:['modalidad_uso'], displayFields:['descripcion']},
+                displayFields:[]},
+            {references:'tipo_asignacion', fields:['tipo_asignacion'], displayFields:[]},
+            {references:'modalidad_uso', fields:['modalidad_uso'], displayFields:[]},
             {references:'movimientos_solicitudes', fields:[{source:'acta_origen', target:'acta'}], alias:'solicitud_origen'},
         ],
         constraints:[{constraintType:'unique', fields:['acta_origen', 'ficha']}],
+        hiddenColumns:['responsable_sector'],
         sql:{
+            isTable:true,
+            from:`(${sqlMovimientosBien})`,
             policies:getPolicies(be)
         }
     };

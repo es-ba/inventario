@@ -62,11 +62,11 @@ BEGIN
               'sede', new.sede,
               'espacio', new.espacio,
               'puesto', new.puesto,
+              'enusode', new.enusode,
               'enusode_responsable', new.enusode_responsable
-            )),
-            coalesce(new.campos_vaciar, '[]'::jsonb)
+            ))
           ),
-          origen = resolver_destino(msb.ficha, '{}'::jsonb, '[]'::jsonb),
+          origen = asignacion_actual(msb.ficha),
           orden_origen = coalesce((
             SELECT max(mb.orden) FROM movimientos_bien mb WHERE mb.ficha = msb.ficha
           ), 0)
@@ -107,7 +107,7 @@ BEGIN
         AND (
           coalesce((SELECT max(mb.orden) FROM movimientos_bien mb WHERE mb.ficha = msb.ficha), 0)
             IS DISTINCT FROM msb.orden_origen
-          OR resolver_destino(msb.ficha, '{}'::jsonb, '[]'::jsonb)
+          OR asignacion_actual(msb.ficha)
             IS DISTINCT FROM msb.origen
         );
     IF v_desactualizados > 0 THEN

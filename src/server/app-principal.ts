@@ -22,7 +22,6 @@ import { sedes } from "./table-sedes";
 import { tipo_bien } from "./table-tipo_bien";
 import { tipo_sector } from "./table-tipo_sector";
 import { sectores } from './table-sectores';
-import { categoria_bien } from "./table-categoria_bien";
 import { estados_baja } from "./table-estados_baja";
 import { estados_baja_acciones } from "./table-estados_baja_acciones";
 import { estados_bien } from "./table-estados_bien";
@@ -348,7 +347,6 @@ export class AppInventario extends AppBackend{
                 {menuType: 'menu', name: 'configuracion', label: 'configuración', menuContent: [
                     {menuType: 'menu', name: 'referenciales', label: 'tablas referenciales', menuContent: [
                         {menuType: 'table', name: 'tipo_bien', label: 'tipos de bien'},
-                        {menuType: 'table', name: 'categoria_bien', label: 'categorías de bien'},
                         {menuType: 'table', name: 'tipo_sector', label: 'tipos de sector'},
                         {menuType: 'table', name: 'tipo_espacio', label: 'tipos de espacio'},
                         {menuType: 'table', name: 'tipo_contrato', label: 'tipos de contrato'},
@@ -407,7 +405,6 @@ export class AppInventario extends AppBackend{
         this.getTableDefinition={
             ... this.getTableDefinition,
             usuarios    ,
-            categoria_bien,
             historial_bienes,
             historial_evento_bien,
             bienes_atributos,

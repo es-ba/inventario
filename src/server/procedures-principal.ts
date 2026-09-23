@@ -1050,8 +1050,9 @@ export const ProceduresInventario:ProcedureDef[] = [
             {name:'sede', typeName:'text'},
             {name:'espacio', typeName:'text'},
             {name:'puesto', typeName:'integer'},
+            {name:'enusode', typeName:'text'},
+            {name:'enusode_responsable', typeName:'text'},
             {name:'detalle', typeName:'text'},
-            {name:'campos_vaciar', typeName:'text'},
         ],
         proceedLabel:'mover',
         coreFunction: async function(context:ProcedureContext, params:any){
@@ -1091,12 +1092,10 @@ export const ProceduresInventario:ProcedureDef[] = [
                 responsable:texto(params.responsable),
                 sector:texto(params.sector), sede:texto(params.sede), espacio:texto(params.espacio),
                 puesto:puestoNumerico(params.puesto),
+                enusode:texto(params.enusode),
+                enusode_responsable:texto(params.enusode_responsable),
             }).filter(([_k, valor]) => valor != null));
-            const camposVaciar = JSON.parse(String(params.campos_vaciar || '[]'));
-            if(!Array.isArray(camposVaciar)){
-                throw new Error('No se pudo leer la lista de campos a vaciar');
-            }
-            if(Object.keys(destino).length === 0 && camposVaciar.length === 0){
+            if(Object.keys(destino).length === 0){
                 throw new Error('Hay que indicar al menos un dato de destino');
             }
 
@@ -1115,11 +1114,11 @@ export const ProceduresInventario:ProcedureDef[] = [
                            d.destino->>'tipo_asignacion', d.destino->>'modalidad_uso',
                            d.destino->>'responsable', d.destino->>'sector', d.destino->>'sede',
                            d.destino->>'espacio', nullif(d.destino->>'puesto','')::integer,
-                           d.destino->>'enusode', d.destino->>'enusode_responsable', $4, $5
+                           d.destino->>'enusode', d.destino->>'enusode_responsable', $3, $4
                         from unnest($1::text[]) AS f(ficha)
-                        cross join lateral (select resolver_destino(f.ficha, $2::jsonb, $3::jsonb) destino) d
+                        cross join lateral (select resolver_destino(f.ficha, $2::jsonb) destino) d
                     returning ficha
-            `, [unicas, JSON.stringify(destino), JSON.stringify(camposVaciar),
+            `, [unicas, JSON.stringify(destino),
                 texto(params.detalle), context.username]).fetchAll();
 
             const noEncontrados = unicas.length - insertados.rows.length;
@@ -1143,9 +1142,10 @@ export const ProceduresInventario:ProcedureDef[] = [
             {name:'sede', typeName:'text'},
             {name:'espacio', typeName:'text'},
             {name:'puesto', typeName:'integer'},
+            {name:'enusode', typeName:'text'},
+            {name:'enusode_responsable', typeName:'text'},
             {name:'accion', typeName:'text'},
             {name:'detalle', typeName:'text'},
-            {name:'campos_vaciar', typeName:'text'},
         ],
         proceedLabel:'crear',
         coreFunction: async function(context:ProcedureContext, params:any){
@@ -1175,10 +1175,6 @@ export const ProceduresInventario:ProcedureDef[] = [
                 throw new Error('No hay bienes seleccionados');
             }
 
-            const camposVaciar = JSON.parse(String(params.campos_vaciar || '[]'));
-            if(!Array.isArray(camposVaciar)){
-                throw new Error('No se pudo leer la lista de campos a vaciar');
-            }
 
             const disponibles = await client.query(
                 `SELECT ficha FROM bienes WHERE ficha = ANY($1::text[]) AND activo ORDER BY ficha FOR UPDATE`, [unicas]
@@ -1190,8 +1186,8 @@ export const ProceduresInventario:ProcedureDef[] = [
             const cabecera = await client.query(`
                 insert into movimientos_solicitudes
                     (tipo_asignacion, modalidad_uso, responsable, sector, sede, espacio,
-                     puesto, accion, detalle, usuario_creacion, campos_vaciar)
-                    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb)
+                     puesto, enusode, enusode_responsable, accion, detalle, usuario_creacion)
+                    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                     returning acta, estado,
                         (select e.desc_estado from estados e where e.estado = movimientos_solicitudes.estado) as desc_estado
             `, [
@@ -1202,10 +1198,11 @@ export const ProceduresInventario:ProcedureDef[] = [
                 texto(params.sede),
                 texto(params.espacio),
                 puestoNumerico(params.puesto),
+                texto(params.enusode),
+                texto(params.enusode_responsable),
                 texto(params.accion),
                 texto(params.detalle),
                 context.username,
-                JSON.stringify(camposVaciar),
             ]).fetchUniqueRow();
             const acta = cabecera.row.acta;
 

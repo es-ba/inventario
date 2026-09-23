@@ -247,7 +247,6 @@ SELECT
     ${textoONulo('v.serie')} AS serie,
     v.activo AS activo,
     ${textoONulo('v.estado')} AS estado,
-    ${textoONulo('v.categoria')} AS categoria,
     ${textoONulo('v.tipo_bien')} AS tipo_bien,
     ${textoONulo('v.rubro')} AS rubro,
     ${textoONulo('v.clase')} AS clase,

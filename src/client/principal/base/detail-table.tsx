@@ -35,6 +35,7 @@ export type DetailTableProps = {
     titulo?:string,
     anchoPanel?:number,
     columnasOcultas?:string[],
+    columnasCalculadas?:string[],
     soloLectura?:boolean,
     textoAlta?:string,
     tituloAlta?:string,
@@ -47,6 +48,7 @@ export function DetailTable({
     titulo,
     anchoPanel = 480,
     columnasOcultas,
+    columnasCalculadas,
     soloLectura: soloLecturaPedida = false,
     textoAlta = 'nuevo',
     tituloAlta,
@@ -106,19 +108,19 @@ export function DetailTable({
             ...(definicion.hiddenColumns ?? []),
             ...(columnasOcultas ?? []),
         ]);
+        const calculadas = new Set(columnasCalculadas ?? []);
         return definicion.fields
             .filter(field => !ocultas.has(field.name)
                 && !field.clientSide
-                && (field.inTable !== false || field.referencedName != null))
+                && (field.inTable !== false || field.referencedName != null || calculadas.has(field.name)))
             .map(field => ({
                 field:field.name,
                 headerName:encabezadoDeColumna(field),
-                flex:1,
-                minWidth:110,
+                minWidth:80,
                 sortable:true,
                 valueFormatter:(valor:unknown) => formatearValor(valor),
             }));
-    }, [columnasOcultas, definicion, nombresFijos]);
+    }, [columnasCalculadas, columnasOcultas, definicion, nombresFijos]);
 
     const idDeFila = React.useCallback((fila:Fila):string => {
         const pk = definicion?.primaryKey ?? [];
@@ -170,6 +172,8 @@ export function DetailTable({
                 }}
                 autoHeight
                 density="compact"
+                autosizeOnMount
+                autosizeOptions={{includeHeaders:true, includeOutliers:true, expand:true}}
                 pageSizeOptions={[10, 25, 50]}
                 initialState={{pagination:{paginationModel:{pageSize:10}}}}
                 localeText={bienesGridLocaleText}

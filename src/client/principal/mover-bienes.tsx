@@ -1,25 +1,35 @@
 import * as React from 'react';
 import {
     Alert,
+    Box,
     Button,
-    Checkbox,
     CircularProgress,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
-    FormControlLabel,
     Stack,
     TextField,
     ToggleButton,
     ToggleButtonGroup,
+    Tooltip,
     Typography,
 } from '@mui/material';
+import {ArrowForward, ContentCopy} from '@mui/icons-material';
 import type {Connector, FieldDefinition} from 'frontend-plus';
 
 import {FormFieldRenderer} from './base/form-field-renderer';
 import {useDestinoDelSector} from './base/destino-del-sector';
 import type {Fila} from './base/tipos-tabla';
+import {
+    CampoDelMovimiento,
+    CAMPOS_DEL_MOVIMIENTO,
+    Destino,
+    OrigenDeCampo,
+    copiarTodoElOrigen,
+    destinoAEnviar,
+    origenDeCampo,
+} from '../../common/movimiento-origen';
 
 
 declare module 'frontend-plus' {
@@ -33,8 +43,9 @@ declare module 'frontend-plus' {
             sede:string,
             espacio:string,
             puesto:string,
+            enusode:string,
+            enusode_responsable:string,
             detalle:string,
-            campos_vaciar:string,
         }) => Promise<{
             message:string,
             movimientos:number,
@@ -49,9 +60,10 @@ declare module 'frontend-plus' {
             sede:string,
             espacio:string,
             puesto:string,
+            enusode:string,
+            enusode_responsable:string,
             accion:string,
             detalle:string,
-            campos_vaciar:string,
         }) => Promise<{
             message:string,
             acta:string,
@@ -62,7 +74,7 @@ declare module 'frontend-plus' {
     }
 }
 
-function campoDeReferencia(name:keyof Cabecera, title:string, references:string, target:string){
+function campoDeReferencia(name:string, title:string, references:string, target:string){
     return {
         name, typeName:'text', title, references,
         referencesFields:[{source:name, target}],
@@ -70,102 +82,117 @@ function campoDeReferencia(name:keyof Cabecera, title:string, references:string,
 }
 
 const CAMPO_ACCION =
-    campoDeReferencia('accion'         , 'acción'             , 'acciones_movimiento', 'accion_movimiento');
+    campoDeReferencia('accion', 'acción', 'acciones_movimiento', 'accion_movimiento');
 
-const CAMPOS = [
-    campoDeReferencia('sector'         , 'sector'             , 'sectores'       , 'sector'),
-    campoDeReferencia('responsable'    , 'responsable'        , 'responsables'   , 'responsable'),
-    campoDeReferencia('sede'           , 'sede'               , 'sedes'          , 'sede'),
-    campoDeReferencia('espacio'        , 'espacio'            , 'espacios'       , 'espacio'),
-    {name:'puesto', typeName:'integer', title:'puesto'} as unknown as FieldDefinition,
-    campoDeReferencia('tipo_asignacion', 'tipo de asignación' , 'tipo_asignacion', 'tipo_asignacion'),
-    campoDeReferencia('modalidad_uso'  , 'modalidad de uso'   , 'modalidad_uso'  , 'modalidad_uso'),
-];
-
-type Cabecera = {
-    accion:string,
-    responsable:string,
-    sector:string,
-    sede:string,
-    espacio:string,
-    puesto:string,
-    tipo_asignacion:string,
-    modalidad_uso:string,
+const CAMPOS:Record<CampoDelMovimiento, FieldDefinition> = {
+    sector:campoDeReferencia('sector', 'sector', 'sectores', 'sector'),
+    responsable:campoDeReferencia('responsable', 'responsable', 'responsables', 'responsable'),
+    sede:campoDeReferencia('sede', 'sede', 'sedes', 'sede'),
+    espacio:campoDeReferencia('espacio', 'espacio', 'espacios', 'espacio'),
+    puesto:{name:'puesto', typeName:'integer', title:'puesto'} as unknown as FieldDefinition,
+    tipo_asignacion:campoDeReferencia('tipo_asignacion', 'tipo de asignación', 'tipo_asignacion', 'tipo_asignacion'),
+    modalidad_uso:campoDeReferencia('modalidad_uso', 'modalidad de uso', 'modalidad_uso', 'modalidad_uso'),
+    enusode_responsable:campoDeReferencia('enusode_responsable', 'responsable de uso', 'responsables', 'responsable'),
 };
 
-const CABECERA_VACIA:Cabecera = {
-    accion:'', responsable:'', sector:'', sede:'', espacio:'', puesto:'',
-    tipo_asignacion:'', modalidad_uso:'',
-};
-
-const CAMPOS_DE_DESTINO:(keyof Cabecera)[] = [
-    'responsable', 'sector', 'sede', 'espacio', 'puesto', 'tipo_asignacion', 'modalidad_uso',
-];
+function TextoDeOrigen({origen}:{origen:OrigenDeCampo}){
+    const [desplegado, setDesplegado] = React.useState(false);
+    if(origen.valores.length === 0){
+        return null;
+    }
+    if(origen.valores.length === 1){
+        const [valor] = origen.valores;
+        return <>
+            <Typography variant="body2">{valor.texto}</Typography>
+            {valor.detalle
+                ? <Typography variant="caption" color="text.secondary">{valor.detalle}</Typography>
+                : null}
+        </>;
+    }
+    if(origen.valores.length <= 3 || desplegado){
+        return <Stack spacing={0.25}>
+            {origen.valores.map(valor => <Box key={valor.codigo ?? ''}>
+                <Typography variant="body2">{valor.texto} ({valor.cantidad})</Typography>
+                {valor.detalle
+                    ? <Typography variant="caption" color="text.secondary">{valor.detalle}</Typography>
+                    : null}
+            </Box>)}
+        </Stack>;
+    }
+    return <Typography
+        variant="body2"
+        sx={{cursor:'pointer', textDecoration:'underline dotted'}}
+        onClick={() => setDesplegado(true)}
+    >
+        varios ({origen.valores.length})
+    </Typography>;
+}
 
 export function MoverBienes({
     abierto,
     conn,
-    fichas,
+    bienes,
     onCerrar,
     onCreada,
 }:{
     abierto:boolean,
     conn:Connector,
-    fichas:string[],
+    bienes:Fila[],
     onCerrar:() => void,
     onCreada:(mensaje:string) => void,
 }){
     const [modo, setModo] = React.useState<'acta'|'directo'>('acta');
+    const [accion, setAccion] = React.useState('');
     const [detalle, setDetalle] = React.useState('');
-    const [cabecera, setCabecera] = React.useState<Cabecera>(CABECERA_VACIA);
-    const [camposVaciar, setCamposVaciar] = React.useState<(keyof Cabecera)[]>([]);
+    const [destino, setDestino] = React.useState<Destino>({});
     const [error, setError] = React.useState<string|null>(null);
     const [trabajando, setTrabajando] = React.useState(false);
 
-    const {admitirPara, destinoAlCambiarSector} = useDestinoDelSector(cabecera.sector);
+    const fichas = React.useMemo(() => bienes.map(bien => String(bien.ficha)), [bienes]);
+    const origenes = React.useMemo(() => {
+        const porCampo = {} as Record<CampoDelMovimiento, OrigenDeCampo>;
+        for(const campo of CAMPOS_DEL_MOVIMIENTO){
+            porCampo[campo] = origenDeCampo(bienes, campo);
+        }
+        return porCampo;
+    }, [bienes]);
 
-    const ponerCampo = React.useCallback(
-        (nombre:string, valor:unknown) => {
-            const texto = valor == null ? '' : String(valor);
-            const cambios:Partial<Cabecera> = {[nombre]:texto};
-            if(nombre === 'sector' && texto !== cabecera.sector){
-                Object.assign(cambios, destinoAlCambiarSector(texto, cabecera));
-            }
-            setCabecera(previa => ({...previa, ...cambios}));
-            const completos = Object.entries(cambios)
-                .filter(([_campo, dato]) => String(dato ?? '').trim() !== '')
-                .map(([campo]) => campo);
-            if(completos.length){
-                setCamposVaciar(previos => previos.filter(campo => !completos.includes(campo)));
-            }
-        },
-        [cabecera, destinoAlCambiarSector],
-    );
+    const {admitirPara, destinoAlCambiarSector} = useDestinoDelSector(destino.sector ?? '');
 
     React.useEffect(() => {
         if(abierto){
             setModo('acta');
+            setAccion('');
             setDetalle('');
-            setCabecera(CABECERA_VACIA);
-            setCamposVaciar([]);
+            setDestino({});
             setError(null);
         }
     }, [abierto]);
 
-    const hayDestino = camposVaciar.length > 0
-        || CAMPOS_DE_DESTINO.some(campo => String(cabecera[campo] ?? '').trim() !== '');
-    const puedeCrear = hayDestino && fichas.length > 0;
+    const ponerValor = (campo:CampoDelMovimiento, valor:unknown) => {
+        const texto = valor == null ? '' : String(valor);
+        setDestino(previo => {
+            const nuevo:Destino = {...previo, [campo]:texto};
+            if(campo === 'sector'){
+                nuevo.espacio = destinoAlCambiarSector(texto, {espacio:previo.espacio ?? ''}).espacio;
+            }
+            return nuevo;
+        });
+    };
+
+    const aEnviar = destinoAEnviar(destino);
+    const puedeCrear = Object.keys(aEnviar).length > 0 && fichas.length > 0;
 
     const crear = React.useCallback(async () => {
         setTrabajando(true);
         setError(null);
         try{
-            const {accion, ...destino} = cabecera;
             const comun = {
                 fichas:JSON.stringify(fichas),
                 detalle:detalle.trim(),
-                campos_vaciar:JSON.stringify(camposVaciar),
-                ...destino,
+                tipo_asignacion:'', modalidad_uso:'', responsable:'', sector:'', sede:'', espacio:'', puesto:'',
+                enusode:'', enusode_responsable:'',
+                ...destinoAEnviar(destino),
             };
             const resultado = modo === 'directo'
                 ? await conn.ajax.bienes_mover_directo(comun)
@@ -177,9 +204,54 @@ export function MoverBienes({
         }finally{
             setTrabajando(false);
         }
-    }, [cabecera, conn, detalle, fichas, modo, onCerrar, onCreada]);
+    }, [accion, conn, destino, detalle, fichas, modo, onCerrar, onCreada]);
 
-    return <Dialog open={abierto} onClose={onCerrar} maxWidth="sm" fullWidth>
+    const columnas = {xs:'1fr', md:'1fr 32px 1.3fr 48px'};
+
+    const filaDeCampo = (campo:CampoDelMovimiento) => {
+        const origen = origenes[campo];
+        const codigo = origen.codigoUnico;
+        return <Box
+            key={campo}
+            sx={{display:'grid', gridTemplateColumns:columnas, gap:1, alignItems:'center', py:0.75}}
+        >
+            <Box sx={{order:{xs:2, md:1}}}>
+                <Typography variant="caption" color="text.secondary" sx={{display:{md:'none'}}}>
+                    origen · {CAMPOS[campo].title}
+                </Typography>
+                <TextoDeOrigen origen={origen}/>
+            </Box>
+            <Box sx={{order:{xs:3, md:2}, display:{xs:'none', md:'flex'}, justifyContent:'center'}}>
+                <ArrowForward fontSize="small" color="disabled"/>
+            </Box>
+            <Box sx={{order:{xs:1, md:3}, minWidth:0}}>
+                <FormFieldRenderer
+                    field={CAMPOS[campo]}
+                    row={{[campo]:destino[campo] ?? ''} as Fila}
+                    setField={(_nombre, valor) => ponerValor(campo, valor)}
+                    admitir={admitirPara(campo)}
+                    size="small"
+                />
+            </Box>
+            <Box sx={{order:4}}>
+                <Tooltip title={codigo == null
+                    ? 'el origen no es único o está sin asignar'
+                    : 'copiar el origen al destino'}>
+                    <span>
+                        <Button
+                            size="small"
+                            disabled={codigo == null}
+                            onClick={() => ponerValor(campo, codigo)}
+                        >
+                            <ContentCopy fontSize="small"/>
+                        </Button>
+                    </span>
+                </Tooltip>
+            </Box>
+        </Box>;
+    };
+
+    return <Dialog open={abierto} onClose={onCerrar} maxWidth="md" fullWidth>
         <DialogTitle>
             Mover {fichas.length} {fichas.length === 1 ? 'bien' : 'bienes'}
         </DialogTitle>
@@ -196,52 +268,59 @@ export function MoverBienes({
                 <ToggleButton value="directo">directo</ToggleButton>
             </ToggleButtonGroup>
 
-            {modo === 'acta' ? <Typography variant="body2" color="text.secondary" sx={{mb:2}}>
-                Se crea una solicitud de movimiento con los bienes seleccionados.
-                Los movimientos se registran cuando la solicitud se procesa.
-            </Typography> : null}
+            {modo === 'acta' ? <>
+                <Typography variant="body2" color="text.secondary" sx={{mb:2}}>
+                    Se crea una solicitud de movimiento con los bienes seleccionados.
+                    Los movimientos se registran cuando la solicitud se procesa.
+                </Typography>
+                <Box sx={{mb:2}}>
+                    <FormFieldRenderer
+                        field={CAMPO_ACCION}
+                        row={{accion} as Fila}
+                        setField={(_nombre, valor) => setAccion(valor == null ? '' : String(valor))}
+                        size="small"
+                    />
+                </Box>
+            </> : null}
 
-            <Stack spacing={2}>
-                {(modo === 'acta' ? [CAMPO_ACCION, ...CAMPOS] : CAMPOS).map(campo => {
-                    const admiteVaciar = campo.name !== 'accion';
-                    const vaciar = camposVaciar.includes(campo.name as keyof Cabecera);
-                    return <Stack key={campo.name} direction="row" spacing={1} alignItems="center">
-                        <Stack sx={{flex:1}}>
-                            <FormFieldRenderer
-                                field={campo}
-                                row={cabecera as unknown as Fila}
-                                setField={ponerCampo}
-                                admitir={admitirPara(campo.name)}
-                                size="small"
-                            />
-                        </Stack>
-                        {admiteVaciar ? <FormControlLabel
-                            label="vaciar"
-                            control={<Checkbox
-                                size="small"
-                                checked={vaciar}
-                                onChange={(_evento, marcado) => {
-                                    const nombre = campo.name as keyof Cabecera;
-                                    setCamposVaciar(previos => marcado
-                                        ? [...previos.filter(c => c !== nombre), nombre]
-                                        : previos.filter(c => c !== nombre));
-                                    if(marcado){ ponerCampo(campo.name, ''); }
-                                }}
-                            />}
-                        /> : null}
-                    </Stack>;
-                })}
-                <TextField
-                    label="detalle"
-                    value={detalle}
-                    onChange={evento => setDetalle(evento.target.value)}
-                    size="small"
-                    multiline
-                    minRows={2}
-                />
+            <Stack direction="row" alignItems="center" spacing={2} sx={{mb:1}}>
+                <Box sx={{flex:1}}/>
+                <Button size="small" startIcon={<ContentCopy/>}
+                    onClick={() => setDestino(previo => copiarTodoElOrigen(previo, origenes))}>
+                    copiar todo el origen
+                </Button>
             </Stack>
 
-            {!hayDestino
+            <Box sx={{
+                display:{xs:'none', md:'grid'},
+                gridTemplateColumns:columnas,
+                gap:1,
+                borderBottom:1,
+                borderColor:'divider',
+                pb:0.5,
+            }}>
+                <Typography variant="subtitle2" sx={{fontWeight:600}}>origen</Typography>
+                <Box/>
+                <Typography variant="subtitle2" sx={{fontWeight:600}}>destino</Typography>
+                <Box/>
+            </Box>
+
+            <Stack divider={<Box sx={{borderBottom:1, borderColor:'divider'}}/>}>
+                {CAMPOS_DEL_MOVIMIENTO.map(filaDeCampo)}
+            </Stack>
+
+            <TextField
+                label="detalle"
+                value={detalle}
+                onChange={evento => setDetalle(evento.target.value)}
+                size="small"
+                multiline
+                minRows={2}
+                fullWidth
+                sx={{mt:2}}
+            />
+
+            {!puedeCrear
                 ? <Alert severity="info" sx={{mt:2}}>
                     Indicá al menos un dato de destino: responsable, sector, sede o espacio.
                 </Alert>

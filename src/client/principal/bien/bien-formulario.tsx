@@ -12,10 +12,10 @@ import {
     Tabs,
     Typography,
 } from '@mui/material';
-import {Edit, ExpandMore} from '@mui/icons-material';
+import {Edit, ExpandMore, LocalShipping} from '@mui/icons-material';
 import type {FieldDefinition, FixedFields, TableDefinition} from 'frontend-plus';
 
-import {useAvisos, useConexion} from '../base/contexto-base';
+import {useAvisos, useConexion, usePermisos} from '../base/contexto-base';
 import {useEstructuraTabla} from '../base/cache-tablas';
 import {DetailTable} from '../base/detail-table';
 import {FormFieldRenderer} from '../base/form-field-renderer';
@@ -27,6 +27,7 @@ import {AdjuntosBien} from './adjuntos-bien';
 import {AuditoriaBien} from './auditoria-bien';
 import {BienHeader, ResumenDelBien} from './bien-header';
 import {AccionesBaja} from '../baja/acciones-baja';
+import {MoverBienes} from '../mover-bienes';
 import {prepararEtiquetasCodigosBarra} from '../../../common/codigos-barra';
 import {imprimirEtiquetasCodigosBarra} from '../imprimir-codigos-barra';
 
@@ -34,7 +35,7 @@ import {imprimirEtiquetasCodigosBarra} from '../imprimir-codigos-barra';
 const SECCIONES:{titulo:string, campos:string[], abiertaPorDefecto?:boolean}[] = [
     {
         titulo:'Datos generales',
-        campos:['ficha', 'numero_integrado', 'prd', 'tipo_bien', 'categoria', 'activo'],
+        campos:['ficha', 'numero_integrado', 'prd', 'tipo_bien', 'activo'],
         abiertaPorDefecto:true,
     },
     {
@@ -43,15 +44,11 @@ const SECCIONES:{titulo:string, campos:string[], abiertaPorDefecto?:boolean}[] =
     },
     {
         titulo:'Identificación',
-        campos:['marca', 'modelo', 'annio', 'serie', 'imei', 'caracteridentificador', 'estado'],
+        campos:['marca', 'modelo', 'annio', 'serie', 'imei', 'caracteridentificador'],
     },
     {
         titulo:'Compra',
         campos:['importe', 'importetotal'],
-    },
-    {
-        titulo:'Contrato',
-        campos:['entidad_prestadora', 'fecha_inicio', 'fecha_fin', 'renovable', 'condiciones', 'costo_mensual'],
     },
     {
         titulo:'Baja',
@@ -65,6 +62,8 @@ const SECCIONES:{titulo:string, campos:string[], abiertaPorDefecto?:boolean}[] =
 
 const CAMPOS_MULTILINEA = new Set(['observacion', 'detalle', 'aclaracion', 'condiciones']);
 
+const COLUMNAS_DE_MOVIMIENTOS = ['responsable_nombre', 'responsable_sector_nombre'];
+
 declare module 'frontend-plus' {
     interface BEAPI {
         bien_resumen:(params:{ficha:string}) => Promise<ResumenDelBien>;
@@ -72,7 +71,10 @@ declare module 'frontend-plus' {
     }
 }
 
-const CAMPOS_OCULTOS = new Set(['clasificacion', 'orden_compra']);
+const CAMPOS_OCULTOS = new Set([
+    'clasificacion', 'orden_compra', 'estado',
+    'entidad_prestadora', 'fecha_inicio', 'fecha_fin', 'renovable', 'condiciones', 'costo_mensual',
+]);
 
 function esCampoDelFormulario(field:FieldDefinition):boolean{
     if(CAMPOS_OCULTOS.has(field.name)){
@@ -239,6 +241,7 @@ export function BienFormulario({
 }){
     const conn = useConexion();
     const {mostrarError, mostrarMensaje} = useAvisos();
+    const permisos = usePermisos();
     const {definicion} = useEstructuraTabla('bienes');
     const [filaInicial, setFilaInicial] = React.useState<Fila|undefined>(undefined);
     const [cargando, setCargando] = React.useState(Boolean(ficha));
@@ -248,6 +251,7 @@ export function BienFormulario({
     const [seccionAbierta, setSeccionAbierta] = React.useState<string>(SECCIONES[0].titulo);
     const [editando, setEditando] = React.useState(!ficha);
     const [version, setVersion] = React.useState(0);
+    const [moverAbierto, setMoverAbierto] = React.useState(false);
 
     React.useEffect(() => {
         if(!ficha){
@@ -293,7 +297,7 @@ export function BienFormulario({
             .then(datos => { if(!cancelado){ setResumen(datos); } })
             .catch(err => { console.warn('[inventario] no se pudo leer el resumen del bien', err); });
         return () => { cancelado = true; };
-    }, [conn, ficha]);
+    }, [conn, ficha, version]);
 
     const definicionSegura = definicion ?? {fields:[], primaryKey:['ficha']};
     const editor = useRowEditor({
@@ -350,7 +354,17 @@ export function BienFormulario({
         },
         {
             etiqueta:'Movimientos',
-            contenido:<DetailTable tabla="movimientos_bien" camposFijos={{ficha:fichaActual}} titulo="Movimientos" soloLectura/>,
+            contenido:<>
+                {permisos.mover
+                    ? <Stack direction="row" justifyContent="flex-end" sx={{mb:1}}>
+                        <Button startIcon={<LocalShipping/>} onClick={() => setMoverAbierto(true)}>
+                            mover este bien
+                        </Button>
+                    </Stack>
+                    : null}
+                <DetailTable key={version} tabla="movimientos_bien" camposFijos={{ficha:fichaActual}}
+                    titulo="Movimientos" columnasCalculadas={COLUMNAS_DE_MOVIMIENTOS} soloLectura/>
+            </>,
         },
         {
             etiqueta:'Adjuntos',
@@ -470,5 +484,16 @@ export function BienFormulario({
                     </Alert>}
             </TabPanel>
         )}
+
+        <MoverBienes
+            abierto={moverAbierto}
+            conn={conn}
+            bienes={[editor.row]}
+            onCerrar={() => setMoverAbierto(false)}
+            onCreada={mensaje => {
+                mostrarMensaje(mensaje);
+                setVersion(v => v + 1);
+            }}
+        />
     </Box>;
 }
