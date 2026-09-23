@@ -120,3 +120,30 @@ export function diasDeVigencia(config:any):number{
     const dias = Number(config?.inventario?.control?.dias_vigencia);
     return Number.isInteger(dias) && dias > 0 ? dias : DIAS_DE_VIGENCIA_POR_DEFECTO;
 }
+
+export const CLASES_PARQUE_TECNOLOGICO = ['4', '6'];
+
+export function condicionParqueTecnologico(alias:string):string{
+    return `${alias}.activo`
+        + ` AND btrim(coalesce(${alias}.rubro, '')) = '3'`
+        + ` AND btrim(coalesce(${alias}.clase, '')) IN (${CLASES_PARQUE_TECNOLOGICO.map(c => `'${c}'`).join(', ')})`;
+}
+
+export function sqlUltimoControl(alias:string):string{
+    return `LEFT JOIN LATERAL (
+    SELECT c.fecha
+      FROM controles_bien c
+     WHERE c.ficha = ${alias}.ficha
+     ORDER BY c.fecha DESC, c.control DESC
+     LIMIT 1
+) uc ON true`;
+}
+
+export function sqlSituacionControl(alias:string, fecha:string, dias:number):string{
+    return `CASE
+        WHEN NOT coalesce(${condicionParqueTecnologico(alias)}, false) THEN NULL
+        WHEN ${fecha} IS NULL THEN 'NUNCA'
+        WHEN current_date - ${fecha} > ${Math.trunc(dias)} THEN 'VENCIDO'
+        ELSE 'VIGENTE'
+    END`;
+}

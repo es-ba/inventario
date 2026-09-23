@@ -43,7 +43,10 @@ export function responsables(context:TableContext):TableDefinition{
         ],
         primaryKey:[responsable.name],
         constraints:[
-            {constraintType:'unique', fields:['responsable']}
+            {constraintType:'unique', fields:['responsable']},
+            {constraintType:'unique', fields:['idper']},
+            {constraintType:'check', consName:'responsables_clave_idper',
+                expr:`(idper IS NULL OR responsable = idper) AND (idper IS NOT NULL OR responsable !~ '^[A-Z]{2}[0-9]+$')`},
         ],
         foreignKeys:[
             {references:'sectores', fields:['sector'], displayFields:['sigla']},

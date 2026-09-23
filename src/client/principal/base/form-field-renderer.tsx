@@ -97,6 +97,15 @@ export function dependientesDeReferencia(
     return dependientes;
 }
 
+export const REFERENCIAS_SIN_INACTIVOS = new Set(['responsables']);
+
+export function sinInactivos(referencia:string|undefined, opciones:Fila[], esActual:(fila:Fila) => boolean):Fila[]{
+    if(referencia == null || !REFERENCIAS_SIN_INACTIVOS.has(referencia)){
+        return opciones;
+    }
+    return opciones.filter(fila => fila.activo !== false || esActual(fila));
+}
+
 export function opcionesDeReferencia(
     filas:Fila[],
     condiciones:{source:string, target:string}[],
@@ -142,22 +151,23 @@ function CampoReferencia({field, row, setField, disabled, error, size, excluidos
     const condiciones = pares.filter(par => par.source !== field.name);
     const columnaPropia = pares.find(par => par.source === field.name)?.target ?? field.name;
     const claveCondiciones = JSON.stringify(condiciones.map(({source}) => row[source] ?? null));
+    const esActual = (fila:Fila) => pares.every(({source, target}) => fila[target] === row[source]);
+    const claveActual = JSON.stringify(pares.map(({source}) => row[source] ?? null));
     const opciones = React.useMemo(
         () => {
             const sinExcluir = sinExcluidos(
                 opcionesDeReferencia(filas, condiciones, row), columnaPropia, excluidos);
-            const permitidas = admitir ? sinExcluir.filter(admitir) : sinExcluir;
+            const vigentes = sinInactivos(field.references, sinExcluir, esActual);
+            const permitidas = admitir ? vigentes.filter(admitir) : vigentes;
             return agrupa
                 ? ordenarPorPertenencia(permitidas, pertenencia.columna, propios)
                 : permitidas;
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [filas, claveCondiciones, agrupa, propios, excluidos, admitir],
+        [filas, claveCondiciones, claveActual, agrupa, propios, excluidos, admitir, field.references],
     );
 
-    const seleccionada = filas.find(
-        fila => pares.every(({source, target}) => fila[target] === row[source]),
-    ) ?? null;
+    const seleccionada = filas.find(esActual) ?? null;
 
     return <Autocomplete
         size={size}

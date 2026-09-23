@@ -13,6 +13,7 @@ import {BienFormulario} from './principal/bien/bien-formulario';
 import './ws-solicitudes';
 import './ws-bajas';
 import './ws-controles';
+import './ws-siper';
 import {
     renderConnectedAppInventario,
     unmountConnectedAppInventario,

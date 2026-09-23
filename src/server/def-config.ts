@@ -69,6 +69,7 @@ install:
       - ../install/movimientos_solicitudes_estado_trg.sql
       - ../install/solicitudes_integridad_trg.sql
       - ../install/solicitudes_responsable_sector_trg.sql
+      - ../install/responsables_activos_trg.sql
       - ../install/trazabilidad_atributos_documentacion_trg.sql
       - ../install/bienes_baja_estado_trg.sql
       - ../install/declaraciones_estado_trg.sql

@@ -5,6 +5,7 @@ import {
     Button,
     Chip,
     CircularProgress,
+    IconButton,
     Stack,
     Tab,
     Tabs,
@@ -24,6 +25,7 @@ import {
     PlaylistAdd,
     Print,
     Refresh,
+    Visibility,
 } from '@mui/icons-material';
 import {
     DataGrid,
@@ -82,6 +84,7 @@ import {
 import {bienesGridLocaleText} from './localizacion-grid';
 import {imprimirEtiquetasCodigosBarra} from './imprimir-codigos-barra';
 import {unmountConnectedAppInventario} from './render-connected-app-inventario';
+import {VistaRapidaBien} from './bien/vista-rapida-bien';
 import {EdicionMasivaBienes} from './edicion-masiva-bienes';
 import {MoverBienes} from './mover-bienes';
 import type {Fila} from './base/tipos-tabla';
@@ -290,6 +293,10 @@ export function BusquedaBienes({
         React.useState<GridFilterModel>({items:[], quickFilterValues:[]});
     const [searchVersion, setSearchVersion] = React.useState(0);
     const [expandedRowIds, setExpandedRowIds] = React.useState<Set<string>>(new Set());
+    const [enVista, setEnVista] = React.useState<BienesBusquedaRow|null>(null);
+    const filaEnVista = enVista == null
+        ? null
+        : rows.find(row => String(row.ficha) === String(enVista.ficha)) ?? enVista;
     const [rowSelectionModel, setRowSelectionModel] =
         React.useState<GridRowSelectionModel>([]);
     const [selectedRows, setSelectedRows] =
@@ -478,6 +485,18 @@ export function BusquedaBienes({
         }
     }, [buildRequest, conn]);
 
+    const abrirBien = React.useCallback((ficha:string) => {
+        if(onAbrirBien){
+            onAbrirBien(ficha);
+            return;
+        }
+        unmountConnectedAppInventario();
+        (myOwn.gotoAddrParams as (params:any) => void)({
+            i:['bienes', 'bienes'],
+            ff:{ficha},
+        });
+    }, [onAbrirBien]);
+
     const columns = React.useMemo<GridColDef<BienesBusquedaRow>[]>(() => {
         if(!tableDefinition){
             return [];
@@ -558,23 +577,34 @@ export function BusquedaBienes({
                     startIcon={<OpenInNew/>}
                     onClick={(event) => {
                         event.stopPropagation();
-                        const ficha = String(params.row.ficha);
-                        if(onAbrirBien){
-                            onAbrirBien(ficha);
-                            return;
-                        }
-                        unmountConnectedAppInventario();
-                        (myOwn.gotoAddrParams as (params:any) => void)({
-                            i:['bienes', 'bienes'],
-                            ff:{ficha},
-                        });
+                        abrirBien(String(params.row.ficha));
                     }}
                 >
                     Abrir
                 </Button>,
         };
-        return [...baseColumns, attributesColumn, actionsColumn];
-    }, [expandedRowIds, onAbrirBien, tableDefinition]);
+        const vistaRapidaColumn:GridColDef<BienesBusquedaRow> = {
+            field:'__vista',
+            headerName:'',
+            width:56,
+            sortable:false,
+            filterable:false,
+            disableColumnMenu:true,
+            renderCell:(params) =>
+                <IconButton
+                    size="small"
+                    title="Vista rápida"
+                    aria-label={`vista rápida de la ficha ${String(params.row.ficha)}`}
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        setEnVista(params.row);
+                    }}
+                >
+                    <Visibility fontSize="small"/>
+                </IconButton>,
+        };
+        return [vistaRapidaColumn, ...baseColumns, attributesColumn, actionsColumn];
+    }, [abrirBien, expandedRowIds, tableDefinition]);
 
     const columnVisibilityModel = React.useMemo(() => {
         const model:Record<string, boolean> = {};
@@ -674,7 +704,7 @@ export function BusquedaBienes({
                     >
                         Editar seleccionados
                     </Button> : null}
-                    {permisos.guardar ? <Button
+                    {permisos.guardar && !permisos.aprobarBaja ? <Button
                         size="small"
                         color="error"
                         startIcon={<Block/>}
@@ -853,6 +883,7 @@ export function BusquedaBienes({
                 minHeight:480,
                 width:'100%',
                 '& .fila-ya-asignada':{opacity:0.5},
+                '& .fila-en-vista':{bgcolor:'action.selected'},
             }}>
                 <DataGrid
                     rows={rows}
@@ -878,8 +909,10 @@ export function BusquedaBienes({
                     filterDebounceMs={400}
                     checkboxSelection
                     isRowSelectable={({id}) => !fichasExcluidas?.has(String(id))}
-                    getRowClassName={({id}) =>
-                        fichasExcluidas?.has(String(id)) ? 'fila-ya-asignada' : ''}
+                    getRowClassName={({id}) => [
+                        fichasExcluidas?.has(String(id)) ? 'fila-ya-asignada' : '',
+                        filaEnVista != null && String(filaEnVista.ficha) === String(id) ? 'fila-en-vista' : '',
+                    ].join(' ')}
                     disableRowSelectionOnClick
                     rowSelectionModel={rowSelectionModel}
                     onRowSelectionModelChange={handleRowSelectionModelChange}
@@ -898,6 +931,13 @@ export function BusquedaBienes({
             </>
         }
         {fixedFields.length > 0 && <Box sx={{display:'none'}} data-fixed-fields={fixedFields.length}/>}
+        <VistaRapidaBien
+            fila={filaEnVista}
+            filas={rows}
+            onCambiar={ficha => setEnVista(rows.find(row => String(row.ficha) === ficha) ?? null)}
+            onCerrar={() => setEnVista(null)}
+            onAbrirFicha={abrirBien}
+        />
         <EdicionMasivaBienes
             abierto={edicionMasivaAbierta}
             conn={conn}

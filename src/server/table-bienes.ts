@@ -2,6 +2,7 @@
 
 import {TableDefinition, TableContext, AppBackend} from "./types-principal";
 import {politicasBienes} from "./politicas";
+import {diasDeVigencia, sqlSituacionControl, sqlUltimoControl} from "./controles-bien";
 
 export function getPolicies(_be?:AppBackend){
     return politicasBienes('ficha');
@@ -117,6 +118,13 @@ LEFT JOIN LATERAL (
 ) ult ON true
 `;
 
+export function sqlBienesConControl(dias:number):string{
+    return `SELECT v.*, uc.fecha AS fecha_ultimo_control,
+        ${sqlSituacionControl('v', 'uc.fecha', dias)} AS situacion_control
+    FROM (${sqlBienes}) v
+    ${sqlUltimoControl('v')}`;
+}
+
 export function bienes(context:TableContext):TableDefinition{
     var be = context.be;
     return {
@@ -186,6 +194,8 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'espacio'                     , typeName:'text'    , editable:false, inTable:false},
             {name:'espacio_numero'              , typeName:'text'    , editable:false, inTable:false},
             {name:'puesto'                      , typeName:'integer' , editable:false, inTable:false},
+            {name:'fecha_ultimo_control'        , typeName:'date'    , editable:false, inTable:false, title:'último control'},
+            {name:'situacion_control'           , typeName:'text'    , editable:false, inTable:false, title:'situación de control'},
             //{name:'codigo_barra'                , typeName:'text'    , inTable:false, editable:false},
         ],  
         primaryKey:['ficha'],
@@ -229,7 +239,7 @@ export function bienes(context:TableContext):TableDefinition{
         ],
         sql:{
             isTable: true,
-            from: `(${sqlBienes})`,
+            from: `(${sqlBienesConControl(diasDeVigencia(be.config))})`,
             policies:getPolicies(be)
         }
     };

@@ -77,6 +77,11 @@ import { controles_bien } from "./table-controles_bien";
 import { controles_bien_items } from "./table-controles_bien_items";
 import { bienes_control } from "./table-bienes_control";
 import { ProceduresControles } from "./procedures-controles";
+import { ProceduresSiper } from "./procedures-siper";
+import { siper_personas } from "./table-siper_personas";
+import { siper_recepciones } from "./table-siper_recepciones";
+import { siper_conciliacion } from "./table-siper_conciliacion";
+import { responsables_inactivos_a_cargo } from "./table-responsables_inactivos_a_cargo";
 
 import {contentDisposition, fechaParaNombre, nombreDeArchivo} from './nombre-archivo';
 import {staticConfigYaml} from './def-config';
@@ -249,6 +254,7 @@ export class AppInventario extends AppBackend{
             ...ProceduresInventario,
             ...ProceduresBajas,
             ...ProceduresControles,
+            ...ProceduresSiper,
         ].map(be.procedureDefCompleter, be);
     }
 
@@ -338,6 +344,15 @@ export class AppInventario extends AppBackend{
                         {menuType: 'table', name: 'bienes_atributos', label: 'atributos de bienes'},
                         {menuType: 'table', name: 'bienes_atributo_valores', label: 'valores posibles'},
                     ]},
+                    ...(context.forDump || context.es?.admin ? [
+                        {menuType: 'menu', name: 'siper', label: 'siper', menuContent: [
+                            {menuType: 'siper', name: 'personas_siper', label: 'personas'},
+                            {menuType: 'table', name: 'siper_personas', label: 'personas recibidas'},
+                            {menuType: 'table', name: 'siper_conciliacion', label: 'situación de las personas'},
+                            {menuType: 'table', name: 'responsables_inactivos_a_cargo', label: 'a cargo de inactivos'},
+                            {menuType: 'table', name: 'siper_recepciones', label: 'recepciones'},
+                        ]} as MenuInfoBase,
+                    ] : []),
                 ]}
             );
         }
@@ -471,6 +486,10 @@ export class AppInventario extends AppBackend{
             controles_bien,
             controles_bien_items,
             bienes_control,
+            siper_personas,
+            siper_recepciones,
+            siper_conciliacion,
+            responsables_inactivos_a_cargo,
         }
     }
 }

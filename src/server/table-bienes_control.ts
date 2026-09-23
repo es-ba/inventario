@@ -2,8 +2,7 @@
 
 import { TableDefinition, TableContext } from "./types-principal";
 import { sqlBienes } from "./table-bienes";
-import { condicionParqueTecnologico } from "./reportes-bienes";
-import { diasDeVigencia } from "./controles-bien";
+import { condicionParqueTecnologico, diasDeVigencia, sqlSituacionControl, sqlUltimoControl } from "./controles-bien";
 
 export function sqlBienesControl(dias:number):string{
     return `
@@ -23,19 +22,9 @@ SELECT
     v.responsable_sector,
     uc.fecha AS fecha_ultimo_control,
     current_date - uc.fecha AS dias_desde_control,
-    CASE
-        WHEN uc.fecha IS NULL THEN 'NUNCA'
-        WHEN current_date - uc.fecha > ${Math.trunc(dias)} THEN 'VENCIDO'
-        ELSE 'VIGENTE'
-    END AS situacion
+    ${sqlSituacionControl('v', 'uc.fecha', dias)} AS situacion
 FROM (${sqlBienes}) v
-LEFT JOIN LATERAL (
-    SELECT c.fecha
-      FROM controles_bien c
-     WHERE c.ficha = v.ficha
-     ORDER BY c.fecha DESC, c.control DESC
-     LIMIT 1
-) uc ON true
+${sqlUltimoControl('v')}
 WHERE ${condicionParqueTecnologico('v')}
 `;
 }

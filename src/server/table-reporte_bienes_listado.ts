@@ -26,6 +26,7 @@ export function reporte_bienes_listado(_context:TableContext):TableDefinition{
             {name:'sector_responsable', typeName:'text', title:'sector del responsable'},
             {name:'sede'            , typeName:'text', title:'sede'               , nullable:true},
             {name:'espacio'         , typeName:'text', title:'espacio'            , nullable:true},
+            {name:'puesto'          , typeName:'integer', title:'puesto'          , nullable:true},
             {name:'responsable'     , typeName:'text', title:'responsable del sector'},
             {name:'responsable_directo', typeName:'text', title:'responsable directo', nullable:true},
             {name:'tipo_asignacion' , typeName:'text', title:'tipo de asignación' , nullable:true},

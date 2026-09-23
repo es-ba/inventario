@@ -1,6 +1,7 @@
 "use strict";
 
 import {sqlBienes, textoONuloSql} from './table-bienes';
+import {CLASES_PARQUE_TECNOLOGICO, condicionParqueTecnologico} from './controles-bien';
 
 
 export const SIN_ASIGNAR = '(sin asignar)';
@@ -60,7 +61,7 @@ export const VINCULOS_CON_EL_BIEN:readonly VinculoConElBien[] = [
         expresion:textoONulo('v.enusode_responsable'),
         titulo:'asignados',
         detalle:{abr:'Asig', label:'Bienes asignados'},
-        mio:{tabla:'mis_bienes_asignados', title:'Bienes asignados a mí', label:'asignados a mí'},
+        mio:{tabla:'mis_bienes_asignados', title:'Bienes en uso mío', label:'en uso mío'},
     },
 ];
 
@@ -146,13 +147,7 @@ SELECT g.*, e.sector
 LEFT JOIN espacios e ON e.espacio = g.espacio
 `;
 
-export const CLASES_PARQUE_TECNOLOGICO = ['4', '6'];
-
-export function condicionParqueTecnologico(alias:string):string{
-    return `${alias}.activo`
-        + ` AND btrim(coalesce(${alias}.rubro, '')) = '3'`
-        + ` AND btrim(coalesce(${alias}.clase, '')) IN (${CLASES_PARQUE_TECNOLOGICO.map(c => `'${c}'`).join(', ')})`;
-}
+export {CLASES_PARQUE_TECNOLOGICO, condicionParqueTecnologico};
 
 export type AtributoDeGrilla = {atributo:string, nombre:string};
 
@@ -256,6 +251,7 @@ SELECT
     coalesce(nullif(btrim(r.sector), ''), '${SIN_ASIGNAR}') AS sector_responsable,
     ${textoONulo('v.sede')} AS sede,
     ${textoONulo('v.espacio')} AS espacio,
+    v.puesto AS puesto,
     ${vinculoConElBien('cargo').expresion} AS responsable,
     ${textoONulo('v.responsable')} AS responsable_directo,
     ${textoONulo('v.tipo_asignacion')} AS tipo_asignacion,

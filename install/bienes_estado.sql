@@ -13,7 +13,7 @@ AS $BODY$
          AND ms.estado NOT IN ('B', 'Pr')
     ) THEN 'EN_MOVIMIENTO'
     WHEN (
-      SELECT nullif(btrim(mb.sector), '')
+      SELECT coalesce(nullif(btrim(mb.sector), ''), nullif(btrim(mb.responsable), ''))
         FROM movimientos_bien mb
        WHERE mb.ficha = p_ficha
        ORDER BY mb.orden DESC

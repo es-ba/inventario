@@ -7,7 +7,6 @@ import {
     MenuItem,
     Stack,
     TextField,
-    Typography,
 } from '@mui/material';
 import {Refresh} from '@mui/icons-material';
 import {DataGrid, GridColDef, GridRowParams} from '@mui/x-data-grid';
@@ -159,9 +158,6 @@ export function BajasListado({
 
     return <Box sx={{p:{xs:1, md:2}}}>
         <Stack direction="row" alignItems="center" spacing={2} sx={{mb:2}}>
-            <Typography variant="h6" sx={{fontWeight:600}}>
-                Proceso de baja
-            </Typography>
             <Box sx={{flex:1}}/>
             <Button startIcon={<Refresh/>} onClick={() => void cargar()} disabled={cargando}>
                 actualizar

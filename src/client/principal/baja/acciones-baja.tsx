@@ -57,7 +57,7 @@ export function AccionesBaja({fila,onAplicada}:{fila:Fila,onAplicada:()=>void}){
     if(!ficha){return null;}
     return <>
         <Stack direction="row" spacing={0.5}>
-            {activo && (!estado || estado === 'RECHAZADA') && permisos.guardar
+            {activo && (!estado || estado === 'RECHAZADA') && permisos.guardar && !permisos.aprobarBaja
                 ? <Button size="small" color="error" onClick={()=>setSolicitar(true)}>solicitar baja</Button> : null}
             {activo && (!estado || estado === 'RECHAZADA') && permisos.aprobarBaja
                 ? <Button size="small" color="error" onClick={()=>abrir('aprobar_directa')}>baja directa</Button> : null}

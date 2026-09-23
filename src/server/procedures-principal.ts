@@ -30,7 +30,8 @@ import {
     buildAtributosOpcionesQuery,
     buildAtributoValoresOpcionesQuery,
 } from './atributos-opciones-query';
-import { bienes, sqlBienes } from './table-bienes';
+import { bienes, sqlBienesConControl } from './table-bienes';
+import { diasDeVigencia } from './controles-bien';
 import { sqlVisibilidad } from './politicas';
 import { generarDeclaracionPdf } from './declaracion-pdf-render';
 import { DocumentoEmitido, analizarFirmaPdf, verificarDeclaracionFirmada } from './declaracion-verificacion';
@@ -130,7 +131,7 @@ async function opcionesBusquedaBienes(context:ProcedureContext, withoutPaginatio
         })),
     );
     const options:BienesBusquedaQueryOptions = {
-        baseSql:sqlBienes,
+        baseSql:sqlBienesConControl(diasDeVigencia(context.be.config)),
         visibilitySql:sqlVisibilidad('b.ficha'),
         allowedFields,
         resolveSqlFieldName:resolveBienesPresentationSqlFieldName,
