@@ -15,7 +15,7 @@ import {
 import {Delete} from '@mui/icons-material';
 import type {FixedFields} from 'frontend-plus';
 
-import {useAvisos, useConexion, usePermisos} from '../base/contexto-base';
+import {useConfirmar, useAvisos, useConexion, usePermisos} from '../base/contexto-base';
 import {formatearValor} from '../base/formato-valores';
 import {TabPanel, propsDeSolapa} from '../base/tab-panel';
 import type {Fila} from '../base/tipos-tabla';
@@ -40,6 +40,7 @@ export function SolicitudBienes({
     soloLectura?:boolean,
 }){
     const conn = useConexion();
+    const confirmar = useConfirmar();
     const {mostrarError} = useAvisos();
     const permisos = usePermisos();
     const soloLectura = soloLecturaPedida || !permisos.guardar;
@@ -77,7 +78,7 @@ export function SolicitudBienes({
     );
 
     const quitar = React.useCallback(async (fila:Fila) => {
-        if(!window.confirm(`¿Quitar el bien ${fila.ficha} de la solicitud?`)){
+        if(!await confirmar({titulo:'Quitar bien', mensaje:`¿Quitar el bien ${fila.ficha} de la solicitud?`, confirmar:'Quitar', peligroso:true})){
             return;
         }
         try{
@@ -89,7 +90,7 @@ export function SolicitudBienes({
         }catch(err){
             mostrarError(err, 'No se pudo quitar el bien');
         }
-    }, [cargar, conn, mostrarError]);
+    }, [confirmar, cargar, conn, mostrarError]);
 
     const agregarSeleccionados = React.useCallback(async (fichas:string[]) => {
         const resultado = await conn.ajax.solicitud_bienes_agregar({
@@ -115,13 +116,13 @@ export function SolicitudBienes({
                     <Table size="small">
                         <TableHead>
                             <TableRow>
-                                <TableCell>ficha</TableCell>
-                                <TableCell>descripción</TableCell>
-                                <TableCell>modelo</TableCell>
-                                <TableCell>serie</TableCell>
-                                <TableCell>observaciones</TableCell>
-                                <TableCell>verificado</TableCell>
-                                {soloLectura ? null : <TableCell align="right">acciones</TableCell>}
+                                <TableCell>Ficha</TableCell>
+                                <TableCell>Descripción</TableCell>
+                                <TableCell>Modelo</TableCell>
+                                <TableCell>Serie</TableCell>
+                                <TableCell>Observaciones</TableCell>
+                                <TableCell>Verificado</TableCell>
+                                {soloLectura ? null : <TableCell align="right">Acciones</TableCell>}
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -136,7 +137,7 @@ export function SolicitudBienes({
                                     <IconButton
                                         size="small"
                                         color="error"
-                                        title="quitar de la solicitud"
+                                        title="Quitar de la solicitud"
                                         onClick={() => void quitar(fila)}
                                     >
                                         <Delete/>

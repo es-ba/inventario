@@ -15,7 +15,7 @@ export function movimientos_solicitud_bien(context:TableContext):TableDefinition
         title:'bienes por solicitud de movimiento',
         editable:context.es.administrativo,
         fields:[
-            {name:'acta'                        , typeName:'bigint'  , nullable:false},
+            {name:'acta'                        , typeName:'bigint'  , nullable:false, title:'N.º de solicitud'},
             {name:'ficha'                       , typeName:'text'    , nullable:false},
             {name:'observaciones'               , typeName:'text'    , nullable:true},
             {name:'verificado'                  , typeName:'boolean' , nullable:true, defaultValue:false},

@@ -80,15 +80,15 @@ export function VistaRapidaBien({
             <Stack direction="row" spacing={1} justifyContent="space-between">
                 <Button startIcon={<ChevronLeft/>} disabled={anterior == null}
                     onClick={() => anterior && onCambiar(String(anterior.ficha))}>
-                    anterior
+                    Anterior
                 </Button>
                 <Button endIcon={<ChevronRight/>} disabled={siguiente == null}
                     onClick={() => siguiente && onCambiar(String(siguiente.ficha))}>
-                    siguiente
+                    Siguiente
                 </Button>
             </Stack>
             <Button variant="contained" startIcon={<OpenInNew/>} onClick={() => onAbrirFicha(ficha!)}>
-                abrir ficha completa
+                Abrir ficha completa
             </Button>
         </Stack>}
     </Drawer>;

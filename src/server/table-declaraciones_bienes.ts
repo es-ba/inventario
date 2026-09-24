@@ -20,7 +20,7 @@ export function declaraciones_bienes(context:TableContext):TableDefinition{
             {name:'detalle'               , typeName:'text'},
             {name:'observacion'           , typeName:'text'},
             {name:'sector'                  , typeName:'text'},
-            {name:'responsable'           , typeName:'text'},
+            {name:'responsable'           , typeName:'text', title:'responsable directo'},
             {name:'sede'                  , typeName:'text'},
             {name:'espacio'               , typeName:'text'},
             {name:'activo'                , typeName:'boolean'},

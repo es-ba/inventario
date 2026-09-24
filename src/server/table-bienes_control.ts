@@ -2,7 +2,7 @@
 
 import { TableDefinition, TableContext } from "./types-principal";
 import { sqlBienes } from "./table-bienes";
-import { condicionParqueTecnologico, diasDeVigencia, sqlSituacionControl, sqlUltimoControl } from "./controles-bien";
+import { condicionControlable, diasDeVigencia, sqlSituacionControl, sqlUltimoControl } from "./controles-bien";
 
 export function sqlBienesControl(dias:number):string{
     return `
@@ -25,7 +25,7 @@ SELECT
     ${sqlSituacionControl('v', 'uc.fecha', dias)} AS situacion
 FROM (${sqlBienes}) v
 ${sqlUltimoControl('v')}
-WHERE ${condicionParqueTecnologico('v')}
+WHERE ${condicionControlable('v')}
 `;
 }
 

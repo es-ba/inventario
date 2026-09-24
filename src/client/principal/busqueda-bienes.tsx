@@ -5,7 +5,6 @@ import {
     Button,
     Chip,
     CircularProgress,
-    IconButton,
     Stack,
     Tab,
     Tabs,
@@ -25,7 +24,6 @@ import {
     PlaylistAdd,
     Print,
     Refresh,
-    Visibility,
 } from '@mui/icons-material';
 import {
     DataGrid,
@@ -39,8 +37,6 @@ import {
     GridSortModel,
     GridToolbarColumnsButton,
     GridToolbarContainer,
-    GridToolbarDensitySelector,
-    GridToolbarFilterButton,
     GridToolbarQuickFilter,
     GRID_CHECKBOX_SELECTION_FIELD,
     getGridBooleanOperators,
@@ -78,6 +74,7 @@ import {
 import {
     BienesBusquedaFilterDraft,
     BienesBusquedaTarget,
+    FiltrosAplicados,
     FiltrosCompuestos,
     isCompleteFilter,
 } from './filtros-compuestos';
@@ -86,10 +83,11 @@ import {imprimirEtiquetasCodigosBarra} from './imprimir-codigos-barra';
 import {unmountConnectedAppInventario} from './render-connected-app-inventario';
 import {VistaRapidaBien} from './bien/vista-rapida-bien';
 import {EdicionMasivaBienes} from './edicion-masiva-bienes';
-import {MoverBienes} from './mover-bienes';
+import {MoverBienes, AvisoMovimiento, ResultadoMovimiento} from './mover-bienes';
 import type {Fila} from './base/tipos-tabla';
 import {BajaBienes} from './baja-bienes';
 import {usePermisos} from './base/contexto-base';
+import {etiquetaDeCampo, formatearValor} from './base/formato-valores';
 
 declare module 'frontend-plus' {
     interface FieldDefinition {
@@ -119,6 +117,8 @@ export type AccionSeleccionBienes = {
 
 type BusquedaBienesProps = {
     conn:Connector;
+    visible?:boolean;
+    actualizacion?:{ficha:string, version:number};
     fixedFields:FixedFields;
     onAbrirBien?:(ficha:string) => void;
     onNuevoBien?:() => void;
@@ -175,6 +175,10 @@ function gridItemToFilter(item:GridFilterItem):BienesBusquedaFilter|null{
         operator,
         value:item.value,
     };
+}
+
+function alContrato({source, target, operator, value, valueTo}:BienesBusquedaFilterDraft):BienesBusquedaFilter{
+    return {source, target, operator, value, valueTo};
 }
 
 function estadoFromTab(tab:number):BienesBusquedaRequest['estado']{
@@ -262,6 +266,8 @@ function AtributosDetalle({row}:{row:BienesBusquedaRow}){
 
 export function BusquedaBienes({
     conn,
+    visible = true,
+    actualizacion,
     fixedFields,
     onAbrirBien,
     onNuevoBien,
@@ -273,7 +279,7 @@ export function BusquedaBienes({
     const [metadataLoading, setMetadataLoading] = React.useState(true);
     const [metadataError, setMetadataError] = React.useState<string|null>(null);
     const [filters, setFilters] = React.useState<BienesBusquedaFilterDraft[]>([]);
-    const [appliedFilters, setAppliedFilters] = React.useState<BienesBusquedaFilter[]>([]);
+    const [appliedFilters, setAppliedFilters] = React.useState<BienesBusquedaFilterDraft[]>([]);
     const [logicOperator, setLogicOperator] =
         React.useState<BienesBusquedaRequest['logicOperator']>('and');
     const [appliedLogicOperator, setAppliedLogicOperator] =
@@ -306,11 +312,13 @@ export function BusquedaBienes({
     const [bajaAbierta, setBajaAbierta] = React.useState(false);
     const [bajaDirecta, setBajaDirecta] = React.useState(false);
     const [avisoMasivo, setAvisoMasivo] = React.useState<string|null>(null);
+    const [resultadoMovimiento, setResultadoMovimiento] = React.useState<ResultadoMovimiento|null>(null);
     const [vista, setVista] = React.useState<'listado'|'resumen'>('listado');
     const [resumenAbierto, setResumenAbierto] = React.useState(false);
     const [grupoFiltro, setGrupoFiltro] =
         React.useState<{partes:GrupoFiltro[], textos:string[], etiquetas:string[]}|null>(null);
     const requestSequence = React.useRef(0);
+    const versionActualizada = React.useRef(0);
 
     const clearSelection = React.useCallback(() => {
         setRowSelectionModel([]);
@@ -370,7 +378,7 @@ export function BusquedaBienes({
         return (tableDefinition?.fields ?? []).map(field => ({
             source:'field' as const,
             target:field.name,
-            label:field.label || field.title || field.name,
+            label:etiquetaDeCampo(field),
             typeName:field.typeName,
         }));
     }, [tableDefinition]);
@@ -406,7 +414,7 @@ export function BusquedaBienes({
         return {
             estado:estadoFromTab(tab),
             logicOperator:appliedLogicOperator,
-            filters:appliedFilters,
+            filters:appliedFilters.map(alContrato),
             quickSearch,
             gridFilters:filterModel.items
                 .map(gridItemToFilter)
@@ -438,12 +446,35 @@ export function BusquedaBienes({
         setLoading(true);
         setError(null);
         try{
+            const consulta = buildRequest();
             const response = await conn.ajax.bienes_buscar_avanzado({
-                consulta:JSON.stringify(buildRequest()),
+                consulta:JSON.stringify(consulta),
             });
             if(sequence === requestSequence.current){
                 setRows(response.rows ?? []);
                 setTotal(Number(response.total ?? 0));
+                const ultimaPagina = Math.max(0, Math.ceil(Number(response.total ?? 0) / consulta.pageSize) - 1);
+                if(consulta.page > ultimaPagina){
+                    setPaginationModel(actual => ({...actual, page:ultimaPagina}));
+                }
+            }
+            if(actualizacion && versionActualizada.current !== actualizacion.version){
+                const actualizada = await conn.ajax.bienes_buscar_avanzado({consulta:JSON.stringify({
+                    ...consulta, page:0,
+                    gridFilters:[...(consulta.gridFilters ?? []), {source:'field', target:'ficha', operator:'equals', value:actualizacion.ficha}],
+                })});
+                if(sequence === requestSequence.current){
+                    const fila = actualizada.rows?.[0];
+                    setSelectedRows(anteriores => {
+                        if(!anteriores.has(actualizacion.ficha)){ return anteriores; }
+                        const nuevas = new Map(anteriores);
+                        if(fila){ nuevas.set(actualizacion.ficha, fila); }
+                        else { nuevas.delete(actualizacion.ficha); }
+                        return nuevas;
+                    });
+                    if(!fila){ setRowSelectionModel(anteriores => anteriores.filter(id => String(id) !== actualizacion.ficha)); }
+                    versionActualizada.current = actualizacion.version;
+                }
             }
         }catch(err){
             if(sequence === requestSequence.current){
@@ -454,13 +485,13 @@ export function BusquedaBienes({
                 setLoading(false);
             }
         }
-    }, [buildRequest, conn]);
+    }, [buildRequest, conn, actualizacion]);
 
     React.useEffect(() => {
-        if(hasSearched && vista === 'listado'){
+        if(visible && hasSearched && vista === 'listado'){
             void loadRows();
         }
-    }, [hasSearched, loadRows, searchVersion, vista]);
+    }, [hasSearched, loadRows, searchVersion, vista, visible]);
 
     const exportRows = React.useCallback(async () => {
         setLoading(true);
@@ -506,7 +537,7 @@ export function BusquedaBienes({
                 const type = gridColumnType(field.typeName);
                 return {
                     field:field.name,
-                    headerName:field.label || field.title || field.name,
+                    headerName:etiquetaDeCampo(field),
                     type,
                     filterOperators:supportedGridFilterOperators(type),
                     minWidth:130,
@@ -515,7 +546,7 @@ export function BusquedaBienes({
                     renderCell:(params:GridRenderCellParams<BienesBusquedaRow>) =>
                         params.value instanceof Date
                             ? params.value.toLocaleDateString('es-AR')
-                            : String(params.value ?? ''),
+                            : formatearValor(params.value),
                 };
             });
         const attributesColumn:GridColDef<BienesBusquedaRow> = {
@@ -583,27 +614,7 @@ export function BusquedaBienes({
                     Abrir
                 </Button>,
         };
-        const vistaRapidaColumn:GridColDef<BienesBusquedaRow> = {
-            field:'__vista',
-            headerName:'',
-            width:56,
-            sortable:false,
-            filterable:false,
-            disableColumnMenu:true,
-            renderCell:(params) =>
-                <IconButton
-                    size="small"
-                    title="Vista rápida"
-                    aria-label={`vista rápida de la ficha ${String(params.row.ficha)}`}
-                    onClick={(event) => {
-                        event.stopPropagation();
-                        setEnVista(params.row);
-                    }}
-                >
-                    <Visibility fontSize="small"/>
-                </IconButton>,
-        };
-        return [vistaRapidaColumn, ...baseColumns, attributesColumn, actionsColumn];
+        return [...baseColumns, attributesColumn, actionsColumn];
     }, [abrirBien, expandedRowIds, tableDefinition]);
 
     const columnVisibilityModel = React.useMemo(() => {
@@ -639,10 +650,8 @@ export function BusquedaBienes({
 
     const Toolbar = React.useCallback(() =>
         <GridToolbarContainer>
+            {rowSelectionModel.length === 0 ? <>
             <GridToolbarColumnsButton/>
-            <GridToolbarFilterButton/>
-            <GridToolbarDensitySelector/>
-            {}
             {onNuevoBien && permisos.guardar
                 ? <Button
                     size="small"
@@ -672,11 +681,11 @@ export function BusquedaBienes({
             >
                 Exportar CSV
             </Button>
+            </> : <>
             <Typography variant="body2" sx={{ml:1}}>
                 {rowSelectionModel.length}{' '}
                 {rowSelectionModel.length === 1 ? 'bien seleccionado' : 'bienes seleccionados'}
             </Typography>
-            {}
             {accionSeleccion
                 ? <Button
                     size="small"
@@ -702,7 +711,7 @@ export function BusquedaBienes({
                         disabled={rowSelectionModel.length === 0}
                         onClick={() => setEdicionMasivaAbierta(true)}
                     >
-                        Editar seleccionados
+                        Editar
                     </Button> : null}
                     {permisos.guardar && !permisos.aprobarBaja ? <Button
                         size="small"
@@ -720,7 +729,7 @@ export function BusquedaBienes({
                         disabled={rowSelectionModel.length === 0}
                         onClick={() => { setBajaDirecta(true); setBajaAbierta(true); }}
                     >
-                        Baja directa
+                        Dar de baja
                     </Button> : null}
                     {permisos.mover ? <Button
                         size="small"
@@ -728,9 +737,11 @@ export function BusquedaBienes({
                         disabled={rowSelectionModel.length === 0}
                         onClick={() => setMoverAbierto(true)}
                     >
-                        Mover seleccionados
+                        Mover
                     </Button> : null}
                 </>}
+            <Button size="small" onClick={clearSelection}>Quitar selección</Button>
+            </>}
             <Box sx={{flex:1}}/>
             <GridToolbarQuickFilter debounceMs={400}/>
         </GridToolbarContainer>,
@@ -785,8 +796,8 @@ export function BusquedaBienes({
                     }
                 }}
             >
-                <ToggleButton value="listado">listado</ToggleButton>
-                <ToggleButton value="resumen">resumen</ToggleButton>
+                <ToggleButton value="listado">Listado</ToggleButton>
+                <ToggleButton value="resumen">Resumen</ToggleButton>
             </ToggleButtonGroup>
         </Stack>
 
@@ -807,26 +818,20 @@ export function BusquedaBienes({
                 }
                 clearSelection();
                 setShowValidation(false);
-                setAppliedFilters(filters.map(filter => ({
-                    source:filter.source,
-                    target:filter.target,
-                    operator:filter.operator,
-                    value:filter.value,
-                    valueTo:filter.valueTo,
-                })));
+                setAppliedFilters(filters);
                 setAppliedLogicOperator(logicOperator);
                 setPaginationModel(current => ({...current, page:0}));
                 setHasSearched(true);
                 setSearchVersion(version => version + 1);
             }}
-            onClear={() => {
-                clearSelection();
-                setFilters([]);
-                setShowValidation(false);
-            }}
         />
 
+        {(JSON.stringify(filters.map(alContrato)) !== JSON.stringify(appliedFilters.map(alContrato))
+            || logicOperator !== appliedLogicOperator)
+            ? <Alert severity="info" sx={{mb:1}}>Hay cambios en los filtros sin aplicar. Pulsá Buscar para aplicarlos.</Alert> : null}
+
         {error && <Alert severity="error" sx={{mb:2}}>{error}</Alert>}
+        {resultadoMovimiento ? <AvisoMovimiento resultado={resultadoMovimiento} onCerrar={() => setResultadoMovimiento(null)}/> : null}
         {avisoMasivo && <Alert
             severity="success"
             sx={{mb:2}}
@@ -835,24 +840,45 @@ export function BusquedaBienes({
             {avisoMasivo}
         </Alert>}
 
-        {vista === 'listado' && grupoFiltro
-            ? <Stack direction="row" spacing={1} alignItems="center" sx={{mb:1}}>
-                <Chip
-                    color="primary"
-                    variant="outlined"
-                    label={grupoFiltro.partes
-                        .map((_parte, i) => `${grupoFiltro.etiquetas[i]}: ${grupoFiltro.textos[i]}`)
-                        .join(' · ')}
-                    onDelete={() => {
-                        clearSelection();
-                        setGrupoFiltro(null);
-                        setPaginationModel(current => ({...current, page:0}));
-                    }}
-                />
-                {resumenAbierto
-                    ? <Button size="small" onClick={() => setVista('resumen')}>volver al resumen</Button>
+        {vista === 'listado'
+            ? <FiltrosAplicados
+                condiciones={appliedFilters}
+                grupo={grupoFiltro
+                    ? grupoFiltro.partes.map((_parte, i) => `${grupoFiltro.etiquetas[i]}: ${grupoFiltro.textos[i]}`).join(' · ')
                     : null}
-            </Stack>
+                texto={(filterModel.quickFilterValues ?? []).join(' ').trim()}
+                onQuitarCondicion={id => {
+                    clearSelection();
+                    setFilters(actuales => actuales.filter(filtro => filtro.id !== id));
+                    setAppliedFilters(actuales => actuales.filter(filtro => filtro.id !== id));
+                    setPaginationModel(current => ({...current, page:0}));
+                    setSearchVersion(version => version + 1);
+                }}
+                onQuitarGrupo={() => {
+                    clearSelection();
+                    setGrupoFiltro(null);
+                    setPaginationModel(current => ({...current, page:0}));
+                }}
+                onQuitarTexto={() => {
+                    clearSelection();
+                    setFilterModel(actual => ({...actual, quickFilterValues:[]}));
+                    setPaginationModel(current => ({...current, page:0}));
+                }}
+                onVolverAlResumen={resumenAbierto ? () => setVista('resumen') : undefined}
+                onClear={() => {
+                    clearSelection();
+                    setFilters([]);
+                    setAppliedFilters([]);
+                    setLogicOperator('and');
+                    setAppliedLogicOperator('and');
+                    setFilterModel({items:[], quickFilterValues:[]});
+                    setGrupoFiltro(null);
+                    setPaginationModel(current => ({...current, page:0}));
+                    setHasSearched(true);
+                    setSearchVersion(version => version + 1);
+                    setShowValidation(false);
+                }}
+            />
             : null}
 
         {!hasSearched
@@ -865,8 +891,8 @@ export function BusquedaBienes({
                     <ResumenBienes
                         conn={conn}
                         consulta={consultaResumen}
-                        version={searchVersion}
-                        visible={vista === 'resumen'}
+                        version={searchVersion + (actualizacion?.version ?? 0)}
+                        visible={visible && vista === 'resumen'}
                         grupoActivo={grupoFiltro?.partes ?? null}
                         onElegirGrupo={(partes, textos, etiquetas) => {
                             clearSelection();
@@ -882,6 +908,7 @@ export function BusquedaBienes({
                 height:'calc(100vh - 330px)',
                 minHeight:480,
                 width:'100%',
+                '& .MuiDataGrid-row':{cursor:'pointer'},
                 '& .fila-ya-asignada':{opacity:0.5},
                 '& .fila-en-vista':{bgcolor:'action.selected'},
             }}>
@@ -907,6 +934,7 @@ export function BusquedaBienes({
                         setPaginationModel(current => ({...current, page:0}));
                     }}
                     filterDebounceMs={400}
+                    disableColumnFilter
                     checkboxSelection
                     isRowSelectable={({id}) => !fichasExcluidas?.has(String(id))}
                     getRowClassName={({id}) => [
@@ -914,6 +942,12 @@ export function BusquedaBienes({
                         filaEnVista != null && String(filaEnVista.ficha) === String(id) ? 'fila-en-vista' : '',
                     ].join(' ')}
                     disableRowSelectionOnClick
+                    onCellClick={({field, row}) => {
+                        if(field !== GRID_CHECKBOX_SELECTION_FIELD){ setEnVista(row); }
+                    }}
+                    onCellKeyDown={({field, row}, event) => {
+                        if(event.key === 'Enter' && field !== GRID_CHECKBOX_SELECTION_FIELD && !field.startsWith('__')){ setEnVista(row); }
+                    }}
                     rowSelectionModel={rowSelectionModel}
                     onRowSelectionModelChange={handleRowSelectionModelChange}
                     keepNonExistentRowsSelected
@@ -956,8 +990,8 @@ export function BusquedaBienes({
             conn={conn}
             bienes={filasSeleccionadasEnOrden(rowSelectionModel, selectedRows) as unknown as Fila[]}
             onCerrar={() => setMoverAbierto(false)}
-            onCreada={(mensaje) => {
-                setAvisoMasivo(mensaje);
+            onCreada={(resultado) => {
+                setResultadoMovimiento(resultado);
                 clearSelection();
                 setSearchVersion(version => version + 1);
             }}

@@ -163,7 +163,7 @@ export function ResumenBienes({
         })),
         {
             field:'cantidad',
-            headerName:'cantidad',
+            headerName:'Cantidad',
             type:'number',
             width:120,
         },
@@ -173,7 +173,7 @@ export function ResumenBienes({
         <Stack direction="row" spacing={2} sx={{mb:2}} flexWrap="wrap" useFlexGap alignItems="center">
             {elegidas.map((elegida, posicion) => <Stack key={posicion} direction="row" alignItems="center">
                 <SelectorDimension
-                    etiqueta={posicion === 0 ? 'agrupar por' : 'y por'}
+                    etiqueta={posicion === 0 ? 'Agrupar por' : 'Y por'}
                     opciones={opciones}
                     valor={elegida}
                     excluidas={dimensiones.filter(d => d !== elegida)}
@@ -183,7 +183,7 @@ export function ResumenBienes({
                 {elegidas.length > 1
                     ? <IconButton
                         size="small"
-                        title="quitar"
+                        title="Quitar"
                         onClick={() => setElegidas(previas => previas.filter((_d, i) => i !== posicion))}
                     >
                         <Close fontSize="small"/>
@@ -197,7 +197,7 @@ export function ResumenBienes({
                     disabled={elegidas.some(d => d == null)}
                     onClick={() => setElegidas(previas => [...previas, null])}
                 >
-                    agregar campo
+                    Agregar campo
                 </Button>
                 : null}
             <Box sx={{flex:1}}/>

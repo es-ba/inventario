@@ -106,3 +106,12 @@ export function aValorFechaInput(value:unknown):string{
     const iso = /^(\d{4}-\d{2}-\d{2})/.exec(texto);
     return iso ? iso[1] : texto;
 }
+
+export function capitalizar(texto:string):string{
+    const primera = texto.search(/\S/);
+    return primera < 0 ? texto : texto.slice(0, primera) + texto.charAt(primera).toLocaleUpperCase('es') + texto.slice(primera + 1);
+}
+
+export function etiquetaDeCampo(field:{name:string, label?:string, title?:string}):string{
+    return capitalizar(field.label || field.title || field.name);
+}

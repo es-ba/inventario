@@ -6,7 +6,6 @@ import {
     MenuItem,
     Stack,
     TextField,
-    Typography,
 } from '@mui/material';
 import {Refresh} from '@mui/icons-material';
 import {
@@ -21,11 +20,10 @@ import {
 import type {FixedFields} from 'frontend-plus';
 
 import {useAvisos, useConexion} from '../base/contexto-base';
-import {formatearValor} from '../base/formato-valores';
+import {capitalizar, formatearValor} from '../base/formato-valores';
 import {bienesGridLocaleText} from '../localizacion-grid';
 import type {Fila} from '../base/tipos-tabla';
-import {SITUACIONES_DE_CONTROL, SituacionDeControl} from '../../../common/controles';
-import {fichaDesdeEAN13} from '../../../common/codigos-barra';
+import {SITUACIONES_DE_CONTROL, SituacionDeControl, buscarBienParaControl} from '../../../common/controles';
 
 const COLOR_POR_SITUACION:Record<SituacionDeControl, 'error'|'warning'|'success'> = {
     NUNCA:'error',
@@ -43,8 +41,13 @@ export function textoDeReferencia(codigo:unknown, ...descripciones:unknown[]):st
     return texto !== '' ? texto : String(codigo ?? '').trim();
 }
 
+export function codigoDeClase(fila:Fila):string{
+    return [codigo(fila, 'rubro'), codigo(fila, 'clase')].filter(parte => parte !== '').join('.');
+}
+
 export function claseDe(fila:Fila):string{
-    return textoDeReferencia(fila.clase, fila.clases__nombre);
+    const nombre = String(fila.clases__nombre ?? '').trim();
+    return nombre !== '' ? `${codigoDeClase(fila)} — ${nombre}` : codigoDeClase(fila);
 }
 
 export function espacioDe(fila:Fila):string{
@@ -60,10 +63,10 @@ function codigo(fila:Fila, campo:string):string{
     return String(fila[campo] ?? '').trim();
 }
 
-function opcionesDe(filas:Fila[], campo:string, texto:(fila:Fila) => string){
+function opcionesDe(filas:Fila[], campo:string|((fila:Fila) => string), texto:(fila:Fila) => string){
     const vistas = new Map<string, string>();
     for(const fila of filas){
-        const valor = codigo(fila, campo);
+        const valor = typeof campo === 'string' ? codigo(fila, campo) : campo(fila);
         if(valor !== '' && !vistas.has(valor)){
             vistas.set(valor, texto(fila));
         }
@@ -75,7 +78,7 @@ export function ChipSituacion({situacion}:{situacion:string}){
     return <Chip
         size="small"
         color={COLOR_POR_SITUACION[situacion as SituacionDeControl] ?? 'default'}
-        label={situacion.toLowerCase()}
+        label={capitalizar(situacion.toLowerCase())}
     />;
 }
 
@@ -127,7 +130,7 @@ export function ControlesListado({
         return cuenta;
     }, [filas]);
 
-    const clases = React.useMemo(() => opcionesDe(filas, 'clase', claseDe), [filas]);
+    const clases = React.useMemo(() => opcionesDe(filas, codigoDeClase, claseDe), [filas]);
     const grupos = React.useMemo(
         () => opcionesDe(filas, 'grupo', f => textoDeReferencia(f.grupo, f.grupos__descripcion)),
         [filas],
@@ -142,7 +145,7 @@ export function ControlesListado({
         const buscado = busqueda.trim().toLowerCase();
         return filas.filter(fila =>
             (situacion === TODOS || codigo(fila, 'situacion') === situacion)
-            && (clase === TODOS || codigo(fila, 'clase') === clase)
+            && (clase === TODOS || codigoDeClase(fila) === clase)
             && (grupo === TODOS || codigo(fila, 'grupo') === grupo)
             && (sector === TODOS || codigo(fila, 'sector') === sector)
             && (espacio === TODOS || codigo(fila, 'espacio') === espacio)
@@ -164,62 +167,60 @@ export function ControlesListado({
         if(texto === ''){
             return;
         }
-        const ficha = fichaDesdeEAN13(texto) ?? texto;
-        const bien = filas.find(fila => codigo(fila, 'ficha') === ficha);
-        if(bien == null){
-            mostrarError(new Error(`La ficha ${ficha} no está entre los bienes a controlar`));
+        const {bien, error} = buscarBienParaControl(texto, filas, filasVisibles);
+        if(!bien){
+            if(error){ mostrarError(new Error(error)); }
             return;
         }
-        setBusqueda('');
         onAbrirBien(bien, listaEnOrden());
     };
 
     const columnas = React.useMemo<GridColDef[]>(() => [
-        {field:'ficha', headerName:'ficha', width:110},
-        {field:'clase', headerName:'clase', width:150, valueGetter:(_v, fila) => claseDe(fila)},
+        {field:'ficha', headerName:'Ficha', width:110},
+        {field:'clase', headerName:'Clase', width:150, valueGetter:(_v, fila) => claseDe(fila)},
         {
             field:'grupo',
-            headerName:'grupo',
+            headerName:'Grupo',
             width:140,
             valueGetter:(_v, fila) => textoDeReferencia(fila.grupo, fila.grupos__descripcion),
         },
-        {field:'detalle', headerName:'descripción', flex:1, minWidth:180},
+        {field:'detalle', headerName:'Descripción', flex:1, minWidth:180},
         {
             field:'marca',
-            headerName:'marca',
+            headerName:'Marca',
             width:120,
             valueGetter:(_v, fila) => textoDeReferencia(fila.marca, fila.marcas__descripcion),
         },
-        {field:'serie', headerName:'serie', width:140},
+        {field:'serie', headerName:'Serie', width:140},
         {
             field:'sector',
-            headerName:'sector',
+            headerName:'Sector',
             width:100,
             valueGetter:(_v, fila) => textoDeReferencia(fila.sector, fila.sectores__sigla),
         },
-        {field:'espacio', headerName:'espacio', width:150, valueGetter:(_v, fila) => espacioDe(fila)},
+        {field:'espacio', headerName:'Espacio', width:150, valueGetter:(_v, fila) => espacioDe(fila)},
         {
             field:'responsable_sector',
-            headerName:'responsable del sector',
+            headerName:'Responsable del sector',
             width:170,
             valueGetter:(_v, fila) => responsableDelSectorDe(fila),
         },
         {
             field:'fecha_ultimo_control',
-            headerName:'último control',
+            headerName:'Último control',
             width:120,
             valueFormatter:(value:unknown) => formatearValor(value),
         },
         {
             field:'dias_desde_control',
-            headerName:'días',
+            headerName:'Días',
             type:'number',
             width:80,
             valueGetter:(value:unknown) => value == null ? null : Number(value),
         },
         {
             field:'situacion',
-            headerName:'situación',
+            headerName:'Situación',
             width:110,
             renderCell:params => <ChipSituacion situacion={codigo(params.row, 'situacion')}/>,
         },
@@ -238,18 +239,15 @@ export function ControlesListado({
         onChange={evento => cambiar(evento.target.value)}
         sx={{minWidth:160}}
     >
-        <MenuItem value={TODOS}>todos</MenuItem>
+        <MenuItem value={TODOS}>Todos</MenuItem>
         {opciones.map(([clave, texto]) => <MenuItem key={clave} value={clave}>{texto}</MenuItem>)}
     </TextField>;
 
     return <Box sx={{p:{xs:1, md:2}}}>
         <Stack direction="row" alignItems="center" spacing={2} sx={{mb:2}}>
-            <Typography variant="h6" sx={{fontWeight:600}}>
-                Control de bienes
-            </Typography>
             <Box sx={{flex:1}}/>
             <Button startIcon={<Refresh/>} onClick={() => void cargar()} disabled={cargando}>
-                actualizar
+                Actualizar
             </Button>
         </Stack>
 
@@ -271,8 +269,8 @@ export function ControlesListado({
         <Stack direction="row" spacing={2} sx={{mb:2}} flexWrap="wrap" useFlexGap>
             <TextField
                 size="small"
-                label="ficha, serie o código de barras"
-                helperText="Enter abre la ficha"
+                label="Ficha, serie o código de barras"
+                helperText="Enter abre la ficha o una única coincidencia de serie"
                 value={busqueda}
                 onChange={evento => setBusqueda(evento.target.value)}
                 onKeyDown={evento => {

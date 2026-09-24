@@ -2,9 +2,8 @@
 
 import type {ProcedureContext, ProcedureDef} from './types-principal';
 import {armarGruposPorItem, TipoDeItem} from '../common/controles';
-import {ErrorControl, planificarControl} from './controles-bien';
+import {condicionControlable, ErrorControl, planificarControl} from './controles-bien';
 import {sqlVisibilidad} from './politicas';
-import {condicionParqueTecnologico} from './reportes-bienes';
 
 async function catalogoDeControl(context:ProcedureContext, grupoDelBien:string|null){
     const {client} = context;
@@ -49,7 +48,7 @@ export const ProceduresControles:ProcedureDef[] = [
             const ficha = String(params.ficha ?? '').trim();
             const bienes = await client.query(`
                 SELECT b.ficha, nullif(btrim(b.grupo), '') AS grupo,
-                       coalesce(${condicionParqueTecnologico('b')}, false) AS en_parque
+                       coalesce(${condicionControlable('b')}, false) AS controlable
                   FROM bienes b
                  WHERE b.ficha = $1 AND ${sqlVisibilidad('b.ficha')}
             `, [ficha]).fetchAll();
@@ -57,8 +56,8 @@ export const ProceduresControles:ProcedureDef[] = [
             if(bien == null){
                 throw new ErrorControl(`La ficha ${ficha} no existe o no tiene acceso a ella`);
             }
-            if(bien.en_parque !== true){
-                throw new ErrorControl(`La ficha ${ficha} no pertenece al parque tecnológico`);
+            if(bien.controlable !== true){
+                throw new ErrorControl(`La ficha ${ficha} está dada de baja`);
             }
             const plan = planificarControl(params, await catalogoDeControl(context, bien.grupo));
             const {row} = await client.query(`

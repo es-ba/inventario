@@ -13,9 +13,9 @@ import {Add, Close, Delete, Refresh} from '@mui/icons-material';
 import {DataGrid, GridColDef, GridRowParams} from '@mui/x-data-grid';
 import type {FieldDefinition, FixedFields, TableDefinition} from 'frontend-plus';
 
-import {useAvisos, useConexion, usePermisos} from './contexto-base';
+import {useConfirmar, useAvisos, useConexion, usePermisos, useSalida} from './contexto-base';
 import {useEstructuraTabla} from './cache-tablas';
-import {formatearValor} from './formato-valores';
+import {capitalizar, etiquetaDeCampo, formatearValor} from './formato-valores';
 import {FormFieldRenderer, dependientesDeReferencia} from './form-field-renderer';
 import {useRowEditor} from './use-row-editor';
 import {bienesGridLocaleText} from '../localizacion-grid';
@@ -24,9 +24,9 @@ import {Fila, mensajeDeError} from './tipos-tabla';
 
 function encabezadoDeColumna(field:FieldDefinition):string{
     if(field.referencedName != null){
-        return `${field.referencedAlias ?? ''} ${field.referencedName}`.trim();
+        return capitalizar(`${field.referencedAlias ?? ''} ${field.referencedName}`.trim());
     }
-    return field.label ?? field.title ?? field.name;
+    return etiquetaDeCampo(field);
 }
 
 export type DetailTableProps = {
@@ -41,6 +41,7 @@ export type DetailTableProps = {
     textoAlta?:string,
     tituloAlta?:string,
     tituloEdicion?:string,
+    tituloDetalle?:string,
 };
 
 export function DetailTable({
@@ -52,10 +53,12 @@ export function DetailTable({
     columnasCalculadas,
     columnasExtra,
     soloLectura: soloLecturaPedida = false,
-    textoAlta = 'nuevo',
+    textoAlta = 'Nuevo',
     tituloAlta,
     tituloEdicion,
+    tituloDetalle,
 }:DetailTableProps){
+    const solicitarSalida = useSalida();
     const conn = useConexion();
     const {mostrarError} = useAvisos();
     const permisos = usePermisos();
@@ -92,7 +95,7 @@ export function DetailTable({
             }) as unknown as Fila[];
             setFilas(datos);
         }catch(err){
-            mostrarError(err, `No se pudieron cargar los datos de ${tabla}`);
+            mostrarError(err, `No se pudieron cargar ${definicion?.title ?? 'los datos'}`);
             setFilas([]);
         }finally{
             setCargando(false);
@@ -146,7 +149,7 @@ export function DetailTable({
             <Typography variant="h6">{titulo ?? definicion?.title ?? tabla}</Typography>
             <Stack direction="row" spacing={1}>
                 <Button startIcon={<Refresh/>} onClick={() => void cargarFilas()}>
-                    actualizar
+                    Actualizar
                 </Button>
                 {soloLectura ? null : <Button
                     variant="contained"
@@ -186,7 +189,7 @@ export function DetailTable({
         <Drawer
             anchor="right"
             open={panelAbierto}
-            onClose={cerrarPanel}
+            onClose={() => solicitarSalida(cerrarPanel)}
             PaperProps={{sx:{width:anchoPanel, p:2}}}
         >
             {definicion != null && panelAbierto
@@ -195,12 +198,13 @@ export function DetailTable({
                     definicion={definicion}
                     filaInicial={filaDelPanel}
                     nombresFijos={nombresFijos}
-                    onCerrar={cerrarPanel}
+                    onCerrar={() => solicitarSalida(cerrarPanel)}
                     onGuardado={despuesDeGuardar}
                     soloLectura={soloLectura}
                     filasExistentes={filas}
                     tituloAlta={tituloAlta}
                     tituloEdicion={tituloEdicion}
+                    tituloDetalle={tituloDetalle}
                 />
                 : null}
         </Drawer>
@@ -218,6 +222,7 @@ function PanelDeRegistro({
     filasExistentes,
     tituloAlta,
     tituloEdicion,
+    tituloDetalle,
 }:{
     tabla:string,
     definicion:TableDefinition,
@@ -229,8 +234,10 @@ function PanelDeRegistro({
     filasExistentes:Fila[],
     tituloAlta?:string,
     tituloEdicion?:string,
+    tituloDetalle?:string,
 }){
     const conn = useConexion();
+    const confirmar = useConfirmar();
     const {mostrarError} = useAvisos();
     const permisos = usePermisos();
     const [borrando, setBorrando] = React.useState(false);
@@ -294,14 +301,13 @@ function PanelDeRegistro({
             .map(fila => String(fila[campoUnico] ?? ''))
             .filter(valor => valor !== '' && valor !== propio));
     }, [campoUnico, esAlta, filaInicial, filasExistentes]);
-
-    const nombreElemento = definicion.elementName ?? definicion.name ?? tabla;
+    const elemento = String(definicion.elementName ?? tabla).replace(/_/g, ' ');
 
     const borrar = React.useCallback(async () => {
         if(!filaInicial){
             return;
         }
-        if(!window.confirm('¿Eliminar este registro?')){
+        if(!await confirmar({titulo:'Eliminar registro', mensaje:'¿Eliminar este registro?', confirmar:'Eliminar', peligroso:true})){
             return;
         }
         setBorrando(true);
@@ -316,14 +322,14 @@ function PanelDeRegistro({
         }finally{
             setBorrando(false);
         }
-    }, [conn, definicion.primaryKey, filaInicial, mostrarError, onGuardado, tabla]);
+    }, [confirmar, conn, definicion.primaryKey, filaInicial, mostrarError, onGuardado, tabla]);
 
     return <Box sx={{display:'flex', flexDirection:'column', height:'100%'}}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{mb:2}}>
             <Typography variant="h6">
-                {esAlta
-                    ? (tituloAlta ?? `Nuevo ${nombreElemento}`)
-                    : (tituloEdicion ?? `Editar ${nombreElemento}`)}
+                {esAlta ? (tituloAlta ?? `Nuevo ${elemento}`)
+                    : soloLectura ? (tituloDetalle ?? `Detalle del ${elemento}`)
+                    : (tituloEdicion ?? `Editar ${elemento}`)}
             </Typography>
             <IconButton onClick={onCerrar} size="small"><Close/></IconButton>
         </Stack>
@@ -335,7 +341,7 @@ function PanelDeRegistro({
                 row={editor.row}
                 setField={asignar}
                 error={editor.errores[field.name]}
-                disabled={soloLectura}
+                disabled={soloLectura || editor.guardando}
                 excluidos={field.name === campoUnico ? usados : undefined}
             />)}
         </Stack>
@@ -348,17 +354,17 @@ function PanelDeRegistro({
             {}
             {soloLectura || esAlta || !permisos.eliminar
                 ? <span/>
-                : <Button color="error" startIcon={<Delete/>} onClick={() => void borrar()} disabled={borrando}>
-                    eliminar
+                : <Button color="error" startIcon={<Delete/>} onClick={() => void borrar()} disabled={borrando || editor.guardando}>
+                    Eliminar
                 </Button>}
             <Stack direction="row" spacing={1}>
-                <Button onClick={onCerrar}>{soloLectura ? 'cerrar' : 'cancelar'}</Button>
+                <Button onClick={onCerrar}>{soloLectura ? 'Cerrar' : 'Cancelar'}</Button>
                 {soloLectura ? null : <Button
                     variant="contained"
                     disabled={!editor.puedeGuardar}
                     onClick={async () => { if(await editor.guardar()){ onGuardado(); } }}
                 >
-                    guardar
+                    Guardar
                 </Button>}
             </Stack>
         </Stack>

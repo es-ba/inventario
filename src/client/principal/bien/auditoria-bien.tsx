@@ -56,7 +56,7 @@ function resumenDeCambios(cambios:Fila[]):string{
 function valor(dato:unknown){
     const texto = formatearValor(dato);
     return texto === ''
-        ? <Typography component="span" variant="body2" color="text.disabled">vacío</Typography>
+        ? <Typography component="span" variant="body2" color="text.disabled">Vacío</Typography>
         : texto;
 }
 
@@ -90,7 +90,7 @@ export function AuditoriaBien({ficha}:{ficha:string}){
         <Toolbar disableGutters sx={{display:'flex', justifyContent:'space-between'}}>
             <Typography variant="h6">Eventos</Typography>
             <Button startIcon={<Refresh/>} onClick={() => void cargar()} disabled={cargando}>
-                actualizar
+                Actualizar
             </Button>
         </Toolbar>
         {cargando
@@ -125,9 +125,9 @@ export function AuditoriaBien({ficha}:{ficha:string}){
                             : <Table size="small">
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell>campo</TableCell>
-                                        <TableCell>valor anterior</TableCell>
-                                        <TableCell>valor nuevo</TableCell>
+                                        <TableCell>Campo</TableCell>
+                                        <TableCell>Valor anterior</TableCell>
+                                        <TableCell>Valor nuevo</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>

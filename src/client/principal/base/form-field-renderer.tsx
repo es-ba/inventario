@@ -11,7 +11,7 @@ import {
 import type {FieldDefinition} from 'frontend-plus';
 
 import {useDatosReferencial, useEspaciosDelSector, useEstructuraTabla} from './cache-tablas';
-import {aValorFechaInput, formatearValor} from './formato-valores';
+import {aValorFechaInput, etiquetaDeCampo, formatearValor} from './formato-valores';
 import {Fila, nombreDeTipo} from './tipos-tabla';
 
 function comoTextoEditable(value:unknown):string{
@@ -59,8 +59,8 @@ export function camposDeEtiqueta(referencia:string, ...listas:string[][]):string
     ].filter((nombre, i, todos) => nombre && todos.indexOf(nombre) === i);
 }
 
-export const GRUPO_PROPIO = 'del sector';
-export const GRUPO_AJENO = 'otros sectores';
+export const GRUPO_PROPIO = 'Del sector';
+export const GRUPO_AJENO = 'Otros sectores';
 
 export function grupoDePertenencia(fila:Fila, columna:string, propios:Set<string>):string{
     return propios.has(String(fila[columna] ?? '').trim()) ? GRUPO_PROPIO : GRUPO_AJENO;
@@ -193,7 +193,7 @@ function CampoReferencia({field, row, setField, disabled, error, size, excluidos
         }}
         renderInput={params => <TextField
             {...params}
-            label={field.label ?? field.title ?? field.name}
+            label={etiquetaDeCampo(field)}
             required={field.nullable === false}
             error={Boolean(error)}
             helperText={error ?? undefined}
@@ -204,7 +204,7 @@ function CampoReferencia({field, row, setField, disabled, error, size, excluidos
 export function FormFieldRenderer(props:FormFieldRendererProps){
     const {field, row, setField, disabled = false, error = null, multiline = false, minRows, size} = props;
     const value = row[field.name];
-    const etiqueta = field.label ?? field.title ?? field.name;
+    const etiqueta = etiquetaDeCampo(field);
     const deshabilitado = disabled || field.editable === false;
     const tipo = nombreDeTipo(field.typeName);
 
@@ -225,7 +225,7 @@ export function FormFieldRenderer(props:FormFieldRendererProps){
             fullWidth
             size={size}
         >
-            <MenuItem value=""><em>sin valor</em></MenuItem>
+            <MenuItem value=""><em>Sin valor</em></MenuItem>
             {field.options.map(opcion =>
                 <MenuItem key={opcion} value={opcion}>{opcion}</MenuItem>
             )}

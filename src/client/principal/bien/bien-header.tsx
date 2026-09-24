@@ -4,6 +4,7 @@ import {ArrowBack, Print} from '@mui/icons-material';
 
 import {formatearValor} from '../base/formato-valores';
 import type {Fila} from '../base/tipos-tabla';
+import {colorDeEstado} from './presentacion-bien';
 
 export type ResumenDelBien = {
     movimientos?:unknown,
@@ -41,8 +42,13 @@ export function responsablesDelBien(row:Fila):{delSector:string, directo:string}
     return {delSector, directo:mismoQueElSector ? '' : directo};
 }
 
-function estaEnAlta(row:Fila):boolean{
-    return row.activo !== false;
+function Rotulo({etiqueta, valor}:{etiqueta:string, valor:string}){
+    if(valor === ''){
+        return null;
+    }
+    return <Typography variant="caption" color="text.secondary">
+        {etiqueta}: <Box component="span" sx={{color:'text.primary'}}>{valor}</Box>
+    </Typography>;
 }
 
 function ultimoMovimiento(resumen:ResumenDelBien):string{
@@ -94,12 +100,8 @@ export function BienHeader({
     const descripcion = comoTexto(row.detalle)
         || comoTexto(row.observacion)
         || comoTexto(row.modelo);
-    const enAlta = estaEnAlta(row);
     const estado = conDescripcion(row, 'estado');
     const {delSector, directo} = responsablesDelBien(row);
-    const responsable = [delSector, directo ? `directo: ${directo}` : '']
-        .filter(parte => parte !== '')
-        .join(' · ');
     const asignacion = conDescripcion(row, 'tipo_asignacion');
     const ubicacion = [
         conDescripcion(row, 'sector'),
@@ -132,13 +134,8 @@ export function BienHeader({
                     <Typography variant="h6" component="div" sx={{fontWeight:600}}>
                         Ficha {ficha || '—'}
                     </Typography>
-                    <Chip
-                        label={enAlta ? 'Alta' : 'Baja'}
-                        size="small"
-                        color={enAlta ? 'success' : 'default'}
-                    />
                     {estado
-                        ? <Chip label={estado} size="small" variant="outlined"/>
+                        ? <Chip label={estado} size="small" color={colorDeEstado(row.estado)}/>
                         : null}
                 </Stack>
 
@@ -152,23 +149,12 @@ export function BienHeader({
                     </Typography>
                     : null}
 
-                {ubicacion || responsable || asignacion
-                    ? <Stack direction="row" spacing={2} sx={{mt:0.5}} flexWrap="wrap">
-                        {ubicacion
-                            ? <Typography variant="caption" color="text.secondary">
-                                📍 {ubicacion}
-                            </Typography>
-                            : null}
-                        {responsable
-                            ? <Typography variant="caption" color="text.secondary">
-                                👤 {responsable}
-                            </Typography>
-                            : null}
-                        {asignacion
-                            ? <Typography variant="caption" color="text.secondary">
-                                📄 {asignacion}
-                            </Typography>
-                            : null}
+                {ubicacion || delSector || directo || asignacion
+                    ? <Stack direction="row" columnGap={2} rowGap={0.25} sx={{mt:0.5}} flexWrap="wrap" useFlexGap>
+                        <Rotulo etiqueta="Ubicación" valor={ubicacion}/>
+                        <Rotulo etiqueta="Responsable del sector" valor={delSector}/>
+                        <Rotulo etiqueta="Responsable directo" valor={directo}/>
+                        <Rotulo etiqueta="Tipo de asignación" valor={asignacion}/>
                     </Stack>
                     : null}
 
@@ -183,19 +169,19 @@ export function BienHeader({
                         useFlexGap
                     >
                         <DatoResumen
-                            etiqueta="último movimiento"
+                            etiqueta="Último movimiento"
                             valor={ultimoMovimiento(resumen)}
                         />
                         <DatoResumen
-                            etiqueta="última declaración"
+                            etiqueta="Última declaración"
                             valor={ultimaDeclaracion(resumen)}
                         />
                         <DatoResumen
-                            etiqueta="movimientos"
+                            etiqueta="Movimientos"
                             valor={comoTexto(resumen.movimientos)}
                         />
                         <DatoResumen
-                            etiqueta="adjuntos"
+                            etiqueta="Adjuntos"
                             valor={comoTexto(resumen.adjuntos)}
                         />
                     </Stack>

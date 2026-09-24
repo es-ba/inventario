@@ -9,12 +9,14 @@ import {
 } from './principal/render-connected-app-inventario';
 import {SolicitudesListado} from './principal/solicitud/solicitudes-listado';
 import {SolicitudFormulario} from './principal/solicitud/solicitud-formulario';
+import {useSalida} from './principal/base/contexto-base';
 
 type Vista =
     {nombre:'listado'}
     | {nombre:'solicitud', acta?:string};
 
 function PantallaSolicitudes({acta}:{acta?:string}){
+    const solicitarSalida = useSalida();
     const [vista, setVista] = React.useState<Vista>(acta ? {nombre:'solicitud', acta} : {nombre:'listado'});
 
     return <Paper square elevation={0} sx={{minHeight:'100vh'}}>
@@ -25,10 +27,10 @@ function PantallaSolicitudes({acta}:{acta?:string}){
                     edge="start"
                     aria-label="volver al menú"
                     title="Volver al menú"
-                    onClick={() => {
+                    onClick={() => solicitarSalida(() => {
                         unmountConnectedAppInventario();
                         location.hash = '';
-                    }}
+                    })}
                     sx={{mr:2}}
                 >
                     <MenuIcon/>
@@ -43,6 +45,7 @@ function PantallaSolicitudes({acta}:{acta?:string}){
         {vista.nombre === 'solicitud'
             ? <SolicitudFormulario
                 acta={vista.acta}
+                onIdentificada={numero => setVista({nombre:'solicitud', acta:numero})}
                 onVolver={() => setVista({nombre:'listado'})}
             />
             : <SolicitudesListado

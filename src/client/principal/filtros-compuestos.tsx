@@ -3,6 +3,7 @@ import {
     Autocomplete,
     Box,
     Button,
+    Chip,
     CircularProgress,
     IconButton,
     MenuItem,
@@ -44,7 +45,6 @@ type FiltrosCompuestosProps = {
     onFiltersChange: (filters:BienesBusquedaFilterDraft[]) => void;
     onLogicOperatorChange: (logicOperator:BienesBusquedaLogicOperator) => void;
     onSearch: () => void;
-    onClear: () => void;
 };
 
 type OperatorOption = {
@@ -53,32 +53,32 @@ type OperatorOption = {
 };
 
 const textOperators:OperatorOption[] = [
-    {value:'contains', label:'contiene'},
-    {value:'equals', label:'es igual a'},
-    {value:'not_equals', label:'es distinto de'},
-    {value:'starts_with', label:'empieza con'},
-    {value:'ends_with', label:'termina con'},
-    {value:'empty', label:'está vacío'},
-    {value:'not_empty', label:'no está vacío'},
+    {value:'contains', label:'Contiene'},
+    {value:'equals', label:'Es igual a'},
+    {value:'not_equals', label:'Es distinto de'},
+    {value:'starts_with', label:'Empieza con'},
+    {value:'ends_with', label:'Termina con'},
+    {value:'empty', label:'Está vacío'},
+    {value:'not_empty', label:'No está vacío'},
 ];
 
 const orderedOperators:OperatorOption[] = [
-    {value:'equals', label:'es igual a'},
-    {value:'not_equals', label:'es distinto de'},
-    {value:'greater_than', label:'es mayor que'},
-    {value:'greater_or_equal', label:'es mayor o igual que'},
-    {value:'less_than', label:'es menor que'},
-    {value:'less_or_equal', label:'es menor o igual que'},
-    {value:'between', label:'está entre'},
-    {value:'empty', label:'está vacío'},
-    {value:'not_empty', label:'no está vacío'},
+    {value:'equals', label:'Es igual a'},
+    {value:'not_equals', label:'Es distinto de'},
+    {value:'greater_than', label:'Es mayor que'},
+    {value:'greater_or_equal', label:'Es mayor o igual que'},
+    {value:'less_than', label:'Es menor que'},
+    {value:'less_or_equal', label:'Es menor o igual que'},
+    {value:'between', label:'Está entre'},
+    {value:'empty', label:'Está vacío'},
+    {value:'not_empty', label:'No está vacío'},
 ];
 
 const booleanOperators:OperatorOption[] = [
-    {value:'equals', label:'es igual a'},
-    {value:'not_equals', label:'es distinto de'},
-    {value:'empty', label:'está vacío'},
-    {value:'not_empty', label:'no está vacío'},
+    {value:'equals', label:'Es igual a'},
+    {value:'not_equals', label:'Es distinto de'},
+    {value:'empty', label:'Está vacío'},
+    {value:'not_empty', label:'No está vacío'},
 ];
 
 let filterSequence = 0;
@@ -124,6 +124,18 @@ export function isCompleteFilter(filter:BienesBusquedaFilterDraft):boolean{
     }
     return filter.operator !== 'between'
         || (filter.valueTo != null && String(filter.valueTo).trim() !== '');
+}
+
+export function textoDeFiltro(filtro:BienesBusquedaFilterDraft):string{
+    const operador = [...textOperators, ...orderedOperators].find(o => o.value === filtro.operator)?.label ?? filtro.operator;
+    const partes = [filtro.targetLabel || filtro.target, operador.toLowerCase()];
+    if(operatorNeedsValue(filtro.operator)){
+        partes.push(String(filtro.value ?? ''));
+    }
+    if(filtro.operator === 'between'){
+        partes.push('y', String(filtro.valueTo ?? ''));
+    }
+    return partes.join(' ');
 }
 
 function operatorsFor(target:BienesBusquedaTarget | undefined):OperatorOption[]{
@@ -478,7 +490,6 @@ export function FiltrosCompuestos({
     onFiltersChange,
     onLogicOperatorChange,
     onSearch,
-    onClear,
 }:FiltrosCompuestosProps){
     const updateFilter = (id:string, patch:Partial<BienesBusquedaFilterDraft>) => {
         onFiltersChange(filters.map(filter => filter.id === id ? {...filter, ...patch} : filter));
@@ -498,8 +509,8 @@ export function FiltrosCompuestos({
                     )}
                     sx={{minWidth:230}}
                 >
-                    <MenuItem value="and">Cumplir todas (AND)</MenuItem>
-                    <MenuItem value="or">Cumplir alguna (OR)</MenuItem>
+                    <MenuItem value="and">Todas las condiciones</MenuItem>
+                    <MenuItem value="or">Alguna condición</MenuItem>
                 </TextField>
             </Stack>
 
@@ -619,16 +630,41 @@ export function FiltrosCompuestos({
                 >
                     Buscar
                 </Button>
-                <Button
-                    size="small"
-                    startIcon={<Clear/>}
-                    disabled={loading || filters.length === 0}
-                    onClick={onClear}
-                    sx={{ml:1}}
-                >
-                    Limpiar
-                </Button>
             </Box>
         </Stack>
     </Paper>;
+}
+
+export function FiltrosAplicados({
+    condiciones,
+    grupo,
+    texto,
+    onQuitarCondicion,
+    onQuitarGrupo,
+    onQuitarTexto,
+    onVolverAlResumen,
+    onClear,
+}:{
+    condiciones:BienesBusquedaFilterDraft[],
+    grupo:string|null,
+    texto:string,
+    onQuitarCondicion:(id:string) => void,
+    onQuitarGrupo:() => void,
+    onQuitarTexto:() => void,
+    onVolverAlResumen?:() => void,
+    onClear:() => void,
+}){
+    if(!condiciones.length && !grupo && !texto){
+        return null;
+    }
+    return <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap sx={{mb:1}}>
+        <Typography variant="body2" color="text.secondary">Filtros aplicados:</Typography>
+        {condiciones.map(condicion =>
+            <Chip key={condicion.id} size="small" label={textoDeFiltro(condicion)} onDelete={() => onQuitarCondicion(condicion.id)}/>
+        )}
+        {grupo ? <Chip size="small" color="primary" variant="outlined" label={grupo} onDelete={onQuitarGrupo}/> : null}
+        {texto ? <Chip size="small" label={`Texto: ${texto}`} onDelete={onQuitarTexto}/> : null}
+        {onVolverAlResumen ? <Button size="small" onClick={onVolverAlResumen}>Volver al resumen</Button> : null}
+        <Button size="small" startIcon={<Clear/>} onClick={onClear}>Limpiar todo</Button>
+    </Stack>;
 }

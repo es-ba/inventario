@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
     AppBar,
+    Box,
     IconButton,
     Paper,
     Toolbar,
@@ -10,6 +11,7 @@ import {Menu as MenuIcon} from '@mui/icons-material';
 import type {Connector, FixedFields} from 'frontend-plus';
 import {BusquedaBienes} from './principal/busqueda-bienes';
 import {BienFormulario} from './principal/bien/bien-formulario';
+import {useSalida} from './principal/base/contexto-base';
 import './ws-solicitudes';
 import './ws-bajas';
 import './ws-controles';
@@ -31,6 +33,8 @@ function PantallaPrincipal({
     fixedFields:FixedFields;
 }){
     const [vista, setVista] = React.useState<Vista>({nombre:'busqueda'});
+    const solicitarSalida = useSalida();
+    const [actualizacion, setActualizacion] = React.useState<{ficha:string, version:number}>();
 
     const volverAlMenu = () => {
         unmountConnectedAppInventario();
@@ -45,7 +49,7 @@ function PantallaPrincipal({
                     edge="start"
                     aria-label="volver al menú"
                     title="Volver al menú"
-                    onClick={volverAlMenu}
+                    onClick={() => solicitarSalida(volverAlMenu)}
                     sx={{mr:2}}
                 >
                     <MenuIcon/>
@@ -61,14 +65,19 @@ function PantallaPrincipal({
             ? <BienFormulario
                 ficha={vista.ficha}
                 onVolver={() => setVista({nombre:'busqueda'})}
+                onGuardado={fila => setActualizacion(anterior => ({ficha:String(fila.ficha), version:(anterior?.version ?? 0) + 1}))}
             />
-            : <BusquedaBienes
+            : null}
+        <Box sx={{display:vista.nombre === 'busqueda' ? 'block' : 'none'}}>
+            <BusquedaBienes
                 conn={conn}
                 fixedFields={fixedFields}
+                visible={vista.nombre === 'busqueda'}
+                actualizacion={actualizacion}
                 onAbrirBien={ficha => setVista({nombre:'bien', ficha})}
                 onNuevoBien={() => setVista({nombre:'bien', ficha:undefined})}
             />
-        }
+        </Box>
     </Paper>;
 }
 

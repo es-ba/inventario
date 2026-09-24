@@ -54,10 +54,10 @@ export function SolicitudesListado({
     React.useEffect(() => { void cargar(); }, [cargar]);
 
     const columnas = React.useMemo<GridColDef[]>(() => [
-        {field:'acta', headerName:'acta', width:120},
+        {field:'acta', headerName:'N.º de solicitud', width:140},
         {
             field:'estado',
-            headerName:'estado',
+            headerName:'Estado',
             width:130,
             renderCell:(params) => {
                 const codigo = String(params.row.estado ?? '');
@@ -69,7 +69,7 @@ export function SolicitudesListado({
         },
         {
             field:'tipo_asignacion__descripcion',
-            headerName:'asignación',
+            headerName:'Asignación',
             width:120,
             valueGetter:(_v, fila) => textoDeReferencia(
                 fila.tipo_asignacion, fila.tipo_asignacion__descripcion,
@@ -77,7 +77,7 @@ export function SolicitudesListado({
         },
         {
             field:'responsables__apellido',
-            headerName:'responsable',
+            headerName:'Responsable directo',
             flex:1,
             minWidth:140,
             valueGetter:(_v, fila) => textoDeReferencia(
@@ -86,19 +86,19 @@ export function SolicitudesListado({
         },
         {
             field:'sectores__sigla',
-            headerName:'sector',
+            headerName:'Sector',
             width:120,
             valueGetter:(_v, fila) => textoDeReferencia(fila.sector, fila.sectores__sigla),
         },
         {
             field:'sedes__descripcion',
-            headerName:'sede',
+            headerName:'Sede',
             width:130,
             valueGetter:(_v, fila) => textoDeReferencia(fila.sede, fila.sedes__descripcion),
         },
         {
             field:'espacios__numero',
-            headerName:'espacio',
+            headerName:'Espacio',
             width:130,
             valueGetter:(_v, fila) => textoDeReferencia(
                 fila.espacio, fila.espacios__numero, fila.espacios__denominacion,
@@ -106,14 +106,14 @@ export function SolicitudesListado({
         },
         {
             field:'fecha_creacion',
-            headerName:'creada',
+            headerName:'Creada',
             width:110,
             valueFormatter:(value:unknown) => formatearValor(value),
         },
-        {field:'usuario_creacion', headerName:'usuario', width:120},
+        {field:'usuario_creacion', headerName:'Usuario', width:120},
         {
             field:'__acciones',
-            headerName:'acciones',
+            headerName:'Acciones',
             width:260,
             sortable:false,
             filterable:false,
@@ -130,11 +130,11 @@ export function SolicitudesListado({
         <Stack direction="row" alignItems="center" spacing={2} sx={{mb:2}}>
             <Box sx={{flex:1}}/>
             <Button startIcon={<Refresh/>} onClick={() => void cargar()} disabled={cargando}>
-                actualizar
+                Actualizar
             </Button>
             {permisos.guardar
                 ? <Button variant="contained" startIcon={<Add/>} onClick={() => onAbrir(undefined)}>
-                    nueva solicitud
+                    Nueva solicitud
                 </Button>
                 : null}
         </Stack>

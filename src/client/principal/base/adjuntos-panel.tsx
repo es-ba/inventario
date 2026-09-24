@@ -17,7 +17,7 @@ import {
 import {Delete, Download, UploadFile} from '@mui/icons-material';
 import type {FixedFields} from 'frontend-plus';
 
-import {useAvisos, useConexion, usePermisos} from './contexto-base';
+import {useConfirmar, useAvisos, useConexion, usePermisos} from './contexto-base';
 import {formatearValor} from './formato-valores';
 import type {Fila} from './tipos-tabla';
 
@@ -48,6 +48,7 @@ export function AdjuntosPanel({
     soloLectura: soloLecturaPedida = false,
 }:AdjuntosPanelProps){
     const conn = useConexion();
+    const confirmar = useConfirmar();
     const {mostrarError, mostrarMensaje} = useAvisos();
     const permisos = usePermisos();
     const soloLectura = soloLecturaPedida || !permisos.guardar;
@@ -97,7 +98,7 @@ export function AdjuntosPanel({
     }, [cargar, mostrarError, mostrarMensaje, subir]);
 
     const borrar = React.useCallback(async (fila:Fila) => {
-        if(!window.confirm(`¿Eliminar el adjunto ${nombreDeArchivo(fila.archivo)}?`)){
+        if(!await confirmar({titulo:'Eliminar adjunto', mensaje:`¿Eliminar el adjunto ${nombreDeArchivo(fila.archivo)}?`, confirmar:'Eliminar', peligroso:true})){
             return;
         }
         try{
@@ -109,7 +110,7 @@ export function AdjuntosPanel({
         }catch(err){
             mostrarError(err, 'No se pudo eliminar el adjunto');
         }
-    }, [campoClave, campoNumero, cargar, conn, mostrarError, tabla]);
+    }, [confirmar, campoClave, campoNumero, cargar, conn, mostrarError, tabla]);
 
     const urlDescarga = (fila:Fila) => endpointDescarga
         + `?${campoClave}=${encodeURIComponent(String(fila[campoClave]))}`
@@ -123,7 +124,7 @@ export function AdjuntosPanel({
                 disabled={subiendo}
                 onClick={() => inputArchivo.current?.click()}
             >
-                subir archivo
+                Subir archivo
             </Button>
             <input
                 ref={inputArchivo}
@@ -147,12 +148,12 @@ export function AdjuntosPanel({
                 : <Table size="small">
                     <TableHead>
                         <TableRow>
-                            <TableCell>n°</TableCell>
-                            <TableCell>archivo</TableCell>
-                            <TableCell>detalle</TableCell>
-                            <TableCell>usuario</TableCell>
-                            <TableCell>fecha</TableCell>
-                            <TableCell align="right">acciones</TableCell>
+                            <TableCell>N.º</TableCell>
+                            <TableCell>Archivo</TableCell>
+                            <TableCell>Detalle</TableCell>
+                            <TableCell>Usuario</TableCell>
+                            <TableCell>Fecha</TableCell>
+                            <TableCell align="right">Acciones</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -167,14 +168,14 @@ export function AdjuntosPanel({
                                     <Link
                                         href={urlDescarga(fila)}
                                         download={nombreDeArchivo(fila.archivo)}
-                                        title="descargar"
+                                        title="Descargar"
                                     >
                                         <IconButton size="small"><Download/></IconButton>
                                     </Link>
                                     {soloLectura ? null : <IconButton
                                         size="small"
                                         color="error"
-                                        title="eliminar"
+                                        title="Eliminar"
                                         onClick={() => void borrar(fila)}
                                     >
                                         <Delete/>

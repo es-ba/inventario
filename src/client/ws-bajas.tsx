@@ -9,12 +9,14 @@ import {
 } from './principal/render-connected-app-inventario';
 import {BajasListado} from './principal/baja/bajas-listado';
 import {BienFormulario} from './principal/bien/bien-formulario';
+import {useSalida} from './principal/base/contexto-base';
 
 type Vista =
     {nombre:'listado'}
     | {nombre:'bien', ficha:string};
 
 function PantallaBajas(){
+    const solicitarSalida = useSalida();
     const [vista, setVista] = React.useState<Vista>({nombre:'listado'});
 
     return <Paper square elevation={0} sx={{minHeight:'100vh'}}>
@@ -25,10 +27,10 @@ function PantallaBajas(){
                     edge="start"
                     aria-label="volver al menú"
                     title="Volver al menú"
-                    onClick={() => {
+                    onClick={() => solicitarSalida(() => {
                         unmountConnectedAppInventario();
                         location.hash = '';
-                    }}
+                    })}
                     sx={{mr:2}}
                 >
                     <MenuIcon/>

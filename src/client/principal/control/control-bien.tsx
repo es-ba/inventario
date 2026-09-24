@@ -112,7 +112,7 @@ function ValorDeItem({
                 value={valor}
                 onChange={evento => onCambiar(evento.target.value)}
             >
-                <MenuItem value="">sin dato</MenuItem>
+                <MenuItem value="">Sin dato</MenuItem>
                 {opciones.map(o => <MenuItem key={String(o.valor)} value={String(o.valor)}>
                     {textoDeOpcion(o.valor)}
                 </MenuItem>)}
@@ -243,7 +243,7 @@ export function ControlBien({
     };
 
     return <Box sx={{p:{xs:1, md:2}, maxWidth:720, mx:'auto'}}>
-        <Button startIcon={<ArrowBack/>} onClick={onVolver} sx={{mb:1}}>volver al listado</Button>
+        <Button startIcon={<ArrowBack/>} onClick={onVolver} sx={{mb:1}}>Volver al listado</Button>
         <Typography variant="h6" sx={{fontWeight:600}}>
             {ficha} · {textoDeReferencia(bien.detalle)}
         </Typography>
@@ -261,7 +261,7 @@ export function ControlBien({
             {[
                 textoDeReferencia(bien.sector, bien.sectores__sigla),
                 espacioDe(bien) ? `espacio ${espacioDe(bien)}` : '',
-                responsableDelSectorDe(bien) ? `responsable: ${responsableDelSectorDe(bien)}` : '',
+                responsableDelSectorDe(bien) ? `responsable del sector: ${responsableDelSectorDe(bien)}` : '',
             ].filter(Boolean).join(' · ')}
         </Typography>
 
@@ -274,12 +274,12 @@ export function ControlBien({
                             <Stack direction="row" alignItems="center" justifyContent="space-between">
                                 <Typography variant="subtitle1" sx={{fontWeight:600}}>Registrar control</Typography>
                                 {ultimo
-                                    ? <Button size="small" onClick={copiarUltimo}>copiar último control</Button>
+                                    ? <Button size="small" onClick={copiarUltimo}>Copiar último control</Button>
                                     : null}
                             </Stack>
                             <TextField
                                 type="date"
-                                label="fecha"
+                                label="Fecha"
                                 value={fecha}
                                 onChange={evento => setFecha(evento.target.value)}
                                 inputProps={{max:hoyLocal()}}
@@ -297,7 +297,7 @@ export function ControlBien({
                                 onCambiar={valor => setValores(anteriores => ({...anteriores, [String(item.item)]:valor}))}
                             />)}
                             <TextField
-                                label="observación"
+                                label="Observación"
                                 value={observacion}
                                 onChange={evento => setObservacion(evento.target.value)}
                                 multiline
@@ -313,7 +313,7 @@ export function ControlBien({
                                     disabled={guardando}
                                     onClick={() => void guardar('quedarse')}
                                 >
-                                    guardar
+                                    Guardar
                                 </Button>
                                 {onSiguiente
                                     ? <Button
@@ -323,7 +323,7 @@ export function ControlBien({
                                         disabled={guardando}
                                         onClick={() => void guardar('siguiente')}
                                     >
-                                        guardar y siguiente
+                                        Guardar y siguiente
                                     </Button>
                                     : null}
                             </Stack>

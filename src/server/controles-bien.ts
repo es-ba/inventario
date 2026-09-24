@@ -129,6 +129,10 @@ export function condicionParqueTecnologico(alias:string):string{
         + ` AND btrim(coalesce(${alias}.clase, '')) IN (${CLASES_PARQUE_TECNOLOGICO.map(c => `'${c}'`).join(', ')})`;
 }
 
+export function condicionControlable(alias:string):string{
+    return `${alias}.activo`;
+}
+
 export function sqlUltimoControl(alias:string):string{
     return `LEFT JOIN LATERAL (
     SELECT c.fecha
@@ -141,7 +145,7 @@ export function sqlUltimoControl(alias:string):string{
 
 export function sqlSituacionControl(alias:string, fecha:string, dias:number):string{
     return `CASE
-        WHEN NOT coalesce(${condicionParqueTecnologico(alias)}, false) THEN NULL
+        WHEN NOT coalesce(${condicionControlable(alias)}, false) THEN NULL
         WHEN ${fecha} IS NULL THEN 'NUNCA'
         WHEN current_date - ${fecha} > ${Math.trunc(dias)} THEN 'VENCIDO'
         ELSE 'VIGENTE'

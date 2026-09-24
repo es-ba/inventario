@@ -43,14 +43,14 @@ export async function registrarPersonasSiper(client:ClienteSql, recibidas:unknow
         RETURNING r.responsable
     `).fetchAll();
     return {
-        message:`Se recibieron ${personas.length} personas de siper y se actualizaron ${actualizados.rows.length} responsables`,
+        message:`Se recibieron ${personas.length} personas de siper y se actualizaron ${actualizados.rows.length} personas vinculadas`,
         personas:personas.length,
         actualizados:actualizados.rows.length,
     };
 }
 
 export async function inactivarResponsables(client:ClienteSql, texto:unknown, rol:unknown){
-    exigirAdmin(rol, 'desactivar responsables');
+    exigirAdmin(rol, 'desactivar personas');
     const codigos = listaDeCodigos(texto, 'responsables');
     const cambiados = await client.query(`
         UPDATE responsables SET activo = false
@@ -58,13 +58,13 @@ export async function inactivarResponsables(client:ClienteSql, texto:unknown, ro
         RETURNING responsable
     `, [codigos]).fetchAll();
     return {
-        message:`Se desactivaron ${cambiados.rows.length} responsables`,
+        message:`Se desactivaron ${cambiados.rows.length} personas`,
         inactivados:cambiados.rows.map(r => String(r.responsable)),
     };
 }
 
 export async function darAltasDeSiper(client:ClienteSql, texto:unknown, rol:unknown){
-    exigirAdmin(rol, 'dar de alta responsables');
+    exigirAdmin(rol, 'dar de alta personas');
     const idpers = listaDeCodigos(texto, 'personas');
     const altas = await client.query(`
         INSERT INTO responsables(idper, apellido, nombre, sector, activo, activo_siper, fecha_egreso, externo)
@@ -79,7 +79,7 @@ export async function darAltasDeSiper(client:ClienteSql, texto:unknown, rol:unkn
     const creados = altas.rows.map(r => String(r.responsable));
     const omitidos = idpers.filter(idper => !creados.includes(idper));
     return {
-        message:`Se dieron de alta ${creados.length} responsables`
+        message:`Se dieron de alta ${creados.length} personas`
             + (omitidos.length ? `; no se dieron de alta ${omitidos.join(', ')} porque ya existen, están inactivos o no están entre las personas recibidas de siper` : ''),
         creados,
         omitidos,

@@ -20,6 +20,7 @@ import {Add, Delete} from '@mui/icons-material';
 import type {Connector, FieldDefinition, TableDefinition} from 'frontend-plus';
 
 import {FormFieldRenderer} from './base/form-field-renderer';
+import {etiquetaDeCampo} from './base/formato-valores';
 
 
 declare module 'frontend-plus' {
@@ -170,7 +171,7 @@ export function EdicionMasivaBienes({
                         <TextField
                             select
                             size="small"
-                            label="campo"
+                            label="Campo"
                             value={cambio.campo}
                             onChange={evento => actualizar(cambio.id, {
                                 campo:evento.target.value,
@@ -181,26 +182,26 @@ export function EdicionMasivaBienes({
                             {disponibles
                                 .filter(f => f.name === cambio.campo || !usados.has(f.name))
                                 .map(f => <MenuItem key={f.name} value={f.name}>
-                                    {f.label ?? f.title ?? f.name}
+                                    {etiquetaDeCampo(f)}
                                 </MenuItem>)}
                         </TextField>
                         <Box sx={{flex:1, minWidth:0}}>
                             {field && !cambio.vaciar
                                 ? <FormFieldRenderer
-                                    field={{...field, label:'nuevo valor', nullable:true}}
+                                    field={{...field, label:'Nuevo valor', nullable:true}}
                                     row={{[field.name]:cambio.valor}}
                                     setField={(nombre, valor) => escribirCampo(cambio.id, nombre, valor)}
                                     size="small"
                                 />
                                 : <TextField
                                     size="small"
-                                    label="nuevo valor"
+                                    label="Nuevo valor"
                                     value=""
                                     disabled
                                     fullWidth
                                     helperText={cambio.vaciar
-                                        ? 'el campo va a quedar vacío'
-                                        : 'elegí primero el campo'}
+                                        ? 'El campo va a quedar vacío'
+                                        : 'Elegí primero el campo'}
                                 />}
                         </Box>
                         <FormControlLabel
@@ -208,13 +209,13 @@ export function EdicionMasivaBienes({
                                 checked={cambio.vaciar}
                                 onChange={(_e, marcado) => actualizar(cambio.id, {vaciar:marcado})}
                             />}
-                            label="vaciar"
+                            label="Vaciar"
                             sx={{whiteSpace:'nowrap', mt:0.5}}
                         />
                         <IconButton
                             size="small"
                             sx={{mt:0.5}}
-                            title="quitar"
+                            title="Quitar"
                             onClick={() => {
                                 setCambios(previos => previos.filter(c => c.id !== cambio.id));
                                 setPrevisualizacion(null);
@@ -240,7 +241,7 @@ export function EdicionMasivaBienes({
                     setPrevisualizacion(null);
                 }}
             >
-                agregar campo
+                Agregar campo
             </Button>
 
             {previsualizacion
@@ -258,20 +259,20 @@ export function EdicionMasivaBienes({
                 : null}
         </DialogContent>
         <DialogActions>
-            <Button onClick={onCerrar} disabled={trabajando}>cancelar</Button>
+            <Button onClick={onCerrar} disabled={trabajando}>Cancelar</Button>
             <Button
                 onClick={() => void llamar(true)}
                 disabled={!puedeAplicar || trabajando}
                 startIcon={trabajando ? <CircularProgress size={16}/> : undefined}
             >
-                previsualizar
+                Previsualizar
             </Button>
             <Button
                 variant="contained"
                 onClick={() => void llamar(false)}
                 disabled={!puedeAplicar || trabajando || previsualizacion == null}
             >
-                aplicar
+                Aplicar
             </Button>
         </DialogActions>
     </Dialog>;

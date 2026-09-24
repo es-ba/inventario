@@ -3,11 +3,12 @@ import {Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuIt
 import type {FixedFields} from 'frontend-plus';
 import {useAvisos, useConexion, usePermisos} from '../base/contexto-base';
 import type {Fila} from '../base/tipos-tabla';
-import {BajaBienes} from '../baja-bienes';
+import {BajaBienes, CAMPO_MOTIVO} from '../baja-bienes';
+import {FormFieldRenderer} from '../base/form-field-renderer';
 
 type Accion = 'aprobar'|'aprobar_directa'|'rechazar'|'restaurar';
 const TITULOS:Record<Accion,string> = {
-    aprobar:'Aprobar baja', aprobar_directa:'Dar de baja directamente',
+    aprobar:'Aprobar baja', aprobar_directa:'Dar de baja',
     rechazar:'Rechazar baja', restaurar:'Restaurar bien',
 };
 
@@ -58,15 +59,15 @@ export function AccionesBaja({fila,onAplicada}:{fila:Fila,onAplicada:()=>void}){
     return <>
         <Stack direction="row" spacing={0.5}>
             {activo && (!estado || estado === 'RECHAZADA') && permisos.guardar && !permisos.aprobarBaja
-                ? <Button size="small" color="error" onClick={()=>setSolicitar(true)}>solicitar baja</Button> : null}
+                ? <Button size="small" color="error" onClick={()=>setSolicitar(true)}>Solicitar baja</Button> : null}
             {activo && (!estado || estado === 'RECHAZADA') && permisos.aprobarBaja
-                ? <Button size="small" color="error" onClick={()=>abrir('aprobar_directa')}>baja directa</Button> : null}
+                ? <Button size="small" color="error" onClick={()=>abrir('aprobar_directa')}>Dar de baja</Button> : null}
             {activo && estado === 'SOLICITADA' && permisos.aprobarBaja ? <>
-                <Button size="small" color="error" onClick={()=>abrir('aprobar')}>aprobar</Button>
-                <Button size="small" onClick={()=>abrir('rechazar')}>rechazar</Button>
+                <Button size="small" color="error" onClick={()=>abrir('aprobar')}>Aprobar</Button>
+                <Button size="small" onClick={()=>abrir('rechazar')}>Rechazar</Button>
             </> : null}
             {!activo && permisos.restaurarBaja
-                ? <Button size="small" onClick={()=>abrir('restaurar')}>restaurar</Button> : null}
+                ? <Button size="small" onClick={()=>abrir('restaurar')}>Restaurar</Button> : null}
         </Stack>
         <BajaBienes abierto={solicitar} conn={conn} fichas={[ficha]} onCerrar={()=>setSolicitar(false)}
             onAplicada={mensaje=>{mostrarMensaje(mensaje);onAplicada();}}/>
@@ -75,7 +76,7 @@ export function AccionesBaja({fila,onAplicada}:{fila:Fila,onAplicada:()=>void}){
             <DialogContent dividers>
                 <Stack spacing={2}>
                     <Alert severity="info">{accion === 'aprobar' || accion === 'aprobar_directa'
-                        ? 'Al aprobar, el bien pasa a inactivo. Puede asociar un respaldo de la solapa Adjuntos si corresponde.'
+                        ? (accion === 'aprobar_directa' ? 'Al dar de baja' : 'Al aprobar') + ', el bien pasa a inactivo. Puede asociar un respaldo de la solapa Adjuntos si corresponde.'
                         : accion === 'restaurar' ? 'El bien volverá a estar activo. La baja anterior se conservará en la auditoría.'
                         : 'La solicitud será rechazada y el bien permanecerá activo.'}</Alert>
                     {accion === 'aprobar' || accion === 'aprobar_directa' ? <TextField select label="Adjunto de respaldo (opcional)" value={documento}
@@ -85,15 +86,17 @@ export function AccionesBaja({fila,onAplicada}:{fila:Fila,onAplicada:()=>void}){
                             {String(row.numero_adjunto)} · {String(row.detalle || row.archivo)}
                         </MenuItem>)}
                     </TextField> : null}
-                    {accion === 'aprobar_directa' || accion === 'rechazar' || accion === 'restaurar' ? <TextField label="Motivo" value={motivo}
+                    {accion === 'aprobar_directa' ? <FormFieldRenderer field={CAMPO_MOTIVO} row={{motivo_baja:motivo} as Fila}
+                        setField={(_nombre, valor) => setMotivo(valor == null ? '' : String(valor))}/> : null}
+                    {accion === 'rechazar' || accion === 'restaurar' ? <TextField label="Motivo" value={motivo}
                         onChange={evento=>setMotivo(evento.target.value)} multiline minRows={2} required fullWidth/> : null}
                     {error ? <Alert severity="error">{error}</Alert> : null}
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button disabled={trabajando} onClick={()=>setAccion(null)}>cancelar</Button>
+                <Button disabled={trabajando} onClick={()=>setAccion(null)}>Cancelar</Button>
                 <Button variant="contained" onClick={()=>void ejecutar()} disabled={trabajando
-                    || ((accion === 'aprobar_directa' || accion === 'rechazar' || accion === 'restaurar') && !motivo.trim())}>confirmar</Button>
+                    || ((accion === 'aprobar_directa' || accion === 'rechazar' || accion === 'restaurar') && !motivo.trim())}>{accion ? TITULOS[accion] : 'Confirmar'}</Button>
             </DialogActions>
         </Dialog>
     </>;

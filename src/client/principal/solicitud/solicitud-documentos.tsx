@@ -9,7 +9,6 @@ import {
     DialogContent,
     DialogTitle,
     IconButton,
-    Link,
     MenuItem,
     Stack,
     Table,
@@ -23,7 +22,7 @@ import {
 import {Delete, Description, Download, UploadFile} from '@mui/icons-material';
 import type {FieldDefinition, FixedFields} from 'frontend-plus';
 
-import {useAvisos, useConexion, usePermisos} from '../base/contexto-base';
+import {useConfirmar, useAvisos, useConexion, usePermisos} from '../base/contexto-base';
 import {FormFieldRenderer} from '../base/form-field-renderer';
 import {formatearValor} from '../base/formato-valores';
 import type {Fila} from '../base/tipos-tabla';
@@ -59,7 +58,7 @@ declare module 'frontend-plus' {
 const CAMPO_REPRESENTANTE = {
     name:'representante',
     typeName:'text',
-    title:'representante del IDECBA',
+    title:'Representante del IDECBA',
     references:'responsables',
     referencesFields:[{source:'representante', target:'responsable'}],
 } as unknown as FieldDefinition;
@@ -67,14 +66,14 @@ const CAMPO_REPRESENTANTE = {
 const CAMPO_CARACTER = {
     name:'caracter_representante',
     typeName:'text',
-    title:'en su carácter de',
+    title:'En su carácter de',
     references:'jerarquias',
     referencesFields:[{source:'caracter_representante', target:'jerarquia'}],
 } as unknown as FieldDefinition;
 
 const OPERACIONES = [
-    {valor:'entrega', etiqueta:'entrega'},
-    {valor:'devolucion', etiqueta:'devolución'},
+    {valor:'entrega', etiqueta:'Entrega'},
+    {valor:'devolucion', etiqueta:'Devolución'},
 ];
 
 const DATOS_VACIOS = {
@@ -85,12 +84,16 @@ const DATOS_VACIOS = {
     operacion:'entrega',
 };
 
-export function SolicitudDocumentos({acta}:{acta:string}){
+export function SolicitudDocumentos({acta, disabled = false}:{acta:string, disabled?:boolean}){
     const conn = useConexion();
+    const confirmar = useConfirmar();
     const {mostrarError, mostrarMensaje} = useAvisos();
     const permisos = usePermisos();
     const [filas, setFilas] = React.useState<Fila[]>([]);
     const [cargando, setCargando] = React.useState(true);
+    const [errorCarga, setErrorCarga] = React.useState(false);
+    const [generando, setGenerando] = React.useState(false);
+    const enviando = React.useRef(false);
     const [emitiendo, setEmitiendo] = React.useState<TipoDocumento|null>(null);
     const [datos, setDatos] = React.useState(DATOS_VACIOS);
     const [subiendoEn, setSubiendoEn] = React.useState<string|null>(null);
@@ -104,6 +107,7 @@ export function SolicitudDocumentos({acta}:{acta:string}){
 
     const cargar = React.useCallback(async () => {
         setCargando(true);
+        setErrorCarga(false);
         try{
             const datosTabla = await conn.ajax.table_data({
                 table:'solicitudes_documentos',
@@ -113,6 +117,7 @@ export function SolicitudDocumentos({acta}:{acta:string}){
             setFilas(datosTabla);
         }catch(err){
             mostrarError(err, 'No se pudieron cargar los documentos');
+            setErrorCarga(true);
             setFilas([]);
         }finally{
             setCargando(false);
@@ -128,9 +133,11 @@ export function SolicitudDocumentos({acta}:{acta:string}){
     );
 
     const emitir = React.useCallback(async () => {
-        if(emitiendo == null){
+        if(emitiendo == null || enviando.current || disabled){
             return;
         }
+        enviando.current = true;
+        setGenerando(true);
         try{
             const resultado = await conn.ajax.solicitud_documento_emitir({
                 acta, tipo:emitiendo, ...datos,
@@ -141,8 +148,11 @@ export function SolicitudDocumentos({acta}:{acta:string}){
             await cargar();
         }catch(err){
             mostrarError(err, 'No se pudo emitir el documento');
+        }finally{
+            enviando.current = false;
+            setGenerando(false);
         }
-    }, [acta, cargar, conn, datos, emitiendo, mostrarError, mostrarMensaje]);
+    }, [acta, cargar, conn, datos, emitiendo, mostrarError, mostrarMensaje, disabled]);
 
     const subir = React.useCallback(async (archivo:File) => {
         const fila = destino.current;
@@ -177,7 +187,7 @@ export function SolicitudDocumentos({acta}:{acta:string}){
             ? `El ${etiqueta.toLowerCase()} versión ${fila.version} tiene un documento recibido.`
                 + ' Si lo borrás se elimina también ese archivo. ¿Seguir?'
             : `¿Borrar el ${etiqueta.toLowerCase()} versión ${fila.version}?`;
-        if(!window.confirm(aviso)){
+        if(!await confirmar({titulo:'Borrar documento', mensaje:aviso, confirmar:'Borrar', peligroso:true})){
             return;
         }
         try{
@@ -190,7 +200,7 @@ export function SolicitudDocumentos({acta}:{acta:string}){
         }catch(err){
             mostrarError(err, 'No se pudo borrar el documento');
         }
-    }, [acta, cargar, conn, mostrarError, mostrarMensaje]);
+    }, [confirmar, acta, cargar, conn, mostrarError, mostrarMensaje]);
 
     const urlDescarga = (fila:Fila, firmado:boolean) =>
         'download/solicitud_documento'
@@ -205,6 +215,7 @@ export function SolicitudDocumentos({acta}:{acta:string}){
                 key={tipo}
                 variant="outlined"
                 startIcon={<Description/>}
+                disabled={disabled || generando}
                 onClick={() => setEmitiendo(tipo)}
             >
                 emitir {ETIQUETA[tipo].toLowerCase()}
@@ -225,6 +236,8 @@ export function SolicitudDocumentos({acta}:{acta:string}){
 
         {cargando
             ? <Box sx={{display:'flex', justifyContent:'center', p:4}}><CircularProgress/></Box>
+            : errorCarga
+                ? <Alert severity="error" action={<Button onClick={() => void cargar()}>Reintentar</Button>}>No se pudieron cargar los documentos.</Alert>
             : filas.length === 0
                 ? <Typography variant="body2" color="text.secondary" sx={{p:2}}>
                     La solicitud todavía no tiene documentos emitidos.
@@ -232,12 +245,12 @@ export function SolicitudDocumentos({acta}:{acta:string}){
                 : <Table size="small">
                     <TableHead>
                         <TableRow>
-                            <TableCell>documento</TableCell>
-                            <TableCell>versión</TableCell>
-                            <TableCell>código</TableCell>
-                            <TableCell>emitido</TableCell>
-                            <TableCell>recibido</TableCell>
-                            <TableCell align="right">acciones</TableCell>
+                            <TableCell>Documento</TableCell>
+                            <TableCell>Versión</TableCell>
+                            <TableCell>Código</TableCell>
+                            <TableCell>Emitido</TableCell>
+                            <TableCell>Recibido</TableCell>
+                            <TableCell align="right">Acciones</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -251,32 +264,27 @@ export function SolicitudDocumentos({acta}:{acta:string}){
                                 <TableCell>{formatearValor(fila.fecha)}</TableCell>
                                 <TableCell>{tieneFirmado ? formatearValor(fila.fecha_firmado) : '—'}</TableCell>
                                 <TableCell align="right">
-                                    <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                                        <Link href={urlDescarga(fila, false)} download title="descargar emitido">
-                                            <IconButton size="small"><Download/></IconButton>
-                                        </Link>
+                                    <Stack direction={{xs:'column', md:'row'}} spacing={0.5} justifyContent="flex-end">
+                                        <Button href={urlDescarga(fila, false)} download startIcon={<Download/>}>Descargar emitido</Button>
                                         {tieneFirmado
-                                            ? <Link href={urlDescarga(fila, true)} download title="descargar recibido">
-                                                <IconButton size="small" color="success"><Download/></IconButton>
-                                            </Link>
+                                            ? <Button href={urlDescarga(fila, true)} download startIcon={<Download/>}>Descargar recibido</Button>
                                             : null}
-                                        <IconButton
+                                        <Button
                                             size="small"
-                                            title={tieneFirmado ? 'reemplazar el documento recibido' : 'recibir documento'}
-                                            disabled={subiendoEn === clave}
+                                            title={tieneFirmado ? 'Reemplazar el documento recibido' : 'Recibir documento'}
+                                            disabled={subiendoEn != null}
+                                            startIcon={subiendoEn === clave ? <CircularProgress size={18}/> : <UploadFile/>}
                                             onClick={() => {
                                                 destino.current = fila;
                                                 inputArchivo.current?.click();
                                             }}
                                         >
-                                            {subiendoEn === clave
-                                                ? <CircularProgress size={18}/>
-                                                : <UploadFile/>}
-                                        </IconButton>
+                                            {tieneFirmado ? 'Reemplazar documento recibido' : 'Subir documento recibido'}
+                                        </Button>
                                         <IconButton
                                             size="small"
                                             color="error"
-                                            title="borrar el documento"
+                                            title="Borrar el documento"
                                             onClick={() => void eliminar(fila)}
                                         >
                                             <Delete/>
@@ -289,14 +297,14 @@ export function SolicitudDocumentos({acta}:{acta:string}){
                 </Table>
         }
 
-        <Dialog open={emitiendo != null} onClose={() => setEmitiendo(null)} maxWidth="sm" fullWidth>
+        <Dialog open={emitiendo != null} onClose={() => { if(!enviando.current){ setEmitiendo(null); } }} maxWidth="sm" fullWidth>
             <DialogTitle>Emitir {emitiendo ? ETIQUETA[emitiendo].toLowerCase() : ''}</DialogTitle>
             <DialogContent dividers>
                 <Alert severity="info" sx={{mb:2}}>
                     Los bienes salen de la solicitud. Lo que no se complete acá queda como
                     línea de puntos para llenar a mano.
                 </Alert>
-                <Stack spacing={2}>
+                <Stack component="fieldset" disabled={generando} spacing={2} sx={{border:0, p:0, m:0, minWidth:0}}>
                     <FormFieldRenderer
                         field={CAMPO_REPRESENTANTE}
                         row={datos as unknown as Fila}
@@ -313,7 +321,7 @@ export function SolicitudDocumentos({acta}:{acta:string}){
                         <TextField
                             select
                             size="small"
-                            label="el acta documenta una"
+                            label="El acta documenta una"
                             value={datos.operacion}
                             onChange={e => setDatos(d => ({...d, operacion:e.target.value}))}
                         >
@@ -323,14 +331,14 @@ export function SolicitudDocumentos({acta}:{acta:string}){
                         </TextField>
                         <TextField
                             size="small"
-                            label="entrega en representación de"
+                            label="Entrega en representación de"
                             value={datos.entrega_representa}
                             onChange={e => setDatos(d => ({...d, entrega_representa:e.target.value}))}
-                            helperText="si se deja vacío se usa el sector del representante"
+                            helperText="Si se deja vacío se usa el sector del representante"
                         />
                         <TextField
                             size="small"
-                            label="recibe en representación de"
+                            label="Recibe en representación de"
                             value={datos.recibe_representa}
                             onChange={e => setDatos(d => ({...d, recibe_representa:e.target.value}))}
                         />
@@ -338,8 +346,10 @@ export function SolicitudDocumentos({acta}:{acta:string}){
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button onClick={() => setEmitiendo(null)}>cancelar</Button>
-                <Button variant="contained" onClick={() => void emitir()}>emitir</Button>
+                <Button disabled={generando} onClick={() => setEmitiendo(null)}>Cancelar</Button>
+                <Button disabled={generando || disabled} variant="contained" onClick={() => void emitir()}>
+                    {generando ? 'Generando…' : 'emitir'}
+                </Button>
             </DialogActions>
         </Dialog>
     </Box>;

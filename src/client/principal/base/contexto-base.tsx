@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Alert, Snackbar} from '@mui/material';
+import {Alert, Snackbar, Button, Dialog, DialogTitle, DialogContent, DialogActions} from '@mui/material';
 import type {Connector} from 'frontend-plus';
 
 import type {InfoUsuario} from '../../../common/contracts';
@@ -24,11 +24,21 @@ const SIN_PERMISOS:InfoUsuario = {
     puede_guardar:false, puede_mover:false, puede_controlar:false,
 };
 
+export type PedidoDeConfirmacion = {
+    titulo:string,
+    mensaje:string,
+    confirmar:string,
+    peligroso?:boolean,
+};
+
 type ValorContextoBase = {
     conn:Connector,
+    confirmar:(pedido:PedidoDeConfirmacion) => Promise<boolean>,
     mostrarError:(err:unknown, prefijo?:string) => void,
     mostrarMensaje:(texto:string) => void,
     infoUsuario:InfoUsuario,
+    registrarEdicion:(id:symbol, estado:{modificado:boolean, guardando:boolean}|null) => void,
+    solicitarSalida:(salir:() => void) => void,
 };
 
 const ContextoBase = React.createContext<ValorContextoBase|null>(null);
@@ -41,6 +51,37 @@ export function BaseInventarioProvider({
     children:React.ReactNode,
 }){
     const [aviso, setAviso] = React.useState<Aviso|null>(null);
+    const ediciones = React.useRef(new Map<symbol, {modificado:boolean, guardando:boolean}>());
+    const [confirmacion, setConfirmacion] =
+        React.useState<(PedidoDeConfirmacion & {responder:(si:boolean) => void})|null>(null);
+    const confirmar = React.useCallback((pedido:PedidoDeConfirmacion) => new Promise<boolean>(resolver => {
+        setConfirmacion({...pedido, responder:si => { setConfirmacion(null); resolver(si); }});
+    }), []);
+    const registrarEdicion = React.useCallback((id:symbol, estado:{modificado:boolean, guardando:boolean}|null) => {
+        if(estado){ ediciones.current.set(id, estado); }
+        else { ediciones.current.delete(id); }
+    }, []);
+    const solicitarSalida = React.useCallback(async (salir:() => void) => {
+        const estados = [...ediciones.current.values()];
+        if(estados.some(e => e.guardando)){
+            setAviso({texto:'Esperá a que termine el guardado.', severidad:'info'});
+        }else if(!estados.some(e => e.modificado) || await confirmar({
+            titulo:'Cambios sin guardar', mensaje:'Si salís, se descartarán los cambios pendientes.',
+            confirmar:'Descartar y salir', peligroso:true,
+        })){
+            salir();
+        }
+    }, [confirmar]);
+    React.useEffect(() => {
+        const advertir = (evento:BeforeUnloadEvent) => {
+            if([...ediciones.current.values()].some(e => e.modificado || e.guardando)){
+                evento.preventDefault();
+                evento.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', advertir);
+        return () => window.removeEventListener('beforeunload', advertir);
+    }, []);
 
     const mostrarError = React.useCallback((err:unknown, prefijo?:string) => {
         const texto = mensajeDeError(err);
@@ -66,12 +107,23 @@ export function BaseInventarioProvider({
     }, [conn]);
 
     const valor = React.useMemo(
-        () => ({conn, mostrarError, mostrarMensaje, infoUsuario}),
-        [conn, mostrarError, mostrarMensaje, infoUsuario],
+        () => ({conn, confirmar, mostrarError, mostrarMensaje, infoUsuario, registrarEdicion, solicitarSalida}),
+        [conn, confirmar, mostrarError, mostrarMensaje, infoUsuario, registrarEdicion, solicitarSalida],
     );
 
     return <ContextoBase.Provider value={valor}>
         {children}
+        <Dialog open={confirmacion != null} onClose={() => confirmacion?.responder(false)}>
+            <DialogTitle>{confirmacion?.titulo}</DialogTitle>
+            <DialogContent>{confirmacion?.mensaje}</DialogContent>
+            <DialogActions>
+                <Button autoFocus onClick={() => confirmacion?.responder(false)}>Cancelar</Button>
+                <Button color={confirmacion?.peligroso ? 'error' : 'primary'} variant="contained"
+                    onClick={() => confirmacion?.responder(true)}>
+                    {confirmacion?.confirmar}
+                </Button>
+            </DialogActions>
+        </Dialog>
         <Snackbar
             open={aviso != null}
             autoHideDuration={aviso?.severidad === 'error' ? 12000 : 5000}
@@ -102,6 +154,23 @@ function useContextoBase():ValorContextoBase{
 
 export function useConexion():Connector{
     return useContextoBase().conn;
+}
+
+export function useConfirmar(){
+    return useContextoBase().confirmar;
+}
+
+export function useSalida(){
+    return useContextoBase().solicitarSalida;
+}
+
+export function useRegistrarEdicion(modificado:boolean, guardando:boolean){
+    const {registrarEdicion} = useContextoBase();
+    const id = React.useRef(Symbol('edicion'));
+    React.useEffect(() => {
+        registrarEdicion(id.current, {modificado, guardando});
+        return () => registrarEdicion(id.current, null);
+    }, [registrarEdicion, modificado, guardando]);
 }
 
 export function useAvisos():Pick<ValorContextoBase, 'mostrarError'|'mostrarMensaje'>{

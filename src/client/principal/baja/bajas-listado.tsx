@@ -91,23 +91,23 @@ export function BajasListado({
     }), [estado, filas, motivo]);
 
     const columnas = React.useMemo<GridColDef[]>(() => [
-        {field:'acciones',headerName:'acciones',width:300,sortable:false,filterable:false,
+        {field:'acciones',headerName:'Acciones',width:300,sortable:false,filterable:false,
             renderCell:params=><Box onClick={evento=>evento.stopPropagation()}><AccionesBaja fila={params.row} onAplicada={()=>void cargar()}/></Box>},
-        {field:'ficha', headerName:'ficha', width:110},
+        {field:'ficha', headerName:'Ficha', width:110},
         {
             field:'detalle',
-            headerName:'descripción',
+            headerName:'Descripción',
             flex:1,
             minWidth:180,
         },
         {
             field:'estado_baja',
-            headerName:'estado',
+            headerName:'Estado',
             width:140,
             renderCell:(params) => {
                 const valor = codigo(params.row, 'estado_baja');
                 if(valor === ''){
-                    return <Chip size="small" variant="outlined" label="sin estado"/>;
+                    return <Chip size="small" variant="outlined" label="Sin estado"/>;
                 }
                 return <Chip
                     size="small"
@@ -118,7 +118,7 @@ export function BajasListado({
         },
         {
             field:'motivo_baja',
-            headerName:'motivo',
+            headerName:'Motivo',
             width:150,
             valueGetter:(_v, fila) => textoDeReferencia(
                 fila.motivo_baja, fila.motivos_baja__descripcion,
@@ -126,21 +126,21 @@ export function BajasListado({
         },
         {
             field:'fecha_solicitud',
-            headerName:'solicitada',
+            headerName:'Solicitada',
             width:110,
             valueFormatter:(value:unknown) => formatearValor(value),
         },
         {
             field:'fecha_finalizacion',
-            headerName:'finalizada',
+            headerName:'Finalizada',
             width:110,
             valueFormatter:(value:unknown) => formatearValor(value),
         },
-        {field:'autorizado_por', headerName:'autorizada por', width:150},
-        {field:'documento_respaldo', headerName:'documento', width:150},
+        {field:'autorizado_por', headerName:'Autorizada por', width:150},
+        {field:'documento_respaldo', headerName:'Documento', width:150},
         {
             field:'responsable',
-            headerName:'responsable',
+            headerName:'Responsable del sector',
             width:180,
             valueGetter:(_v, fila) => textoDeReferencia(
                 fila.responsable, fila.responsables__apellido, fila.responsables__nombre,
@@ -148,7 +148,7 @@ export function BajasListado({
         },
         {
             field:'sector',
-            headerName:'sector',
+            headerName:'Sector',
             width:120,
             valueGetter:(_v, fila) => textoDeReferencia(fila.sector, fila.sectores__sigla),
         },
@@ -160,7 +160,7 @@ export function BajasListado({
         <Stack direction="row" alignItems="center" spacing={2} sx={{mb:2}}>
             <Box sx={{flex:1}}/>
             <Button startIcon={<Refresh/>} onClick={() => void cargar()} disabled={cargando}>
-                actualizar
+                Actualizar
             </Button>
         </Stack>
 
@@ -192,29 +192,29 @@ export function BajasListado({
             <TextField
                 select
                 size="small"
-                label="estado"
+                label="Estado"
                 value={estado}
                 onChange={evento => setEstado(evento.target.value)}
                 sx={{minWidth:200}}
             >
-                <MenuItem value={TODOS}>todos</MenuItem>
+                <MenuItem value={TODOS}>Todos</MenuItem>
                 {estados.filas.map(fila => {
                     const valor = codigo(fila, 'estado_baja');
                     return <MenuItem key={valor} value={valor}>
                         {textoDeReferencia(valor, fila.descripcion)}
                     </MenuItem>;
                 })}
-                <MenuItem value={SIN_ESTADO}>sin estado</MenuItem>
+                <MenuItem value={SIN_ESTADO}>Sin estado</MenuItem>
             </TextField>
             <TextField
                 select
                 size="small"
-                label="motivo"
+                label="Motivo"
                 value={motivo}
                 onChange={evento => setMotivo(evento.target.value)}
                 sx={{minWidth:200}}
             >
-                <MenuItem value={TODOS}>todos</MenuItem>
+                <MenuItem value={TODOS}>Todos</MenuItem>
                 {motivos.filas.map(fila => {
                     const valor = codigo(fila, 'motivo_baja');
                     return <MenuItem key={valor} value={valor}>

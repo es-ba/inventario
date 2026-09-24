@@ -24,10 +24,10 @@ declare module 'frontend-plus' {
     }
 }
 
-const CAMPO_MOTIVO = {
+export const CAMPO_MOTIVO = {
     name:'motivo_baja',
     typeName:'text',
-    title:'motivo de la baja',
+    title:'Motivo de la baja',
     nullable:false,
     references:'motivos_baja',
     referencesFields:[{source:'motivo_baja', target:'motivo_baja'}],
@@ -84,7 +84,7 @@ export function BajaBienes({
     const cuantos = `${fichas.length} ${fichas.length === 1 ? 'bien' : 'bienes'}`;
 
     return <Dialog open={abierto} onClose={onCerrar} maxWidth="xs" fullWidth>
-        <DialogTitle>{directa ? 'Dar de baja directamente' : 'Solicitar baja de'} {cuantos}</DialogTitle>
+        <DialogTitle>{directa ? 'Dar de baja' : 'Solicitar baja de'} {cuantos}</DialogTitle>
         <DialogContent dividers>
             <Stack spacing={2}>
                 <Alert severity="warning">
@@ -102,7 +102,7 @@ export function BajaBienes({
             </Stack>
         </DialogContent>
         <DialogActions>
-            <Button onClick={onCerrar}>cancelar</Button>
+            <Button onClick={onCerrar}>Cancelar</Button>
             <Button
                 variant="contained"
                 color="error"
@@ -110,7 +110,7 @@ export function BajaBienes({
                 startIcon={trabajando ? <CircularProgress size={16}/> : undefined}
                 onClick={() => void darDeBaja()}
             >
-                {directa ? 'dar de baja directamente' : 'solicitar baja'}
+                {directa ? 'Dar de baja' : 'Solicitar baja'}
             </Button>
         </DialogActions>
     </Dialog>;

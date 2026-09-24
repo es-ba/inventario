@@ -20,6 +20,8 @@ import type {Connector, FieldDefinition} from 'frontend-plus';
 
 import {FormFieldRenderer} from './base/form-field-renderer';
 import {useDestinoDelSector} from './base/destino-del-sector';
+import {useSalida} from './base/contexto-base';
+import {unmountConnectedAppInventario} from './render-connected-app-inventario';
 import type {Fila} from './base/tipos-tabla';
 import {
     CampoDelMovimiento,
@@ -86,10 +88,10 @@ const CAMPO_ACCION =
 
 const CAMPOS:Record<CampoDelMovimiento, FieldDefinition> = {
     sector:campoDeReferencia('sector', 'sector', 'sectores', 'sector'),
-    responsable:campoDeReferencia('responsable', 'responsable', 'responsables', 'responsable'),
+    responsable:campoDeReferencia('responsable', 'responsable directo', 'responsables', 'responsable'),
     sede:campoDeReferencia('sede', 'sede', 'sedes', 'sede'),
     espacio:campoDeReferencia('espacio', 'espacio', 'espacios', 'espacio'),
-    puesto:{name:'puesto', typeName:'integer', title:'puesto'} as unknown as FieldDefinition,
+    puesto:{name:'puesto', typeName:'integer', title:'Puesto'} as unknown as FieldDefinition,
     tipo_asignacion:campoDeReferencia('tipo_asignacion', 'tipo de asignación', 'tipo_asignacion', 'tipo_asignacion'),
     modalidad_uso:campoDeReferencia('modalidad_uso', 'modalidad de uso', 'modalidad_uso', 'modalidad_uso'),
     enusode_responsable:campoDeReferencia('enusode_responsable', 'responsable de uso', 'responsables', 'responsable'),
@@ -128,6 +130,21 @@ function TextoDeOrigen({origen}:{origen:OrigenDeCampo}){
     </Typography>;
 }
 
+export type ResultadoMovimiento =
+    | {modo:'acta', message:string, acta:string, estado:string, bienes:number, no_encontrados:number}
+    | {modo:'directo', message:string, movimientos:number, no_encontrados:number};
+
+export function AvisoMovimiento({resultado, onCerrar}:{resultado:ResultadoMovimiento, onCerrar:() => void}){
+    const solicitarSalida = useSalida();
+    return <Alert severity="success" onClose={onCerrar} sx={{mb:2}}
+        action={resultado.modo === 'acta' ? <Button onClick={() => solicitarSalida(() => {
+            unmountConnectedAppInventario();
+            location.hash = `w=solicitudes&acta=${encodeURIComponent(resultado.acta)}`;
+        })}>Abrir solicitud N.º {resultado.acta}</Button> : undefined}>
+        {resultado.message}
+    </Alert>;
+}
+
 export function MoverBienes({
     abierto,
     conn,
@@ -139,7 +156,7 @@ export function MoverBienes({
     conn:Connector,
     bienes:Fila[],
     onCerrar:() => void,
-    onCreada:(mensaje:string) => void,
+    onCreada:(resultado:ResultadoMovimiento) => void,
 }){
     const [modo, setModo] = React.useState<'acta'|'directo'>('acta');
     const [accion, setAccion] = React.useState('');
@@ -147,6 +164,7 @@ export function MoverBienes({
     const [destino, setDestino] = React.useState<Destino>({});
     const [error, setError] = React.useState<string|null>(null);
     const [trabajando, setTrabajando] = React.useState(false);
+    const enviando = React.useRef(false);
 
     const fichas = React.useMemo(() => bienes.map(bien => String(bien.ficha)), [bienes]);
     const origenes = React.useMemo(() => {
@@ -184,6 +202,8 @@ export function MoverBienes({
     const puedeCrear = Object.keys(aEnviar).length > 0 && fichas.length > 0;
 
     const crear = React.useCallback(async () => {
+        if(enviando.current){ return; }
+        enviando.current = true;
         setTrabajando(true);
         setError(null);
         try{
@@ -194,14 +214,15 @@ export function MoverBienes({
                 enusode:'', enusode_responsable:'',
                 ...destinoAEnviar(destino),
             };
-            const resultado = modo === 'directo'
-                ? await conn.ajax.bienes_mover_directo(comun)
-                : await conn.ajax.solicitud_crear_desde_bienes({...comun, accion});
-            onCreada(resultado.message);
+            const resultado:ResultadoMovimiento = modo === 'directo'
+                ? {modo:'directo', ...await conn.ajax.bienes_mover_directo(comun)}
+                : {modo:'acta', ...await conn.ajax.solicitud_crear_desde_bienes({...comun, accion})};
+            onCreada(resultado);
             onCerrar();
         }catch(err){
             setError(err instanceof Error ? err.message : String(err));
         }finally{
+            enviando.current = false;
             setTrabajando(false);
         }
     }, [accion, conn, destino, detalle, fichas, modo, onCerrar, onCreada]);
@@ -231,16 +252,17 @@ export function MoverBienes({
                     setField={(_nombre, valor) => ponerValor(campo, valor)}
                     admitir={admitirPara(campo)}
                     size="small"
+                    disabled={trabajando}
                 />
             </Box>
             <Box sx={{order:4}}>
                 <Tooltip title={codigo == null
-                    ? 'el origen no es único o está sin asignar'
-                    : 'copiar el origen al destino'}>
+                    ? 'El origen no es único o está sin asignar'
+                    : 'Copiar el origen al destino'}>
                     <span>
                         <Button
                             size="small"
-                            disabled={codigo == null}
+                            disabled={codigo == null || trabajando}
                             onClick={() => ponerValor(campo, codigo)}
                         >
                             <ContentCopy fontSize="small"/>
@@ -251,7 +273,7 @@ export function MoverBienes({
         </Box>;
     };
 
-    return <Dialog open={abierto} onClose={onCerrar} maxWidth="md" fullWidth>
+    return <Dialog open={abierto} onClose={() => { if(!enviando.current){ onCerrar(); } }} maxWidth="md" fullWidth>
         <DialogTitle>
             Mover {fichas.length} {fichas.length === 1 ? 'bien' : 'bienes'}
         </DialogTitle>
@@ -261,11 +283,12 @@ export function MoverBienes({
                 fullWidth
                 size="small"
                 value={modo}
+                disabled={trabajando}
                 onChange={(_e, valor) => { if(valor){ setModo(valor); setError(null); } }}
                 sx={{mb:2}}
             >
-                <ToggleButton value="acta">con acta</ToggleButton>
-                <ToggleButton value="directo">directo</ToggleButton>
+                <ToggleButton value="acta">Crear solicitud de movimiento</ToggleButton>
+                <ToggleButton value="directo">Registrar movimiento inmediato</ToggleButton>
             </ToggleButtonGroup>
 
             {modo === 'acta' ? <>
@@ -279,15 +302,17 @@ export function MoverBienes({
                         row={{accion} as Fila}
                         setField={(_nombre, valor) => setAccion(valor == null ? '' : String(valor))}
                         size="small"
+                        disabled={trabajando}
                     />
                 </Box>
-            </> : null}
+            </> : <Typography variant="body2" sx={{mb:2}}>El destino se aplica inmediatamente y queda registrado en el historial de cada bien.</Typography>}
 
             <Stack direction="row" alignItems="center" spacing={2} sx={{mb:1}}>
                 <Box sx={{flex:1}}/>
                 <Button size="small" startIcon={<ContentCopy/>}
+                    disabled={trabajando}
                     onClick={() => setDestino(previo => copiarTodoElOrigen(previo, origenes))}>
-                    copiar todo el origen
+                    Copiar valores del origen
                 </Button>
             </Stack>
 
@@ -299,9 +324,9 @@ export function MoverBienes({
                 borderColor:'divider',
                 pb:0.5,
             }}>
-                <Typography variant="subtitle2" sx={{fontWeight:600}}>origen</Typography>
+                <Typography variant="subtitle2" sx={{fontWeight:600}}>Origen</Typography>
                 <Box/>
-                <Typography variant="subtitle2" sx={{fontWeight:600}}>destino</Typography>
+                <Typography variant="subtitle2" sx={{fontWeight:600}}>Destino</Typography>
                 <Box/>
             </Box>
 
@@ -310,7 +335,8 @@ export function MoverBienes({
             </Stack>
 
             <TextField
-                label="detalle"
+                label="Detalle"
+                disabled={trabajando}
                 value={detalle}
                 onChange={evento => setDetalle(evento.target.value)}
                 size="small"
@@ -328,14 +354,14 @@ export function MoverBienes({
             {error ? <Alert severity="error" sx={{mt:2}}>{error}</Alert> : null}
         </DialogContent>
         <DialogActions>
-            <Button onClick={onCerrar} disabled={trabajando}>cancelar</Button>
+            <Button onClick={onCerrar} disabled={trabajando}>Cancelar</Button>
             <Button
                 variant="contained"
                 onClick={() => void crear()}
                 disabled={!puedeCrear || trabajando}
                 startIcon={trabajando ? <CircularProgress size={16}/> : undefined}
             >
-                {modo === 'directo' ? 'mover ahora' : 'crear solicitud'}
+                {modo === 'directo' ? 'Registrar movimiento inmediato' : 'Crear solicitud'}
             </Button>
         </DialogActions>
     </Dialog>;

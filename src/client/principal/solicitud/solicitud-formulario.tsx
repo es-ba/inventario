@@ -14,7 +14,7 @@ import {
 import {ArrowBack} from '@mui/icons-material';
 import type {FixedFields} from 'frontend-plus';
 
-import {useAvisos, useConexion} from '../base/contexto-base';
+import {useAvisos, useConexion, useSalida} from '../base/contexto-base';
 import {useEstructuraTabla} from '../base/cache-tablas';
 import {AdjuntosPanel} from '../base/adjuntos-panel';
 import {FormFieldRenderer} from '../base/form-field-renderer';
@@ -53,10 +53,13 @@ function colorDeEstado(estado:string):'default'|'info'|'warning'|'success'{
 export function SolicitudFormulario({
     acta,
     onVolver,
+    onIdentificada,
 }:{
     acta?:string,
     onVolver:() => void,
+    onIdentificada?:(acta:string) => void,
 }){
+    const solicitarSalida = useSalida();
     const conn = useConexion();
     const {mostrarError, mostrarMensaje} = useAvisos();
     const {definicion} = useEstructuraTabla('movimientos_solicitudes');
@@ -65,9 +68,12 @@ export function SolicitudFormulario({
     const [noEncontrada, setNoEncontrada] = React.useState(false);
     const [solapa, setSolapa] = React.useState(0);
     const [version, setVersion] = React.useState(0);
+    const [actaGuardada, setActaGuardada] = React.useState(acta);
+    const [errorCarga, setErrorCarga] = React.useState(false);
+    const [guardadaEnSesion, setGuardadaEnSesion] = React.useState(false);
 
     React.useEffect(() => {
-        if(!acta){
+        if(!actaGuardada){
             setFilaInicial(undefined);
             setCargando(false);
             return;
@@ -75,7 +81,8 @@ export function SolicitudFormulario({
         let cancelado = false;
         setCargando(true);
         setNoEncontrada(false);
-        const camposFijos:FixedFields = [{fieldName:'acta', value:acta}];
+        setErrorCarga(false);
+        const camposFijos:FixedFields = [{fieldName:'acta', value:actaGuardada}];
         conn.ajax.table_data({
             table:'movimientos_solicitudes_acciones',
             fixedFields:camposFijos,
@@ -91,16 +98,24 @@ export function SolicitudFormulario({
                 }
                 setFilaInicial(filas[0]);
             })
-            .catch(err => { if(!cancelado){ mostrarError(err, `No se pudo leer la solicitud ${acta}`); } })
+            .catch(err => { if(!cancelado){ setErrorCarga(true); mostrarError(err, `No se pudo leer la solicitud ${actaGuardada}`); } })
             .finally(() => { if(!cancelado){ setCargando(false); } });
         return () => { cancelado = true; };
-    }, [conn, acta, mostrarError, version]);
+    }, [conn, actaGuardada, mostrarError, version]);
 
     const definicionSegura = definicion ?? {fields:[], primaryKey:['acta']};
     const editor = useRowEditor({
         tabla:'movimientos_solicitudes',
         definicion:definicionSegura,
         filaInicial,
+        onGuardado:fila => {
+            const numero = String(fila.acta);
+            setGuardadaEnSesion(true);
+            setActaGuardada(numero);
+            onIdentificada?.(numero);
+            mostrarMensaje(`Se guardó la solicitud ${numero}.`);
+            setVersion(v => v + 1);
+        },
     });
 
     const {admitirPara, destinoAlCambiarSector} = useDestinoDelSector(editor.row.sector);
@@ -114,13 +129,14 @@ export function SolicitudFormulario({
         }
     }, [filaEditada, setField, destinoAlCambiarSector]);
 
+    const actaActual = String(editor.row.acta ?? actaGuardada ?? '');
     const subirAdjunto = React.useCallback(
         (archivo:File) => conn.ajax.archivo_solicitud_subir({
-            acta:String(acta ?? ''),
+            acta:actaActual,
             detalle:'',
             files:[archivo],
         }),
-        [acta, conn],
+        [actaActual, conn],
     );
 
     if(cargando || definicion == null){
@@ -128,7 +144,7 @@ export function SolicitudFormulario({
     }
     if(noEncontrada){
         return <Box sx={{p:3}}>
-            <Alert severity="warning" action={<Button onClick={onVolver}>volver</Button>}>
+            <Alert severity="warning" action={<Button onClick={onVolver}>Volver</Button>}>
                 No se encontró la solicitud {acta}.
             </Alert>
         </Box>;
@@ -140,13 +156,12 @@ export function SolicitudFormulario({
     const nombreDeRetroceso = retroceso ? etiquetaDeAccion(retroceso) : '';
 
     const estado = String(editor.row.estado ?? '');
-    const actaActual = String(editor.row.acta ?? acta ?? '');
     const guardada = Boolean(actaActual) && !editor.esAlta;
     const editable = !guardada || estado === ESTADO_EDITABLE;
 
     return <Box sx={{height:'100%', overflow:'auto', p:2}}>
         <Stack direction="row" alignItems="center" spacing={2} sx={{mb:2}}>
-            <IconButton onClick={onVolver} size="small" title="Volver al listado">
+            <IconButton onClick={() => solicitarSalida(onVolver)} size="small" title="Volver al listado">
                 <ArrowBack/>
             </IconButton>
             <Typography variant="h6" sx={{fontWeight:600}}>
@@ -164,20 +179,27 @@ export function SolicitudFormulario({
                 ? <SolicitudAcciones
                     acta={actaActual}
                     acciones={filaInicial?.acciones}
+                    disabled={editor.modificado || editor.guardando || errorCarga}
                     onEjecutada={() => setVersion(v => v + 1)}
                 />
                 : null}
         </Stack>
+
+        {errorCarga ? <Alert severity="error" sx={{mb:2}}
+            action={<Button onClick={() => setVersion(v => v + 1)}>Reintentar</Button>}>
+            {guardadaEnSesion ? 'La solicitud se guardó, pero no se pudo actualizar su información.' : 'No se pudo cargar la solicitud.'}
+        </Alert> : null}
+        {editor.modificado ? <Alert severity="info" sx={{mb:2}}
+            action={<Button disabled={editor.guardando} onClick={editor.descartar}>Descartar cambios</Button>}>
+            Cambios sin guardar. Guardá o descartá los cambios antes de ejecutar una acción o emitir documentos.
+        </Alert> : null}
 
         {guardada && !editable
             ? <Alert severity="info" sx={{mb:2}}>
                 {hayComoRetroceder
                     ? <>La solicitud salió de Borrador: su contenido ya no se edita. Para
                         cambiarla, usá el botón <b>{nombreDeRetroceso}</b> de arriba.</>
-                    : <>La solicitud salió de Borrador y desde su estado actual
-                        ({String(filaInicial?.estados__desc_estado ?? estado)}) no hay ninguna acción
-                        que la haga volver atrás. Para reabrirla hay que declarar esa
-                        transición en estados y acciones.</>}
+                    : <>Esta solicitud no puede reabrirse desde su estado actual. Consultá al administrador.</>}
             </Alert>
             : null}
 
@@ -202,12 +224,12 @@ export function SolicitudFormulario({
                     const esDetalle = nombre === 'detalle';
                     return <Box key={nombre} sx={esDetalle ? {gridColumn:{md:'span 2'}} : undefined}>
                         <FormFieldRenderer
-                            field={field}
+                            field={nombre === 'acta' ? {...field, label:'N.º de solicitud'} : field}
                             row={editor.row}
                             setField={asignarCampo}
                             admitir={admitirPara(nombre)}
                             error={editor.errores[field.name]}
-                            disabled={!editable || (nombre === 'acta' && guardada)}
+                            disabled={!editable || editor.guardando || errorCarga || (nombre === 'acta' && guardada)}
                             multiline={esDetalle}
                             minRows={2}
                         />
@@ -215,23 +237,19 @@ export function SolicitudFormulario({
                 })}
             </Box>
             <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{mt:3}}>
-                <Button onClick={onVolver}>cancelar</Button>
+                <Button disabled={editor.guardando} onClick={() => solicitarSalida(onVolver)}>Cancelar</Button>
                 <Button
                     variant="contained"
-                    disabled={!editable || !editor.puedeGuardar}
-                    onClick={async () => {
-                        if(await editor.guardar()){
-                            mostrarMensaje(`Se guardó la solicitud ${actaActual || editor.row.acta}`);
-                            setVersion(v => v + 1);
-                        }
-                    }}
+                    disabled={!editable || !editor.puedeGuardar || errorCarga}
+                    onClick={() => void editor.guardar()}
                 >
-                    guardar
+                    Guardar
                 </Button>
             </Stack>
         </TabPanel>
 
         <TabPanel value={solapa} index={1} sinRelleno>
+            <Alert severity="info" sx={{mb:2}}>Agregar o quitar bienes se guarda inmediatamente. Descartar la cabecera no revierte estas operaciones.</Alert>
             {guardada
                 ? <SolicitudBienes acta={actaActual} soloLectura={!editable}/>
                 : <Alert severity="info">Guardá la solicitud para agregarle bienes.</Alert>}
@@ -239,11 +257,12 @@ export function SolicitudFormulario({
 
         <TabPanel value={solapa} index={2} sinRelleno>
             {guardada
-                ? <SolicitudDocumentos acta={actaActual}/>
+                ? <SolicitudDocumentos acta={actaActual} disabled={editor.modificado || editor.guardando || errorCarga}/>
                 : <Alert severity="info">Guardá la solicitud para emitir documentos.</Alert>}
         </TabPanel>
 
         <TabPanel value={solapa} index={3} sinRelleno>
+            <Alert severity="info" sx={{mb:2}}>Los adjuntos se guardan inmediatamente. Descartar la cabecera no elimina los archivos subidos.</Alert>
             {guardada
                 ? <AdjuntosPanel
                     tabla="adjuntos_solicitudes"

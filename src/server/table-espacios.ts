@@ -24,7 +24,7 @@ export function espacios(context:TableContext):TableDefinition{
             {name:'ubicacion'           , typeName:'text'    , isName:true}, 
             {name:'denominacion'        , typeName:'text'    , isName:true},
             {name:'sector'              , typeName:'text'    , nullable:false},
-            {name:'responsable'         , typeName:'text'    },
+            {name:'responsable'         , typeName:'text'    , title:'responsable del espacio'},
             {name:'sede'                , typeName:'text'    },
             {name:'id_anterior'         , typeName:'text'    },
         ],

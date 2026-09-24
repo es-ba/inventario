@@ -1124,7 +1124,7 @@ export const ProceduresInventario:ProcedureDef[] = [
 
             const noEncontrados = unicas.length - insertados.rows.length;
             return {
-                message: `Se registraron ${insertados.rows.length} movimientos sin acta`
+                message: `Se registraron ${insertados.rows.length} movimientos sin solicitud`
                     + (noEncontrados > 0 ? ` (${noEncontrados} bienes no se encontraron)` : '')
                     + `. Quedan asentados de inmediato en el historial de cada bien.`,
                 movimientos:insertados.rows.length,

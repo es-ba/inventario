@@ -23,6 +23,7 @@ import {formatearValor} from '../base/formato-valores';
 import {TabPanel, propsDeSolapa} from '../base/tab-panel';
 import type {Fila} from '../base/tipos-tabla';
 import {bienesGridLocaleText} from '../localizacion-grid';
+import {BienFormulario} from '../bien/bien-formulario';
 
 declare module 'frontend-plus' {
     interface BEAPI {
@@ -43,7 +44,7 @@ const SITUACIONES:{situacion:string, color:'default'|'success'|'warning'|'error'
 const COLOR = new Map(SITUACIONES.map(s => [s.situacion, s.color]));
 const TODAS = '__todas__';
 
-function useTabla(tabla:string, version:number){
+function useTabla(tabla:string, descripcion:string, version:number){
     const conn = useConexion();
     const {mostrarError} = useAvisos();
     const [filas, setFilas] = React.useState<Fila[]>([]);
@@ -53,10 +54,10 @@ function useTabla(tabla:string, version:number){
         setCargando(true);
         (conn.ajax.table_data({table:tabla, fixedFields:[] as FixedFields, paramfun:{}}) as unknown as Promise<Fila[]>)
             .then(datos => { if(vigente) setFilas(datos); })
-            .catch(err => { if(vigente){ mostrarError(err, `No se pudo cargar ${tabla}`); setFilas([]); } })
+            .catch(err => { if(vigente){ mostrarError(err, `No se pudo cargar ${descripcion}`); setFilas([]); } })
             .finally(() => { if(vigente) setCargando(false); });
         return () => { vigente = false; };
-    }, [conn, mostrarError, tabla, version]);
+    }, [conn, descripcion, mostrarError, tabla, version]);
     return {filas, cargando};
 }
 
@@ -71,8 +72,8 @@ const sePuedeDarDeAlta = (fila:Fila) => fila.situacion === 'alta' || fila.situac
 function Personas({version, onCambio}:{version:number, onCambio:() => void}){
     const conn = useConexion();
     const {mostrarError, mostrarMensaje} = useAvisos();
-    const {filas, cargando} = useTabla('siper_conciliacion', version);
-    const recepciones = useTabla('siper_recepciones', version);
+    const {filas, cargando} = useTabla('siper_conciliacion', 'la lista de personas', version);
+    const recepciones = useTabla('siper_recepciones', 'las recepciones de siper', version);
     const [situacion, setSituacion] = React.useState(TODAS);
     const [seleccion, setSeleccion] = React.useState<GridRowSelectionModel>([]);
     const [dialogo, setDialogo] = React.useState<'inactivar'|'alta'|null>(null);
@@ -107,26 +108,26 @@ function Personas({version, onCambio}:{version:number, onCambio:() => void}){
     };
     const inactivar = () => ejecutar(
         () => conn.ajax.responsables_inactivar({responsables:JSON.stringify(aInactivar.map(f => String(f.responsable)))}),
-        'No se pudieron desactivar los responsables',
+        'No se pudieron desactivar las personas',
     );
     const darDeAlta = () => ejecutar(
         () => conn.ajax.responsables_alta_siper({idpers:JSON.stringify(aDarDeAlta.map(f => String(f.idper)))}),
-        'No se pudieron dar de alta los responsables',
+        'No se pudieron dar de alta las personas',
     );
 
     const columnas:GridColDef[] = [
-        {field:'situacion', headerName:'situación', width:180,
+        {field:'situacion', headerName:'Situación', width:180,
             renderCell:params => <Chip size="small" color={COLOR.get(String(params.value)) ?? 'default'} label={String(params.value)}/>},
-        {field:'responsable', headerName:'responsable', width:110},
-        {field:'idper', headerName:'idper', width:90},
-        {field:'apellido', headerName:'apellido', flex:1, minWidth:130},
-        {field:'nombre', headerName:'nombre', flex:1, minWidth:130},
-        {field:'activo_inventario', headerName:'activo en inventario', width:150, type:'boolean'},
-        {field:'activo_siper', headerName:'activo en siper', width:130, type:'boolean'},
-        {field:'fecha_egreso', headerName:'egreso (siper)', width:120, valueFormatter:texto},
-        {field:'bienes_directos', headerName:'bienes directos', width:120, type:'number'},
-        {field:'bienes_en_uso', headerName:'bienes en uso', width:120, type:'number'},
-        {field:'sectores_a_cargo', headerName:'sectores a cargo', width:130, type:'number'},
+        {field:'responsable', headerName:'Código de responsable', width:150},
+        {field:'idper', headerName:'Identificador en Siper', width:170},
+        {field:'apellido', headerName:'Apellido', flex:1, minWidth:130},
+        {field:'nombre', headerName:'Nombre', flex:1, minWidth:130},
+        {field:'activo_inventario', headerName:'Activo en inventario', width:150, type:'boolean'},
+        {field:'activo_siper', headerName:'Activo en siper', width:130, type:'boolean'},
+        {field:'fecha_egreso', headerName:'Egreso (siper)', width:120, valueFormatter:texto},
+        {field:'bienes_directos', headerName:'Bienes directos', width:120, type:'number'},
+        {field:'bienes_en_uso', headerName:'Bienes en uso', width:120, type:'number'},
+        {field:'sectores_a_cargo', headerName:'Sectores a cargo', width:130, type:'number'},
     ];
 
     const conPendientes = aInactivar.filter(f => aCargo(f) > 0);
@@ -176,7 +177,7 @@ function Personas({version, onCambio}:{version:number, onCambio:() => void}){
                 localeText={bienesGridLocaleText}
             />}
         <Dialog open={dialogo === 'inactivar'} onClose={() => setDialogo(null)} maxWidth="sm" fullWidth>
-            <DialogTitle>Desactivar {aInactivar.length} {aInactivar.length === 1 ? 'responsable' : 'responsables'}</DialogTitle>
+            <DialogTitle>Desactivar {aInactivar.length} {aInactivar.length === 1 ? 'persona' : 'personas'}</DialogTitle>
             <DialogContent dividers>
                 <Stack spacing={2}>
                     <Alert severity="info">
@@ -186,7 +187,7 @@ function Personas({version, onCambio}:{version:number, onCambio:() => void}){
                     {conPendientes.length
                         ? <Alert severity="warning">
                             <Typography variant="body2" sx={{mb:1}}>
-                                Les quedan cosas a cargo; después hay que reasignarlas desde «A cargo de inactivos»:
+                                Les quedan bienes y sectores a cargo; después hay que reasignarlos desde «A cargo de inactivos»:
                             </Typography>
                             {conPendientes.map(f => <Typography key={String(f.clave)} variant="body2">
                                 {String(f.responsable)} ({nombre(f)}): {String(f.bienes_directos)} bienes directos,
@@ -197,20 +198,20 @@ function Personas({version, onCambio}:{version:number, onCambio:() => void}){
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button onClick={() => setDialogo(null)}>cancelar</Button>
+                <Button onClick={() => setDialogo(null)}>Cancelar</Button>
                 <Button color="error" variant="contained" disabled={trabajando}
                     startIcon={trabajando ? <CircularProgress size={16}/> : undefined}
                     onClick={() => void inactivar()}>
-                    desactivar
+                    Desactivar
                 </Button>
             </DialogActions>
         </Dialog>
         <Dialog open={dialogo === 'alta'} onClose={() => setDialogo(null)} maxWidth="sm" fullWidth>
-            <DialogTitle>Dar de alta {aDarDeAlta.length} {aDarDeAlta.length === 1 ? 'responsable' : 'responsables'}</DialogTitle>
+            <DialogTitle>Dar de alta {aDarDeAlta.length} {aDarDeAlta.length === 1 ? 'persona' : 'personas'}</DialogTitle>
             <DialogContent dividers>
                 <Stack spacing={2}>
                     <Alert severity="info">
-                        Cada alta toma su idper como clave. Si el sector de siper no existe en inventario, queda sin sector.
+                        Cada alta usa el identificador en Siper. Si el sector de Siper no existe en inventario, queda sin sector.
                     </Alert>
                     {duplicados.length
                         ? <Alert severity="warning">
@@ -225,19 +226,19 @@ function Personas({version, onCambio}:{version:number, onCambio:() => void}){
                 </Stack>
             </DialogContent>
             <DialogActions>
-                <Button onClick={() => setDialogo(null)}>cancelar</Button>
+                <Button onClick={() => setDialogo(null)}>Cancelar</Button>
                 <Button variant="contained" disabled={trabajando}
                     startIcon={trabajando ? <CircularProgress size={16}/> : undefined}
                     onClick={() => void darDeAlta()}>
-                    dar de alta
+                    Dar de alta
                 </Button>
             </DialogActions>
         </Dialog>
     </Stack>;
 }
 
-function ACargoDeInactivos({version}:{version:number}){
-    const {filas, cargando} = useTabla('responsables_inactivos_a_cargo', version);
+function ACargoDeInactivos({version, onAbrirBien}:{version:number, onAbrirBien:(ficha:string) => void}){
+    const {filas, cargando} = useTabla('responsables_inactivos_a_cargo', 'lo que quedó a cargo de responsables inactivos', version);
     const porVinculo = React.useMemo(() => {
         const cuenta = new Map<string, number>();
         for(const f of filas) cuenta.set(String(f.vinculo), (cuenta.get(String(f.vinculo)) ?? 0) + 1);
@@ -245,12 +246,19 @@ function ACargoDeInactivos({version}:{version:number}){
     }, [filas]);
 
     const columnas:GridColDef[] = [
-        {field:'vinculo', headerName:'vínculo', width:160},
-        {field:'responsable', headerName:'responsable', width:110},
-        {field:'responsable_nombre', headerName:'nombre', flex:1, minWidth:160},
-        {field:'ficha', headerName:'ficha', width:110},
-        {field:'bienes__detalle', headerName:'bien', flex:1, minWidth:160},
-        {field:'sector', headerName:'sector', width:160,
+        {field:'acciones', headerName:'Acciones', width:140, sortable:false, filterable:false,
+            renderCell:({row}) => row.ficha
+                ? <Button onClick={() => onAbrirBien(String(row.ficha))}>Abrir bien</Button>
+                : <Button component="a" target="_blank" rel="noopener noreferrer"
+                    href={`menu?w=table&table=sectores&ff=${encodeURIComponent(JSON.stringify({sector:row.sector}))}`}>
+                    Abrir sector
+                </Button>},
+        {field:'vinculo', headerName:'Vínculo', width:160},
+        {field:'responsable', headerName:'Código de responsable', width:150},
+        {field:'responsable_nombre', headerName:'Nombre', flex:1, minWidth:160},
+        {field:'ficha', headerName:'Ficha', width:110},
+        {field:'bienes__detalle', headerName:'Bien', flex:1, minWidth:160},
+        {field:'sector', headerName:'Sector', width:160,
             valueGetter:(_v, fila) => [fila.sector, fila.sectores__sigla].filter(Boolean).join(' - ')},
     ];
 
@@ -276,19 +284,23 @@ function ACargoDeInactivos({version}:{version:number}){
 }
 
 export function PersonasSiper(){
+    const [ficha, setFicha] = React.useState<string|null>(null);
     const [solapa, setSolapa] = React.useState(0);
     const [version, setVersion] = React.useState(0);
     const recargar = React.useCallback(() => setVersion(v => v + 1), []);
 
     return <Box sx={{p:{xs:1, md:2}}}>
+        {ficha != null ? <BienFormulario ficha={ficha} onVolver={() => { setFicha(null); recargar(); }}/> : null}
+        <Box sx={{display:ficha == null ? 'block' : 'none'}}>
         <Stack direction="row" alignItems="center">
             <Tabs value={solapa} onChange={(_e, valor:number) => setSolapa(valor)} variant="scrollable" sx={{flex:1}}>
                 <Tab label="Personas" {...propsDeSolapa(0)}/>
                 <Tab label="A cargo de inactivos" {...propsDeSolapa(1)}/>
             </Tabs>
-            <Button startIcon={<Refresh/>} onClick={recargar}>actualizar</Button>
+            <Button startIcon={<Refresh/>} onClick={recargar}>Actualizar</Button>
         </Stack>
         <TabPanel value={solapa} index={0}><Personas version={version} onCambio={recargar}/></TabPanel>
-        <TabPanel value={solapa} index={1}><ACargoDeInactivos version={version}/></TabPanel>
+        <TabPanel value={solapa} index={1}><ACargoDeInactivos version={version} onAbrirBien={setFicha}/></TabPanel>
+        </Box>
     </Box>;
 }

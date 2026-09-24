@@ -1,8 +1,9 @@
 import * as React from 'react';
 import {Button, Chip, CircularProgress, Stack} from '@mui/material';
 
-import {useAvisos, useConexion, usePermisos} from '../base/contexto-base';
+import {useConfirmar, useAvisos, useConexion, usePermisos} from '../base/contexto-base';
 import type {EstadoAccion} from '../../../common/contracts';
+import {capitalizar} from '../base/formato-valores';
 
 
 declare module 'frontend-plus' {
@@ -34,7 +35,7 @@ export function accionesDe(valor:unknown):EstadoAccion[]{
 
 export function etiquetaDeAccion(accion:EstadoAccion):string{
     const abreviatura = String(accion.abr_eaccion ?? '').trim();
-    return abreviatura !== '' ? abreviatura : accion.eaccion.replace(/_/g, ' ');
+    return capitalizar(abreviatura !== '' ? abreviatura : accion.eaccion.replace(/_/g, ' '));
 }
 
 export function SolicitudAcciones({
@@ -42,21 +43,25 @@ export function SolicitudAcciones({
     acciones,
     onEjecutada,
     size = 'small',
+    disabled = false,
 }:{
     acta:string,
     acciones:unknown,
     onEjecutada:() => void,
     size?:'small'|'medium',
+    disabled?:boolean,
 }){
     const conn = useConexion();
+    const confirmar = useConfirmar();
     const {mostrarError, mostrarMensaje} = useAvisos();
     const permisos = usePermisos();
     const [ejecutando, setEjecutando] = React.useState<string|null>(null);
     const lista = accionesDe(acciones);
 
     const ejecutar = React.useCallback(async (accion:EstadoAccion) => {
+        if(disabled || ejecutando != null){ return; }
         const nombre = etiquetaDeAccion(accion);
-        if(accion.confirma && !window.confirm(`¿Confirma la acción "${nombre}"?`)){
+        if(accion.confirma && !await confirmar({titulo:nombre, mensaje:`¿Confirmás «${nombre}» en la solicitud ${acta}?`, confirmar:nombre})){
             return;
         }
         setEjecutando(accion.eaccion);
@@ -69,7 +74,7 @@ export function SolicitudAcciones({
         }finally{
             setEjecutando(null);
         }
-    }, [acta, conn, mostrarError, mostrarMensaje, onEjecutada]);
+    }, [confirmar, acta, conn, mostrarError, mostrarMensaje, onEjecutada, disabled, ejecutando]);
 
     if(lista.length === 0 || !permisos.guardar){
         return null;
@@ -90,7 +95,7 @@ export function SolicitudAcciones({
                 variant={accion.eaccion_direccion === 'avance' ? 'contained' : 'outlined'}
                 color={COLOR_POR_DIRECCION[accion.eaccion_direccion] ?? 'inherit'}
                 title={accion.desc_eaccion ?? undefined}
-                disabled={ejecutando != null}
+                disabled={disabled || ejecutando != null}
                 startIcon={ejecutando === accion.eaccion ? <CircularProgress size={14}/> : undefined}
                 onClick={(evento) => {
                     evento.stopPropagation();

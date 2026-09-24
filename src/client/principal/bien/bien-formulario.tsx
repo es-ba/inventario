@@ -17,11 +17,11 @@ import {Edit, ExpandMore, LocalShipping, OpenInNew} from '@mui/icons-material';
 import type {GridColDef} from '@mui/x-data-grid';
 import type {FieldDefinition, FixedFields, TableDefinition} from 'frontend-plus';
 
-import {useAvisos, useConexion, usePermisos} from '../base/contexto-base';
+import {useAvisos, useConexion, usePermisos, useSalida} from '../base/contexto-base';
 import {useEstructuraTabla} from '../base/cache-tablas';
 import {DetailTable} from '../base/detail-table';
 import {FormFieldRenderer} from '../base/form-field-renderer';
-import {formatearValor} from '../base/formato-valores';
+import {etiquetaDeCampo, formatearValor} from '../base/formato-valores';
 import {TabPanel, propsDeSolapa} from '../base/tab-panel';
 import {useRowEditor} from '../base/use-row-editor';
 import type {Fila} from '../base/tipos-tabla';
@@ -29,7 +29,7 @@ import {AdjuntosBien} from './adjuntos-bien';
 import {AuditoriaBien} from './auditoria-bien';
 import {BienHeader, ResumenDelBien} from './bien-header';
 import {AccionesBaja} from '../baja/acciones-baja';
-import {MoverBienes} from '../mover-bienes';
+import {MoverBienes, AvisoMovimiento, ResultadoMovimiento} from '../mover-bienes';
 import {unmountConnectedAppInventario} from '../render-connected-app-inventario';
 import {prepararEtiquetasCodigosBarra} from '../../../common/codigos-barra';
 import {imprimirEtiquetasCodigosBarra} from '../imprimir-codigos-barra';
@@ -134,7 +134,7 @@ function DatoLeido({field, row}:{field:FieldDefinition, row:Fila}){
     }
     return <Box sx={{minWidth:0, py:0.5}}>
         <Typography variant="caption" color="text.secondary" display="block" lineHeight={1.3}>
-            {field.label ?? field.title ?? field.name}
+            {etiquetaDeCampo(field)}
         </Typography>
         <Typography variant="body2" sx={{wordBreak:'break-word'}}>
             {texto}
@@ -204,7 +204,7 @@ function SugerirFicha({onSugerida}:{onSugerida:(ficha:string) => void}){
             }
         }}
     >
-        sugerir
+        Sugerir
     </Button>;
 }
 
@@ -235,7 +235,7 @@ function SeccionDeCampos({
                 row={editor.row}
                 setField={editor.setField}
                 error={editor.errores[field.name]}
-                disabled={nombre === 'ficha' && fichaBloqueada}
+                disabled={editor.guardando || (nombre === 'ficha' && fichaBloqueada)}
                 multiline={esMultilinea}
                 minRows={2}
             />;
@@ -257,10 +257,13 @@ function SeccionDeCampos({
 export function BienFormulario({
     ficha,
     onVolver,
+    onGuardado,
 }:{
     ficha?:string,
     onVolver:() => void,
+    onGuardado?:(fila:Fila) => void,
 }){
+    const solicitarSalida = useSalida();
     const conn = useConexion();
     const {mostrarError, mostrarMensaje} = useAvisos();
     const permisos = usePermisos();
@@ -274,6 +277,7 @@ export function BienFormulario({
     const [editando, setEditando] = React.useState(!ficha);
     const [version, setVersion] = React.useState(0);
     const [moverAbierto, setMoverAbierto] = React.useState(false);
+    const [resultadoMovimiento, setResultadoMovimiento] = React.useState<ResultadoMovimiento|null>(null);
 
     React.useEffect(() => {
         if(!ficha){
@@ -326,6 +330,7 @@ export function BienFormulario({
         tabla:'bienes',
         definicion:definicionSegura,
         filaInicial,
+        onGuardado,
     });
 
     const camposEnSecciones = React.useMemo(
@@ -356,7 +361,7 @@ export function BienFormulario({
     }
     if(noEncontrado){
         return <Box sx={{p:3}}>
-            <Alert severity="warning" action={<Button onClick={onVolver}>volver</Button>}>
+            <Alert severity="warning" action={<Button onClick={onVolver}>Volver</Button>}>
                 No se encontró el bien con ficha {ficha}.
             </Alert>
         </Box>;
@@ -369,7 +374,7 @@ export function BienFormulario({
                 tabla="bien_atributo"
                 camposFijos={{ficha:fichaActual}}
                 titulo="Atributos del bien"
-                textoAlta="asignar atributo"
+                textoAlta="Asignar atributo"
                 tituloAlta="Asignar atributo"
                 tituloEdicion="Editar asignación"
             />,
@@ -380,13 +385,13 @@ export function BienFormulario({
                 {permisos.mover
                     ? <Stack direction="row" justifyContent="flex-end" sx={{mb:1}}>
                         <Button startIcon={<LocalShipping/>} onClick={() => setMoverAbierto(true)}>
-                            mover este bien
+                            Mover este bien
                         </Button>
                     </Stack>
                     : null}
                 <DetailTable key={version} tabla="movimientos_bien" camposFijos={{ficha:fichaActual}}
                     titulo="" columnasCalculadas={COLUMNAS_DE_MOVIMIENTOS}
-                    columnasExtra={COLUMNA_SOLICITUD_ORIGEN} soloLectura/>
+                    columnasExtra={COLUMNA_SOLICITUD_ORIGEN} soloLectura tituloDetalle="Detalle del movimiento"/>
             </>,
         },
         {
@@ -399,18 +404,21 @@ export function BienFormulario({
         },
         {
             etiqueta:'Declaraciones',
-            contenido:<DetailTable tabla="declaraciones_bienes" camposFijos={{ficha:fichaActual}} titulo="Declaraciones" soloLectura/>,
+            contenido:<DetailTable tabla="declaraciones_bienes" camposFijos={{ficha:fichaActual}} titulo="Declaraciones" soloLectura
+                tituloDetalle="Detalle de la declaración"/>,
         },
     ];
 
     return <Box sx={{height:'100%', overflow:'auto', p:2, pb:6}}>
+        {resultadoMovimiento ? <AvisoMovimiento resultado={resultadoMovimiento} onCerrar={() => setResultadoMovimiento(null)}/> : null}
         <BienHeader
             row={editor.row}
             resumen={guardado ? resumen : null}
-            onVolver={onVolver}
+            onVolver={() => solicitarSalida(onVolver)}
             onImprimirEtiqueta={guardado ? () => void imprimirEtiqueta() : undefined}
         />
 
+        {editor.modificado ? <Alert severity="info" sx={{mb:2}}>Cambios sin guardar</Alert> : null}
         <Tabs
             value={solapa}
             onChange={(_evento, valor:number) => setSolapa(valor)}
@@ -429,11 +437,11 @@ export function BienFormulario({
                 ? <>
                     <Stack direction="row" justifyContent="flex-end" spacing={1} sx={{mb:1}}>
                         {guardado
-                            ? <AccionesBaja fila={editor.row} onAplicada={() => setVersion(v => v + 1)}/>
+                            ? <AccionesBaja fila={editor.row} onAplicada={() => { setVersion(v => v + 1); onGuardado?.(editor.row); }}/>
                             : null}
                         {!editor.soloLectura
                             ? <Button variant="outlined" startIcon={<Edit/>} onClick={() => setEditando(true)}>
-                                editar
+                                Editar
                             </Button>
                             : null}
                     </Stack>
@@ -478,8 +486,11 @@ export function BienFormulario({
                 : null}
 
             <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{mt:3}}>
-                <Button onClick={() => { if(guardado){ setEditando(false); } else { onVolver(); } }}>
-                    cancelar
+                <Button disabled={editor.guardando} onClick={() => {
+                    if(guardado){ editor.descartar(); setEditando(false); }
+                    else { solicitarSalida(onVolver); }
+                }}>
+                    Cancelar
                 </Button>
                 <Button
                     variant="contained"
@@ -491,7 +502,7 @@ export function BienFormulario({
                         }
                     }}
                 >
-                    guardar
+                    Guardar
                 </Button>
             </Stack>
                 </>
@@ -513,8 +524,9 @@ export function BienFormulario({
             conn={conn}
             bienes={[editor.row]}
             onCerrar={() => setMoverAbierto(false)}
-            onCreada={mensaje => {
-                mostrarMensaje(mensaje);
+            onCreada={resultado => {
+                setResultadoMovimiento(resultado);
+                onGuardado?.(editor.row);
                 setVersion(v => v + 1);
             }}
         />

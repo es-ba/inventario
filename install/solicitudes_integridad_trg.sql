@@ -67,7 +67,7 @@ BEGIN
        pg_trigger_depth() < 2 OR
        nullif(current_setting('inventario.acta_origen_permitida', true), '')
          IS DISTINCT FROM NEW.acta_origen::text) THEN
-      RAISE EXCEPTION 'El acta de origen sólo puede asignarse durante el procesamiento de la solicitud';
+      RAISE EXCEPTION 'La solicitud de origen sólo puede asignarse durante el procesamiento de la solicitud';
     END IF;
     RETURN NEW;
   END IF;

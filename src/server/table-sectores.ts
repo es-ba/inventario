@@ -19,7 +19,7 @@ export function sectores(context:TableContext):TableDefinition{
             {name:'descripcion'        , typeName:'text'        },
             {name:'pertenece_a'        , typeName:sector.typeName , nullable:true, defaultValue:null },
             {name:'activo'             , typeName:'boolean'    , nullable: false, defaultValue: true},
-            {name:'responsable'        , typeName:'text'        , nullable:true},
+            {name:'responsable'        , typeName:'text'        , nullable:true, title:'responsable del sector'},
             {name:'tipo_sector'        , typeName:'text'        },
             {name:'subsector'          , typeName:'text'        , nullable:true},
             {name:'id_anterior'        , typeName:'text'        , nullable:true},
