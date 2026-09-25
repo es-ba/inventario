@@ -23,7 +23,7 @@ export function responsables(context:TableContext):TableDefinition{
             {name:'cuil'                    , typeName:'text'    , nullable:true, editable:false},
             {name:'tipo_doc'                , typeName:'text'    , nullable:true, editable:false},
             {name:'documento'               , typeName:'text'    , nullable:true, editable:false},
-            {name:'ficha_siper'             , typeName:'text'    , nullable:true, editable:false, title:'ficha (siper)'},
+            {name:'ficha_siper'             , typeName:'text'    , nullable:true, editable:false, title:'ficha'},
             {name:'es_jefe'                 , typeName:'boolean' , nullable:true},
             {name:'fecha_ingreso'           , typeName:'date'    , nullable:true, editable:false},
             {name:'fecha_egreso'            , typeName:'date'    , nullable:true, editable:false},
