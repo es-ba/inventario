@@ -34,6 +34,8 @@ export function seccionesDeVistaRapida(row:Fila, descripcionDeEstado:(estado:str
             dato('número integrado', row.numero_integrado),
             dato('último control', row.fecha_ultimo_control),
             dato('situación de control', row.situacion_control),
+            dato('última modificación', row.fecha_ultima_modificacion),
+            dato('modificado por', row.usuario_ultima_modificacion),
         ]},
         {titulo:'Asignación', datos:[
             dato('sector', row.sector),

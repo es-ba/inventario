@@ -120,9 +120,17 @@ LEFT JOIN LATERAL (
 
 export function sqlBienesConControl(dias:number):string{
     return `SELECT v.*, uc.fecha AS fecha_ultimo_control,
-        ${sqlSituacionControl('v', 'uc.fecha', dias)} AS situacion_control
+        ${sqlSituacionControl('v', 'uc.fecha', dias)} AS situacion_control,
+        um.fecha AS fecha_ultima_modificacion, um.usuario AS usuario_ultima_modificacion
     FROM (${sqlBienes}) v
-    ${sqlUltimoControl('v')}`;
+    ${sqlUltimoControl('v')}
+    LEFT JOIN LATERAL (
+        SELECT e.fecha, e.usuario
+          FROM historial_evento_bien e
+         WHERE e.ficha = v.ficha
+         ORDER BY e.orden DESC
+         LIMIT 1
+    ) um ON true`;
 }
 
 export function bienes(context:TableContext):TableDefinition{
@@ -196,6 +204,8 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'puesto'                      , typeName:'integer' , editable:false, inTable:false},
             {name:'fecha_ultimo_control'        , typeName:'date'    , editable:false, inTable:false, title:'último control'},
             {name:'situacion_control'           , typeName:'text'    , editable:false, inTable:false, title:'situación de control'},
+            {name:'fecha_ultima_modificacion'   , typeName:'timestamp', editable:false, inTable:false, title:'última modificación'},
+            {name:'usuario_ultima_modificacion' , typeName:'text'    , editable:false, inTable:false, title:'modificado por'},
             //{name:'codigo_barra'                , typeName:'text'    , inTable:false, editable:false},
         ],  
         primaryKey:['ficha'],
