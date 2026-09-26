@@ -19,6 +19,10 @@ Vista rápida de bienes: el clic (o Enter) en una fila de la búsqueda (`busqued
 
 Ficha del bien (`principal/bien/bien-formulario.tsx`): la solapa Historial (`historial-bien.tsx`) une eventos con sus cambios, movimientos y controles en una línea de tiempo; el armado y el orden son puros en `historial-datos.ts`. "Clonar" abre un alta con los campos de `CAMPOS_CLONABLES` (`clonar-bien.ts`); sólo aparece donde la pantalla pasa `onClonar` (hoy, `ws-principal.tsx`).
 
+Pantallas React (`src/client/ws-*.tsx`): todas se arman con `PantallaInventario` (`principal/base/pantalla-inventario.tsx`: encabezado y "volver al menú" con `solicitarSalida`), y los helpers `textoDeReferencia`, `codigo` y `leerTabla` viven sólo en `principal/base/referencias.ts`. Un formulario con estado propio (sin `useRowEditor`) tiene que llamar a `useRegistrarEdicion` para que salir pida confirmación. Para abrir la ficha de un bien desde otra pantalla: `location.hash = 'w=principal&ficha=<ficha>'` (con `unmountConnectedAppInventario`).
+
+Listado de solicitudes: los filtros son puros en `src/common/solicitudes.ts`. Los estados salen del catálogo `estados` y no se escriben en el código; "en curso" es tener `acciones` disponibles. Cada contador ignora su propio filtro y respeta los demás (`contarPorEstado`). El listado queda montado mientras se ve una solicitud.
+
 El repo `frontend-inventario` **ya no se usa**. No trabajar ahí ni tomarlo como referencia.
 
 ## Comandos útiles

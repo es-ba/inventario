@@ -1,38 +1,14 @@
 import * as React from 'react';
-import {AppBar, IconButton, Paper, Toolbar, Typography} from '@mui/material';
-import {Menu as MenuIcon} from '@mui/icons-material';
 import type {Connector} from 'frontend-plus';
 
-import {
-    renderConnectedAppInventario,
-    unmountConnectedAppInventario,
-} from './principal/render-connected-app-inventario';
+import {renderConnectedAppInventario} from './principal/render-connected-app-inventario';
 import {PersonasSiper} from './principal/siper/personas-siper';
-import {useSalida} from './principal/base/contexto-base';
+import {PantallaInventario} from './principal/base/pantalla-inventario';
 
 function PantallaSiper(){
-    const solicitarSalida = useSalida();
-    return <Paper square elevation={0} sx={{minHeight:'100vh'}}>
-        <AppBar position="static">
-            <Toolbar>
-                <IconButton
-                    color="inherit"
-                    edge="start"
-                    aria-label="volver al menú"
-                    title="Volver al menú"
-                    onClick={() => solicitarSalida(() => {
-                        unmountConnectedAppInventario();
-                        location.hash = '';
-                    })}
-                    sx={{mr:2}}
-                >
-                    <MenuIcon/>
-                </IconButton>
-                <Typography variant="h6" component="h1">Siper - Personas</Typography>
-            </Toolbar>
-        </AppBar>
+    return <PantallaInventario titulo="Siper - Personas">
         <PersonasSiper/>
-    </Paper>;
+    </PantallaInventario>;
 }
 
 // @ts-ignore backend-plus amplía dinámicamente el mapa de wScreens.

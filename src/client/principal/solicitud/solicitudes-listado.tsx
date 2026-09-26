@@ -1,38 +1,37 @@
 import * as React from 'react';
-import {Box, Button, Chip, CircularProgress, Stack} from '@mui/material';
+import {Box, Button, Checkbox, Chip, CircularProgress, FormControlLabel, Stack, TextField} from '@mui/material';
 import {Add, Refresh} from '@mui/icons-material';
-import {DataGrid, GridColDef, GridRowParams} from '@mui/x-data-grid';
+import {DataGrid, GridColDef, GridPaginationModel, GridRowParams, GridSortModel} from '@mui/x-data-grid';
 import type {FixedFields} from 'frontend-plus';
 
-import {useAvisos, useConexion, usePermisos} from '../base/contexto-base';
+import {useAvisos, useConexion, useInfoUsuario, usePermisos} from '../base/contexto-base';
+import {useDatosReferencial} from '../base/cache-tablas';
 import {formatearValor} from '../base/formato-valores';
 import {bienesGridLocaleText} from '../localizacion-grid';
 import type {Fila} from '../base/tipos-tabla';
+import {codigo, textoDeReferencia} from '../base/referencias';
+import {EN_CURSO, TODAS, contarPorEstado, pasaSolicitud} from '../../../common/solicitudes';
 import {SolicitudAcciones} from './solicitud-acciones';
-
-
-const COLOR_POR_ESTADO:Record<string, 'default'|'info'|'warning'|'success'> = {
-    B:'default', P:'warning', A:'info', F:'info', Pr:'success',
-};
-
-function textoDeReferencia(codigo:unknown, ...descripciones:unknown[]):string{
-    const texto = descripciones
-        .map(parte => String(parte ?? '').trim())
-        .filter(parte => parte !== '')
-        .join(' ');
-    return texto !== '' ? texto : String(codigo ?? '').trim();
-}
 
 export function SolicitudesListado({
     onAbrir,
+    recargar,
 }:{
     onAbrir:(acta?:string) => void,
+    recargar:number,
 }){
     const conn = useConexion();
     const {mostrarError} = useAvisos();
     const permisos = usePermisos();
+    const {usuario} = useInfoUsuario();
+    const catalogoDeEstados = useDatosReferencial('estados');
     const [filas, setFilas] = React.useState<Fila[]>([]);
     const [cargando, setCargando] = React.useState(true);
+    const [estado, setEstado] = React.useState(TODAS);
+    const [soloMias, setSoloMias] = React.useState(false);
+    const [busqueda, setBusqueda] = React.useState('');
+    const [paginacion, setPaginacion] = React.useState<GridPaginationModel>({page:0, pageSize:25});
+    const [orden, setOrden] = React.useState<GridSortModel>([{field:'acta', sort:'desc'}]);
 
     const cargar = React.useCallback(async () => {
         setCargando(true);
@@ -51,21 +50,47 @@ export function SolicitudesListado({
         }
     }, [conn, mostrarError]);
 
-    React.useEffect(() => { void cargar(); }, [cargar]);
+    React.useEffect(() => { void cargar(); }, [cargar, recargar]);
+
+    const estados = React.useMemo(
+        () => [...catalogoDeEstados.filas].sort((a, b) => Number(a.orden_estado ?? 0) - Number(b.orden_estado ?? 0)),
+        [catalogoDeEstados.filas],
+    );
+    const descripcionDeEstado = React.useMemo(
+        () => new Map(estados.map(e => [codigo(e, 'estado'), textoDeReferencia(e.estado, e.desc_estado)])),
+        [estados],
+    );
+
+    const filtros = React.useMemo(
+        () => ({estado, soloMias, usuario:String(usuario ?? ''), busqueda}),
+        [busqueda, estado, soloMias, usuario],
+    );
+    const filasVisibles = React.useMemo(() => filas.filter(fila => pasaSolicitud(fila, filtros)), [filas, filtros]);
+    const conteo = React.useMemo(() => contarPorEstado(filas, filtros), [filas, filtros]);
+
+    const irAlPrincipio = () => setPaginacion(actual => ({...actual, page:0}));
+    const elegirEstado = (valor:string) => {
+        setEstado(valor);
+        irAlPrincipio();
+    };
 
     const columnas = React.useMemo<GridColDef[]>(() => [
-        {field:'acta', headerName:'N.º de solicitud', width:140},
+        {
+            field:'acta',
+            headerName:'N.º de solicitud',
+            type:'number',
+            width:140,
+            align:'left',
+            headerAlign:'left',
+            valueGetter:(value:unknown) => value == null ? null : Number(value),
+        },
         {
             field:'estado',
             headerName:'Estado',
             width:130,
-            renderCell:(params) => {
-                const codigo = String(params.row.estado ?? '');
-                const texto = String(params.row.estados__desc_estado ?? '') || codigo;
-                return codigo
-                    ? <Chip size="small" label={texto} color={COLOR_POR_ESTADO[codigo] ?? 'default'}/>
-                    : null;
-            },
+            valueGetter:(_v, fila) => descripcionDeEstado.get(codigo(fila, 'estado'))
+                ?? textoDeReferencia(fila.estado, fila.estados__desc_estado),
+            renderCell:(params) => params.value ? <Chip size="small" variant="outlined" label={String(params.value)}/> : null,
         },
         {
             field:'tipo_asignacion__descripcion',
@@ -105,6 +130,13 @@ export function SolicitudesListado({
             ),
         },
         {
+            field:'cantidad_bienes',
+            headerName:'Bienes',
+            type:'number',
+            width:90,
+            valueGetter:(value:unknown) => value == null ? 0 : Number(value),
+        },
+        {
             field:'fecha_creacion',
             headerName:'Creada',
             width:110,
@@ -124,7 +156,7 @@ export function SolicitudesListado({
                 onEjecutada={() => void cargar()}
             />,
         },
-    ], [cargar]);
+    ], [cargar, descripcionDeEstado]);
 
     return <Box sx={{p:{xs:1, md:2}}}>
         <Stack direction="row" alignItems="center" spacing={2} sx={{mb:2}}>
@@ -139,17 +171,65 @@ export function SolicitudesListado({
                 : null}
         </Stack>
 
-        {cargando
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{mb:2}}>
+            <Chip
+                label={`todas: ${conteo.todas}`}
+                variant={estado === TODAS ? 'filled' : 'outlined'}
+                onClick={() => elegirEstado(TODAS)}
+            />
+            <Chip
+                label={`en curso: ${conteo.enCurso}`}
+                color="primary"
+                variant={estado === EN_CURSO ? 'filled' : 'outlined'}
+                onClick={() => elegirEstado(estado === EN_CURSO ? TODAS : EN_CURSO)}
+            />
+            {estados.map(fila => {
+                const valor = codigo(fila, 'estado');
+                return <Chip
+                    key={valor}
+                    label={`${descripcionDeEstado.get(valor)}: ${conteo.porEstado.get(valor) ?? 0}`}
+                    variant={estado === valor ? 'filled' : 'outlined'}
+                    onClick={() => elegirEstado(estado === valor ? TODAS : valor)}
+                />;
+            })}
+        </Stack>
+
+        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap sx={{mb:2}}>
+            <TextField
+                size="small"
+                label="Buscar"
+                helperText="N.º de solicitud, responsable, sector o ficha de un bien"
+                value={busqueda}
+                onChange={evento => {
+                    setBusqueda(evento.target.value);
+                    irAlPrincipio();
+                }}
+                sx={{minWidth:280}}
+            />
+            <FormControlLabel
+                control={<Checkbox checked={soloMias} onChange={evento => {
+                    setSoloMias(evento.target.checked);
+                    irAlPrincipio();
+                }}/>}
+                label="Creadas por mí"
+            />
+        </Stack>
+
+        {cargando && filas.length === 0
             ? <Box sx={{display:'flex', justifyContent:'center', p:6}}><CircularProgress/></Box>
             : <DataGrid
-                rows={filas}
+                rows={filasVisibles}
                 columns={columnas}
+                loading={cargando}
                 getRowId={fila => String(fila.acta)}
                 onRowClick={(params:GridRowParams) => onAbrir(String(params.row.acta))}
+                paginationModel={paginacion}
+                onPaginationModelChange={setPaginacion}
+                sortModel={orden}
+                onSortModelChange={setOrden}
                 autoHeight
                 density="compact"
                 pageSizeOptions={[25, 50, 100]}
-                initialState={{pagination:{paginationModel:{pageSize:25}}}}
                 localeText={bienesGridLocaleText}
                 sx={{cursor:'pointer'}}
             />

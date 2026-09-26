@@ -23,6 +23,7 @@ import {useAvisos, useConexion} from '../base/contexto-base';
 import {capitalizar, formatearValor} from '../base/formato-valores';
 import {bienesGridLocaleText} from '../localizacion-grid';
 import type {Fila} from '../base/tipos-tabla';
+import {textoDeReferencia, codigo} from '../base/referencias';
 import {
     Par,
     SIN_DATO,
@@ -40,14 +41,6 @@ const COLOR_POR_SITUACION:Record<SituacionDeControl, 'error'|'warning'|'success'
 };
 
 const TODOS = '__todos__';
-
-export function textoDeReferencia(codigo:unknown, ...descripciones:unknown[]):string{
-    const texto = descripciones
-        .map(parte => String(parte ?? '').trim())
-        .filter(parte => parte !== '')
-        .join(' ');
-    return texto !== '' ? texto : String(codigo ?? '').trim();
-}
 
 export function codigoDeClase(fila:Fila):string{
     return [codigo(fila, 'rubro'), codigo(fila, 'clase')].filter(parte => parte !== '').join('.');
@@ -69,10 +62,6 @@ export function responsableDe(fila:Fila):string{
 export function responsableDelSectorDe(fila:Fila):string{
     return textoDeReferencia(fila.responsable_sector,
         fila.responsable_sector__apellido, fila.responsable_sector__nombre);
-}
-
-function codigo(fila:Fila, campo:string):string{
-    return String(fila[campo] ?? '').trim();
 }
 
 function opcionesDe(filas:Fila[], campo:string|((fila:Fila) => string), texto:(fila:Fila) => string){

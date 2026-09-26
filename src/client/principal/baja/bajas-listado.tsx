@@ -17,8 +17,8 @@ import {useDatosReferencial} from '../base/cache-tablas';
 import {formatearValor} from '../base/formato-valores';
 import {bienesGridLocaleText} from '../localizacion-grid';
 import type {Fila} from '../base/tipos-tabla';
+import {textoDeReferencia, codigo} from '../base/referencias';
 import {AccionesBaja} from './acciones-baja';
-
 
 const COLOR_POR_ESTADO:Record<string, 'default'|'info'|'warning'|'success'|'error'> = {
     SOLICITADA:'warning',
@@ -28,18 +28,6 @@ const COLOR_POR_ESTADO:Record<string, 'default'|'info'|'warning'|'success'|'erro
 
 const SIN_ESTADO = '__sin_estado__';
 const TODOS = '__todos__';
-
-function textoDeReferencia(codigo:unknown, ...descripciones:unknown[]):string{
-    const texto = descripciones
-        .map(parte => String(parte ?? '').trim())
-        .filter(parte => parte !== '')
-        .join(' ');
-    return texto !== '' ? texto : String(codigo ?? '').trim();
-}
-
-function codigo(fila:Fila, campo:string):string{
-    return String(fila[campo] ?? '').trim();
-}
 
 export function BajasListado({
     onAbrirBien,

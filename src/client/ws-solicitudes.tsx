@@ -1,58 +1,40 @@
 import * as React from 'react';
-import {AppBar, IconButton, Paper, Toolbar, Typography} from '@mui/material';
-import {Menu as MenuIcon} from '@mui/icons-material';
+import {Box} from '@mui/material';
 import type {Connector} from 'frontend-plus';
 
-import {
-    renderConnectedAppInventario,
-    unmountConnectedAppInventario,
-} from './principal/render-connected-app-inventario';
+import {renderConnectedAppInventario} from './principal/render-connected-app-inventario';
 import {SolicitudesListado} from './principal/solicitud/solicitudes-listado';
 import {SolicitudFormulario} from './principal/solicitud/solicitud-formulario';
-import {useSalida} from './principal/base/contexto-base';
+import {PantallaInventario} from './principal/base/pantalla-inventario';
 
 type Vista =
     {nombre:'listado'}
     | {nombre:'solicitud', acta?:string};
 
 function PantallaSolicitudes({acta}:{acta?:string}){
-    const solicitarSalida = useSalida();
     const [vista, setVista] = React.useState<Vista>(acta ? {nombre:'solicitud', acta} : {nombre:'listado'});
+    const [version, setVersion] = React.useState(0);
 
-    return <Paper square elevation={0} sx={{minHeight:'100vh'}}>
-        <AppBar position="static">
-            <Toolbar>
-                <IconButton
-                    color="inherit"
-                    edge="start"
-                    aria-label="volver al menú"
-                    title="Volver al menú"
-                    onClick={() => solicitarSalida(() => {
-                        unmountConnectedAppInventario();
-                        location.hash = '';
-                    })}
-                    sx={{mr:2}}
-                >
-                    <MenuIcon/>
-                </IconButton>
-                <Typography variant="h6" component="h1">
-                    {vista.nombre === 'solicitud'
-                        ? `Solicitud ${vista.acta ?? 'nueva'}`
-                        : 'Solicitudes de movimiento'}
-                </Typography>
-            </Toolbar>
-        </AppBar>
+    return <PantallaInventario titulo={vista.nombre === 'solicitud'
+        ? `Solicitud ${vista.acta ?? 'nueva'}`
+        : 'Solicitudes de movimiento'}>
+        <Box sx={{display:vista.nombre === 'listado' ? 'block' : 'none'}}>
+            <SolicitudesListado
+                recargar={version}
+                onAbrir={numero => setVista({nombre:'solicitud', acta:numero})}
+            />
+        </Box>
         {vista.nombre === 'solicitud'
             ? <SolicitudFormulario
                 acta={vista.acta}
                 onIdentificada={numero => setVista({nombre:'solicitud', acta:numero})}
-                onVolver={() => setVista({nombre:'listado'})}
+                onVolver={() => {
+                    setVersion(v => v + 1);
+                    setVista({nombre:'listado'});
+                }}
             />
-            : <SolicitudesListado
-                onAbrir={acta => setVista({nombre:'solicitud', acta})}
-            />
-        }
-    </Paper>;
+            : null}
+    </PantallaInventario>;
 }
 
 // @ts-ignore backend-plus amplía dinámicamente el mapa de wScreens.

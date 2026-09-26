@@ -1,12 +1,9 @@
 import * as React from 'react';
-import {AppBar, Box, IconButton, Paper, Toolbar, Typography} from '@mui/material';
-import {Menu as MenuIcon} from '@mui/icons-material';
+import {Box} from '@mui/material';
 import type {Connector} from 'frontend-plus';
 
-import {
-    renderConnectedAppInventario,
-    unmountConnectedAppInventario,
-} from './principal/render-connected-app-inventario';
+import {renderConnectedAppInventario} from './principal/render-connected-app-inventario';
+import {PantallaInventario} from './principal/base/pantalla-inventario';
 import {ControlesListado} from './principal/control/controles-listado';
 import {ControlBien} from './principal/control/control-bien';
 import type {Fila} from './principal/base/tipos-tabla';
@@ -25,27 +22,7 @@ function PantallaControles(){
         return posicion >= 0 && posicion < abierto.lista.length - 1 ? abierto.lista[posicion + 1] : null;
     }, [abierto]);
 
-    return <Paper square elevation={0} sx={{minHeight:'100vh'}}>
-        <AppBar position="static">
-            <Toolbar>
-                <IconButton
-                    color="inherit"
-                    edge="start"
-                    aria-label="volver al menú"
-                    title="Volver al menú"
-                    onClick={() => {
-                        unmountConnectedAppInventario();
-                        location.hash = '';
-                    }}
-                    sx={{mr:2}}
-                >
-                    <MenuIcon/>
-                </IconButton>
-                <Typography variant="h6" component="h1">
-                    {abierto ? `Control - Bien ${abierto.bien.ficha}` : 'Control de bienes'}
-                </Typography>
-            </Toolbar>
-        </AppBar>
+    return <PantallaInventario titulo={abierto ? `Control - Bien ${abierto.bien.ficha}` : 'Control de bienes'}>
         <Box sx={{display:abierto ? 'none' : 'block'}}>
             <ControlesListado
                 recargar={guardados}
@@ -63,7 +40,7 @@ function PantallaControles(){
                     : null}
             />
             : null}
-    </Paper>;
+    </PantallaInventario>;
 }
 
 // @ts-ignore backend-plus amplía dinámicamente el mapa de wScreens.

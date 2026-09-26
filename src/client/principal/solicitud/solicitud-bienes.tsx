@@ -3,6 +3,7 @@ import {
     Box,
     CircularProgress,
     IconButton,
+    Link,
     Tab,
     Table,
     TableBody,
@@ -15,7 +16,8 @@ import {
 import {Delete} from '@mui/icons-material';
 import type {FixedFields} from 'frontend-plus';
 
-import {useConfirmar, useAvisos, useConexion, usePermisos} from '../base/contexto-base';
+import {useConfirmar, useAvisos, useConexion, usePermisos, useSalida} from '../base/contexto-base';
+import {unmountConnectedAppInventario} from '../render-connected-app-inventario';
 import {formatearValor} from '../base/formato-valores';
 import {TabPanel, propsDeSolapa} from '../base/tab-panel';
 import type {Fila} from '../base/tipos-tabla';
@@ -41,6 +43,7 @@ export function SolicitudBienes({
 }){
     const conn = useConexion();
     const confirmar = useConfirmar();
+    const solicitarSalida = useSalida();
     const {mostrarError} = useAvisos();
     const permisos = usePermisos();
     const soloLectura = soloLecturaPedida || !permisos.guardar;
@@ -127,7 +130,19 @@ export function SolicitudBienes({
                         </TableHead>
                         <TableBody>
                             {filas.map(fila => <TableRow key={String(fila.ficha)}>
-                                <TableCell>{String(fila.ficha ?? '')}</TableCell>
+                                <TableCell>
+                                    <Link
+                                        component="button"
+                                        variant="body2"
+                                        title={`Abrir la ficha del bien ${String(fila.ficha ?? '')}`}
+                                        onClick={() => solicitarSalida(() => {
+                                            unmountConnectedAppInventario();
+                                            location.hash = `w=principal&ficha=${encodeURIComponent(String(fila.ficha ?? ''))}`;
+                                        })}
+                                    >
+                                        {String(fila.ficha ?? '')}
+                                    </Link>
+                                </TableCell>
                                 <TableCell>{formatearValor(fila.bienes__detalle)}</TableCell>
                                 <TableCell>{formatearValor(fila.bienes__modelo)}</TableCell>
                                 <TableCell>{formatearValor(fila.bienes__serie)}</TableCell>

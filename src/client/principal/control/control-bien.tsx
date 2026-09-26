@@ -16,13 +16,13 @@ import {
     Typography,
 } from '@mui/material';
 import {ArrowBack} from '@mui/icons-material';
-import type {Connector, FixedFields} from 'frontend-plus';
 
-import {useAvisos, useConexion, usePermisos} from '../base/contexto-base';
+import {useAvisos, useConexion, usePermisos, useRegistrarEdicion} from '../base/contexto-base';
 import {formatearValor} from '../base/formato-valores';
 import type {Fila} from '../base/tipos-tabla';
+import {leerTabla, textoDeReferencia} from '../base/referencias';
 import {armarGruposPorItem, itemAplica, VALORES_SI_NO} from '../../../common/controles';
-import {espacioDe, responsableDelSectorDe, textoDeReferencia} from './controles-listado';
+import {espacioDe, responsableDelSectorDe} from './controles-listado';
 import {SeccionesDeBien, useDescripcionDeEstado} from '../bien/vista-rapida-bien';
 import {seccionesDeVistaRapida} from '../bien/vista-rapida-datos';
 
@@ -60,14 +60,6 @@ function opcionesDelItem(catalogo:Catalogo, item:Fila):Fila[]{
     }
     const atributo = catalogo.vinculos.find(v => v.item === item.item)?.atributo;
     return catalogo.valoresDeAtributos.filter(v => atributo != null && v.atributo === atributo).sort(porOrden);
-}
-
-function leer(conn:Connector, tabla:string, fixedFields:{fieldName:string, value:unknown}[] = []):Promise<Fila[]>{
-    return conn.ajax.table_data({
-        table:tabla,
-        fixedFields:fixedFields as FixedFields,
-        paramfun:{},
-    }) as unknown as Promise<Fila[]>;
 }
 
 function porOrden(a:Fila, b:Fila):number{
@@ -173,20 +165,22 @@ export function ControlBien({
     const [observacion, setObservacion] = React.useState('');
     const [valores, setValores] = React.useState<Record<string, string>>({});
     const [guardando, setGuardando] = React.useState(false);
+    const hayCambios = Object.values(valores).some(valor => valor !== '') || observacion.trim() !== '';
+    useRegistrarEdicion(hayCambios, guardando);
     const [error, setError] = React.useState<string|null>(null);
     const [bienCompleto, setBienCompleto] = React.useState<Fila|null>(null);
     const [atributosDelBien, setAtributosDelBien] = React.useState<Fila[]>([]);
     const descripcionDeEstado = useDescripcionDeEstado();
 
     const cargarAtributos = React.useCallback(async () => {
-        setAtributosDelBien(await leer(conn, 'bien_atributo', [{fieldName:'ficha', value:ficha}]));
+        setAtributosDelBien(await leerTabla(conn, 'bien_atributo', [{fieldName:'ficha', value:ficha}]));
     }, [conn, ficha]);
 
     const cargarHistorial = React.useCallback(async () => {
-        const controles = await leer(conn, 'controles_bien', [{fieldName:'ficha', value:ficha}]);
+        const controles = await leerTabla(conn, 'controles_bien', [{fieldName:'ficha', value:ficha}]);
         const conItems = await Promise.all(controles.map(async control => ({
             ...control,
-            items:await leer(conn, 'controles_bien_items', [{fieldName:'control', value:control.control}]),
+            items:await leerTabla(conn, 'controles_bien_items', [{fieldName:'control', value:control.control}]),
         })));
         conItems.sort((a, b) => claveDeOrden(b).localeCompare(claveDeOrden(a)));
         setHistorial(conItems);
@@ -196,13 +190,13 @@ export function ControlBien({
         let cancelado = false;
         setCargando(true);
         Promise.all([
-            leer(conn, 'items_control'),
-            leer(conn, 'items_control_opciones'),
-            leer(conn, 'items_control_grupos'),
-            leer(conn, 'items_control_atributos'),
-            leer(conn, 'bienes_atributo_valores'),
-            leer(conn, 'bienes_atributos'),
-            leer(conn, 'bienes', [{fieldName:'ficha', value:ficha}]),
+            leerTabla(conn, 'items_control'),
+            leerTabla(conn, 'items_control_opciones'),
+            leerTabla(conn, 'items_control_grupos'),
+            leerTabla(conn, 'items_control_atributos'),
+            leerTabla(conn, 'bienes_atributo_valores'),
+            leerTabla(conn, 'bienes_atributos'),
+            leerTabla(conn, 'bienes', [{fieldName:'ficha', value:ficha}]),
             cargarHistorial(),
             cargarAtributos(),
         ]).then(([items, opciones, grupos, vinculos, valoresDeAtributos, atributos, bienes]) => {

@@ -44,6 +44,11 @@ export function unmountConnectedAppInventario():void{
     connectedHost = null;
 }
 
+export function volverAlMenu():void{
+    unmountConnectedAppInventario();
+    location.hash = '';
+}
+
 export function renderConnectedAppInventario(
     conn:Connector,
     addrParams:AddrParamsInventario,

@@ -14,6 +14,8 @@ export function movimientos_solicitudes_acciones(context:TableContext):TableDefi
         {name:"acciones"                    , typeName: 'jsonb'      , editable:false, inTable:false},
         {name:"acciones_avance"             , typeName: 'text'       , editable:false, inTable:false, clientSide:'accionesAvance'},
         {name:"acciones_retroceso"          , typeName: 'text'       , editable:false, inTable:false, clientSide:'accionesRetroceso'},
+        {name:"cantidad_bienes"             , typeName: 'integer'    , editable:false, inTable:false, title:'bienes'},
+        {name:"fichas"                      , typeName: 'text'       , editable:false, inTable:false, visible:false},
     );
     
     tableDef.fields.forEach((field:FieldDefinition)=>{
@@ -40,6 +42,12 @@ export function movimientos_solicitudes_acciones(context:TableContext):TableDefi
                         AND accion_cumple_condicion(aux.acta, ea.estado, ea.eaccion, ea.condicion)
                 ) z
             ) y
+        , LATERAL (
+            SELECT count(*)::integer AS cantidad_bienes,
+                   string_agg(msb.ficha, ' ' ORDER BY msb.ficha) AS fichas
+                FROM movimientos_solicitud_bien msb
+                WHERE msb.acta = aux.acta
+            ) b
         )`;
     return tableDef;
 }

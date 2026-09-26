@@ -18,11 +18,11 @@ import {
     Typography,
 } from '@mui/material';
 import {ExpandMore, Refresh} from '@mui/icons-material';
-import type {Connector, FixedFields} from 'frontend-plus';
+import type {FixedFields} from 'frontend-plus';
 
 import {useAvisos, useConexion} from '../base/contexto-base';
 import {formatearValor} from '../base/formato-valores';
-import type {Fila} from '../base/tipos-tabla';
+import {leerTabla} from '../base/referencias';
 import {
     EntradaDeHistorial,
     TIPOS_DE_ENTRADA,
@@ -36,10 +36,6 @@ const COLOR_POR_TIPO:Record<TipoDeEntrada, 'default'|'primary'|'secondary'> = {
     movimiento:'primary',
     control:'secondary',
 };
-
-function leer(conn:Connector, tabla:string, fixedFields:FixedFields):Promise<Fila[]>{
-    return conn.ajax.table_data({table:tabla, fixedFields, paramfun:{}}) as unknown as Promise<Fila[]>;
-}
 
 function valor(dato:unknown){
     const texto = formatearValor(dato);
@@ -87,15 +83,15 @@ export function HistorialBien({ficha}:{ficha:string}){
         try{
             const porFicha:FixedFields = [{fieldName:'ficha', value:ficha}];
             const [eventos, cambios, movimientos, controles, items] = await Promise.all([
-                leer(conn, 'historial_evento_bien', porFicha),
-                leer(conn, 'historial_bienes', porFicha),
-                leer(conn, 'movimientos_bien', porFicha),
-                leer(conn, 'controles_bien', porFicha),
-                leer(conn, 'items_control', []),
+                leerTabla(conn, 'historial_evento_bien', porFicha),
+                leerTabla(conn, 'historial_bienes', porFicha),
+                leerTabla(conn, 'movimientos_bien', porFicha),
+                leerTabla(conn, 'controles_bien', porFicha),
+                leerTabla(conn, 'items_control', []),
             ]);
             const controlesConItems = await Promise.all(controles.map(async control => ({
                 ...control,
-                items:await leer(conn, 'controles_bien_items', [{fieldName:'control', value:control.control}]),
+                items:await leerTabla(conn, 'controles_bien_items', [{fieldName:'control', value:control.control}]),
             })));
             const descripciones = new Map(items.map(i => [String(i.item), String(i.descripcion ?? i.item)]));
             setEntradas(armarHistorial({
