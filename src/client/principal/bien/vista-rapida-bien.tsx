@@ -3,11 +3,40 @@ import {Box, Button, Chip, Divider, Drawer, IconButton, Stack, Typography} from 
 import {ChevronLeft, ChevronRight, Close, OpenInNew} from '@mui/icons-material';
 
 import {useDatosReferencial} from '../base/cache-tablas';
-import {seccionesDeVistaRapida, vecinos, SIN_DATO} from './vista-rapida-datos';
+import {seccionesDeVistaRapida, vecinos, SeccionDeVistaRapida, SIN_DATO} from './vista-rapida-datos';
 
 type Fila = Record<string, unknown>;
 
 export const ANCHO_VISTA_RAPIDA = 420;
+
+export function useDescripcionDeEstado(){
+    const estados = useDatosReferencial('estados_bien');
+    return React.useCallback(
+        (estado:string) => {
+            const encontrado = estados.filas.find(e => e.estado_bien === estado);
+            return encontrado?.descripcion == null ? null : String(encontrado.descripcion);
+        },
+        [estados.filas],
+    );
+}
+
+export function SeccionesDeBien({secciones}:{secciones:SeccionDeVistaRapida[]}){
+    return <>
+        {secciones.map(seccion => <Box key={seccion.titulo} sx={{mb:2}}>
+            <Typography variant="subtitle2" color="primary" sx={{mb:0.5}}>{seccion.titulo}</Typography>
+            <Divider sx={{mb:1}}/>
+            <Box component="dl" sx={{m:0, display:'grid', gridTemplateColumns:'max-content 1fr', columnGap:2, rowGap:0.5}}>
+                {seccion.datos.map(dato => <React.Fragment key={dato.etiqueta}>
+                    <Typography component="dt" variant="body2" color="text.secondary">{dato.etiqueta}</Typography>
+                    <Typography component="dd" variant="body2" sx={{m:0, wordBreak:'break-word',
+                        color:dato.valor === SIN_DATO ? 'text.disabled' : 'text.primary'}}>
+                        {dato.valor}
+                    </Typography>
+                </React.Fragment>)}
+            </Box>
+        </Box>)}
+    </>;
+}
 
 export function VistaRapidaBien({
     fila,
@@ -22,14 +51,7 @@ export function VistaRapidaBien({
     onCerrar:() => void,
     onAbrirFicha:(ficha:string) => void,
 }){
-    const estados = useDatosReferencial('estados_bien');
-    const descripcionDeEstado = React.useCallback(
-        (estado:string) => {
-            const encontrado = estados.filas.find(e => e.estado_bien === estado);
-            return encontrado?.descripcion == null ? null : String(encontrado.descripcion);
-        },
-        [estados.filas],
-    );
+    const descripcionDeEstado = useDescripcionDeEstado();
     const ficha = fila == null ? null : String(fila.ficha);
     const {anterior, siguiente} = vecinos(filas, ficha);
     const secciones = fila == null ? [] : seccionesDeVistaRapida(fila, descripcionDeEstado);
@@ -62,19 +84,7 @@ export function VistaRapidaBien({
             </Stack>
 
             <Box sx={{flex:1, overflowY:'auto'}}>
-                {secciones.map(seccion => <Box key={seccion.titulo} sx={{mb:2}}>
-                    <Typography variant="subtitle2" color="primary" sx={{mb:0.5}}>{seccion.titulo}</Typography>
-                    <Divider sx={{mb:1}}/>
-                    <Box component="dl" sx={{m:0, display:'grid', gridTemplateColumns:'max-content 1fr', columnGap:2, rowGap:0.5}}>
-                        {seccion.datos.map(dato => <React.Fragment key={dato.etiqueta}>
-                            <Typography component="dt" variant="body2" color="text.secondary">{dato.etiqueta}</Typography>
-                            <Typography component="dd" variant="body2" sx={{m:0, wordBreak:'break-word',
-                                color:dato.valor === SIN_DATO ? 'text.disabled' : 'text.primary'}}>
-                                {dato.valor}
-                            </Typography>
-                        </React.Fragment>)}
-                    </Box>
-                </Box>)}
+                <SeccionesDeBien secciones={secciones}/>
             </Box>
 
             <Stack direction="row" spacing={1} justifyContent="space-between">

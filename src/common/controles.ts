@@ -14,7 +14,7 @@ export function buscarBienParaControl<T extends {ficha?:unknown, serie?:unknown}
         : 'No se encontró una ficha o serie coincidente entre los bienes a controlar con estos filtros.'};
 }
 
-export const TIPOS_DE_ITEM = ['si_no', 'texto', 'opcion'] as const;
+export const TIPOS_DE_ITEM = ['si_no', 'texto', 'opcion', 'atributo'] as const;
 
 export type TipoDeItem = typeof TIPOS_DE_ITEM[number];
 
@@ -23,6 +23,37 @@ export const VALORES_SI_NO = ['SI', 'NO'] as const;
 export const SITUACIONES_DE_CONTROL = ['NUNCA', 'VENCIDO', 'VIGENTE'] as const;
 
 export type SituacionDeControl = typeof SITUACIONES_DE_CONTROL[number];
+
+export type Par = {clave:string, nombre?:string, valor:string};
+
+export const SIN_DATO = '__sin_dato__';
+
+export function valorDePar(pares:Par[]|null|undefined, clave:string):string|null{
+    return pares?.find(p => p.clave === clave)?.valor ?? null;
+}
+
+export function pasaFiltroDePar(pares:Par[]|null|undefined, clave:string|null, valor:string|null):boolean{
+    if(!clave || !valor){
+        return true;
+    }
+    const encontrado = valorDePar(pares, clave);
+    return valor === SIN_DATO ? encontrado == null : encontrado === valor;
+}
+
+export function opcionesDePares(listas:(Par[]|null|undefined)[]):{clave:string, nombre:string, valores:string[]}[]{
+    const porClave = new Map<string, {nombre:string, valores:Set<string>}>();
+    for(const pares of listas){
+        for(const {clave, nombre, valor} of pares ?? []){
+            if(!porClave.has(clave)){
+                porClave.set(clave, {nombre:nombre ?? clave, valores:new Set()});
+            }
+            porClave.get(clave)!.valores.add(valor);
+        }
+    }
+    return [...porClave]
+        .map(([clave, {nombre, valores}]) => ({clave, nombre, valores:[...valores].sort()}))
+        .sort((a, b) => a.nombre.localeCompare(b.nombre));
+}
 
 export type GruposPorItem = Map<string, Set<string>>;
 

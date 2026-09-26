@@ -87,7 +87,8 @@ import {MoverBienes, AvisoMovimiento, ResultadoMovimiento} from './mover-bienes'
 import type {Fila} from './base/tipos-tabla';
 import {BajaBienes} from './baja-bienes';
 import {usePermisos} from './base/contexto-base';
-import {etiquetaDeCampo, formatearValor} from './base/formato-valores';
+import {AccionesBaja} from './baja/acciones-baja';
+import {aFechaDeGrilla, etiquetaDeCampo, formatearValor} from './base/formato-valores';
 
 declare module 'frontend-plus' {
     interface FieldDefinition {
@@ -222,7 +223,7 @@ function gridValue(value:unknown, type:GridColDef['type']):unknown{
         return Number.isNaN(numberValue) ? null : numberValue;
     }
     if(type === 'date'){
-        return value instanceof Date ? value : new Date(`${String(value).slice(0, 10)}T00:00:00`);
+        return aFechaDeGrilla(value);
     }
     if(type === 'boolean'){
         return value === true || value === 1 || String(value).toLowerCase() === 'true';
@@ -595,27 +596,30 @@ export function BusquedaBienes({
                 </Box>;
             },
         };
+        const puedeRestaurar = tab === 1 && permisos.restaurarBaja;
         const actionsColumn:GridColDef<BienesBusquedaRow> = {
             field:'__acciones',
             headerName:'',
-            width:120,
+            width:puedeRestaurar ? 220 : 120,
             sortable:false,
             filterable:false,
             disableColumnMenu:true,
             renderCell:(params) =>
-                <Button
-                    size="small"
-                    startIcon={<OpenInNew/>}
-                    onClick={(event) => {
-                        event.stopPropagation();
-                        abrirBien(String(params.row.ficha));
-                    }}
-                >
-                    Abrir
-                </Button>,
+                <Stack direction="row" spacing={0.5} alignItems="center" onClick={(event) => event.stopPropagation()}>
+                    <Button
+                        size="small"
+                        startIcon={<OpenInNew/>}
+                        onClick={() => abrirBien(String(params.row.ficha))}
+                    >
+                        Abrir
+                    </Button>
+                    {puedeRestaurar
+                        ? <AccionesBaja fila={params.row as Fila} onAplicada={() => setSearchVersion(version => version + 1)}/>
+                        : null}
+                </Stack>,
         };
         return [...baseColumns, attributesColumn, actionsColumn];
-    }, [abrirBien, expandedRowIds, tableDefinition]);
+    }, [abrirBien, expandedRowIds, permisos.restaurarBaja, tab, tableDefinition]);
 
     const columnVisibilityModel = React.useMemo(() => {
         const model:Record<string, boolean> = {};

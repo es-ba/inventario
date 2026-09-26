@@ -3,8 +3,12 @@ ENCIENDE|Enciende|si_no|10|true
 PANTALLA|Estado de la pantalla|opcion|20|true
 BATERIA|Estado de la batería|opcion|30|true
 CARGA|Carga correctamente|si_no|40|true
-CARGADOR|Tiene cargador|si_no|50|true
-FUNDA|Tiene funda|si_no|60|true
+CARGADOR|Tiene cargador|atributo|50|true
+FUNDA|Tiene funda|atributo|60|true
+CAJA|Tiene caja|atributo|62|true
+CABLE|Tiene cable|atributo|64|true
+ADAPTADOR|Adaptador|atributo|66|true
+PROTECTOR_PANTALLA|Tiene protector de pantalla|atributo|68|true
 CHIP|Chip presente|si_no|70|true
 LINEA_ACTIVA|Línea activa|si_no|80|true
 IMEI_COINCIDE|IMEI coincide con el registrado|si_no|90|true

@@ -17,7 +17,7 @@ async function ejecutarBaja(context:ProcedureContext, fichas:string[], accion:Ac
          WHERE eba.accion_baja = $1
     `,[accion]).fetchUniqueRow();
     if(!permisos.permitido){ throw new Error(`No tiene permisos para ${accion} la baja`); }
-    if(['solicitar','aprobar_directa','rechazar','restaurar'].includes(accion) && !motivo){
+    if(['solicitar','aprobar_directa','rechazar'].includes(accion) && !motivo){
         throw new Error(`Debe indicar el motivo para ${accion} la baja`);
     }
     if(['aprobar','aprobar_directa'].includes(accion) && documento && !/^\d+$/.test(documento)){
@@ -95,7 +95,7 @@ async function ejecutarBaja(context:ProcedureContext, fichas:string[], accion:Ac
                 + " revisado_por=null, fecha_revision=null, fecha_finalizacion=null, autorizado_por=null,"
                 + " documento_respaldo=null, motivo_rechazo=null, motivo_restauracion=$4,"
                 + " restaurado_por=get_app_user(), fecha_restauracion=current_date",
-            valores:[motivo],
+            valores:[motivo || null],
         },
     };
     const cambio = cambios[accion];
@@ -106,7 +106,7 @@ async function ejecutarBaja(context:ProcedureContext, fichas:string[], accion:Ac
                 SELECT registrar_evento_bien(b.ficha, 'baja_restaurar',
                     jsonb_build_object('motivo',$2::text,'baja_anterior',to_jsonb(b))::text)
                   FROM bienes b WHERE b.ficha=$1
-            `,[ficha,motivo]).execute();
+            `,[ficha,motivo || null]).execute();
         }
         const resultado = await client.query(`
             UPDATE bienes SET estado_baja=$2, activo=$3, ${cambio.sql}

@@ -21,7 +21,7 @@ export function items_control(context:TableContext):TableDefinition{
         detailTables:[
             {table:'items_control_opciones', fields:['item'], abr:'Op', label:'opciones'},
             {table:'items_control_grupos'  , fields:['item'], abr:'Gr', label:'grupos'},
-        ],
+            {table:'items_control_atributos', fields:['item'], abr:'At', label:'atributo'},        ],
         sortColumns:[{column:'orden', order:1}, {column:'item', order:1}],
     };
 }

@@ -23,7 +23,15 @@ import {useAvisos, useConexion} from '../base/contexto-base';
 import {capitalizar, formatearValor} from '../base/formato-valores';
 import {bienesGridLocaleText} from '../localizacion-grid';
 import type {Fila} from '../base/tipos-tabla';
-import {SITUACIONES_DE_CONTROL, SituacionDeControl, buscarBienParaControl} from '../../../common/controles';
+import {
+    Par,
+    SIN_DATO,
+    SITUACIONES_DE_CONTROL,
+    SituacionDeControl,
+    buscarBienParaControl,
+    opcionesDePares,
+    pasaFiltroDePar,
+} from '../../../common/controles';
 
 const COLOR_POR_SITUACION:Record<SituacionDeControl, 'error'|'warning'|'success'> = {
     NUNCA:'error',
@@ -52,6 +60,10 @@ export function claseDe(fila:Fila):string{
 
 export function espacioDe(fila:Fila):string{
     return textoDeReferencia(fila.espacio, fila.espacios__numero, fila.espacios__denominacion);
+}
+
+export function responsableDe(fila:Fila):string{
+    return textoDeReferencia(fila.responsable, fila.responsable__apellido, fila.responsable__nombre);
 }
 
 export function responsableDelSectorDe(fila:Fila):string{
@@ -100,6 +112,11 @@ export function ControlesListado({
     const [sector, setSector] = React.useState(TODOS);
     const [espacio, setEspacio] = React.useState(TODOS);
     const [busqueda, setBusqueda] = React.useState('');
+    const [estado, setEstado] = React.useState(TODOS);
+    const [atributo, setAtributo] = React.useState(TODOS);
+    const [valorAtributo, setValorAtributo] = React.useState(TODOS);
+    const [item, setItem] = React.useState(TODOS);
+    const [valorItem, setValorItem] = React.useState(TODOS);
     const [paginacion, setPaginacion] = React.useState<GridPaginationModel>({page:0, pageSize:25});
     const [orden, setOrden] = React.useState<GridSortModel>([]);
 
@@ -140,20 +157,30 @@ export function ControlesListado({
         [filas],
     );
     const espacios = React.useMemo(() => opcionesDe(filas, 'espacio', espacioDe), [filas]);
+    const estados = React.useMemo(
+        () => opcionesDe(filas, 'estado', f => textoDeReferencia(f.estado, f.estados_bien__descripcion)),
+        [filas],
+    );
+    const atributos = React.useMemo(() => opcionesDePares(filas.map(f => f.atributos as Par[])), [filas]);
+    const items = React.useMemo(() => opcionesDePares(filas.map(f => f.ultimo_control as Par[])), [filas]);
 
     const filasVisibles = React.useMemo(() => {
         const buscado = busqueda.trim().toLowerCase();
+        const elegido = (valor:string) => valor === TODOS ? null : valor;
         return filas.filter(fila =>
             (situacion === TODOS || codigo(fila, 'situacion') === situacion)
             && (clase === TODOS || codigoDeClase(fila) === clase)
             && (grupo === TODOS || codigo(fila, 'grupo') === grupo)
             && (sector === TODOS || codigo(fila, 'sector') === sector)
             && (espacio === TODOS || codigo(fila, 'espacio') === espacio)
+            && (estado === TODOS || codigo(fila, 'estado') === estado)
+            && pasaFiltroDePar(fila.atributos as Par[], elegido(atributo), elegido(valorAtributo))
+            && pasaFiltroDePar(fila.ultimo_control as Par[], elegido(item), elegido(valorItem))
             && (buscado === ''
                 || codigo(fila, 'ficha').toLowerCase().includes(buscado)
                 || codigo(fila, 'serie').toLowerCase().includes(buscado))
         );
-    }, [busqueda, clase, espacio, filas, grupo, sector, situacion]);
+    }, [atributo, busqueda, clase, espacio, estado, filas, grupo, item, sector, situacion, valorAtributo, valorItem]);
 
     const listaEnOrden = React.useCallback(():Fila[] => {
         const porFicha = new Map(filasVisibles.map(fila => [codigo(fila, 'ficha'), fila]));
@@ -191,7 +218,14 @@ export function ControlesListado({
             width:120,
             valueGetter:(_v, fila) => textoDeReferencia(fila.marca, fila.marcas__descripcion),
         },
+        {field:'modelo', headerName:'Modelo', width:120},
         {field:'serie', headerName:'Serie', width:140},
+        {
+            field:'estado',
+            headerName:'Estado',
+            width:130,
+            valueGetter:(_v, fila) => textoDeReferencia(fila.estado, fila.estados_bien__descripcion),
+        },
         {
             field:'sector',
             headerName:'Sector',
@@ -205,6 +239,8 @@ export function ControlesListado({
             width:170,
             valueGetter:(_v, fila) => responsableDelSectorDe(fila),
         },
+        {field:'responsable', headerName:'Responsable directo', width:170, valueGetter:(_v, fila) => responsableDe(fila)},
+        {field:'atributos_texto', headerName:'Atributos', flex:1, minWidth:220},
         {
             field:'fecha_ultimo_control',
             headerName:'Último control',
@@ -242,6 +278,31 @@ export function ControlesListado({
         <MenuItem value={TODOS}>Todos</MenuItem>
         {opciones.map(([clave, texto]) => <MenuItem key={clave} value={clave}>{texto}</MenuItem>)}
     </TextField>;
+
+    const filtroDePar = (
+        etiqueta:string,
+        opciones:{clave:string, nombre:string, valores:string[]}[],
+        clave:string,
+        valor:string,
+        cambiarClave:(clave:string) => void,
+        cambiarValor:(valor:string) => void,
+    ) => <>
+        {filtro(etiqueta, clave, nueva => { cambiarClave(nueva); cambiarValor(TODOS); },
+            opciones.map(o => [o.clave, o.nombre]))}
+        <TextField
+            select
+            size="small"
+            label="valor"
+            value={valor}
+            disabled={clave === TODOS}
+            onChange={evento => cambiarValor(evento.target.value)}
+            sx={{minWidth:140}}
+        >
+            <MenuItem value={TODOS}>Todos</MenuItem>
+            <MenuItem value={SIN_DATO}>Sin dato</MenuItem>
+            {(opciones.find(o => o.clave === clave)?.valores ?? []).map(v => <MenuItem key={v} value={v}>{v}</MenuItem>)}
+        </TextField>
+    </>;
 
     return <Box sx={{p:{xs:1, md:2}}}>
         <Stack direction="row" alignItems="center" spacing={2} sx={{mb:2}}>
@@ -288,6 +349,12 @@ export function ControlesListado({
             {filtro('grupo', grupo, setGrupo, grupos)}
             {filtro('sector', sector, setSector, sectores)}
             {filtro('espacio', espacio, setEspacio, espacios)}
+            {filtro('estado', estado, setEstado, estados)}
+        </Stack>
+
+        <Stack direction="row" spacing={2} sx={{mb:2}} flexWrap="wrap" useFlexGap>
+            {filtroDePar('atributo', atributos, atributo, valorAtributo, setAtributo, setValorAtributo)}
+            {filtroDePar('ítem del último control', items, item, valorItem, setItem, setValorItem)}
         </Stack>
 
         <DataGrid

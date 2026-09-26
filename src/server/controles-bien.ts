@@ -10,7 +10,10 @@ export type CatalogoDeControl = {
     items:ItemDelCatalogo[],
     opciones:Map<string, Set<string>>,
     gruposPorItem:GruposPorItem,
+    atributoPorItem:Map<string, string>,
+    valoresPorAtributo:Map<string, Set<string>>,
     grupoDelBien:string|null,
+    fechaUltimoControl:string|null,
     hoy:string,
 };
 
@@ -26,6 +29,7 @@ export type PlanDeControl = {
     fecha:string,
     observacion:string|null,
     items:{item:string, valor:string}[],
+    atributos:{atributo:string, valor:string}[],
 };
 
 export const DIAS_DE_VIGENCIA_POR_DEFECTO = 365;
@@ -60,7 +64,7 @@ function leerItems(items:unknown):Record<string, unknown>{
     return valor as Record<string, unknown>;
 }
 
-function validarValor(item:ItemDelCatalogo, valor:string, opciones:Map<string, Set<string>>):string{
+function validarValor(item:ItemDelCatalogo, valor:string, catalogo:CatalogoDeControl):string{
     switch(item.tipo_valor){
         case 'si_no':{
             const siNo = valor.toUpperCase();
@@ -70,10 +74,20 @@ function validarValor(item:ItemDelCatalogo, valor:string, opciones:Map<string, S
             return siNo;
         }
         case 'opcion':
-            if(!opciones.get(item.item)?.has(valor)){
+            if(!catalogo.opciones.get(item.item)?.has(valor)){
                 throw new ErrorControl(`El valor "${valor}" no es una opción del ítem ${item.item}`);
             }
             return valor;
+        case 'atributo':{
+            const atributo = catalogo.atributoPorItem.get(item.item);
+            if(atributo == null){
+                throw new ErrorControl(`El ítem ${item.item} no está vinculado a ningún atributo`);
+            }
+            if(!catalogo.valoresPorAtributo.get(atributo)?.has(valor)){
+                throw new ErrorControl(`El valor "${valor}" no es un valor posible del atributo ${atributo} (ítem ${item.item})`);
+            }
+            return valor;
+        }
         case 'texto':
             return valor;
         default:
@@ -110,10 +124,14 @@ export function planificarControl(pedido:PedidoDeControl, catalogo:CatalogoDeCon
         if(!itemAplica(codigo, catalogo.grupoDelBien, catalogo.gruposPorItem)){
             throw new ErrorControl(`El ítem ${codigo} no aplica al grupo del bien`);
         }
-        items.push({item:codigo, valor:validarValor(item, valor, catalogo.opciones)});
+        items.push({item:codigo, valor:validarValor(item, valor, catalogo)});
     }
+    const esElUltimo = catalogo.fechaUltimoControl == null || fecha >= catalogo.fechaUltimoControl;
+    const atributos = esElUltimo ? items
+        .filter(({item}) => porCodigo.get(item)!.tipo_valor === 'atributo')
+        .map(({item, valor}) => ({atributo:catalogo.atributoPorItem.get(item)!, valor})) : [];
     const observacion = texto(pedido.observacion);
-    return {ficha, fecha, observacion:observacion || null, items};
+    return {ficha, fecha, observacion:observacion || null, items, atributos};
 }
 
 export function diasDeVigencia(config:any):number{
@@ -135,7 +153,7 @@ export function condicionControlable(alias:string):string{
 
 export function sqlUltimoControl(alias:string):string{
     return `LEFT JOIN LATERAL (
-    SELECT c.fecha
+    SELECT c.fecha, c.control
       FROM controles_bien c
      WHERE c.ficha = ${alias}.ficha
      ORDER BY c.fecha DESC, c.control DESC

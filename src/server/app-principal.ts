@@ -73,7 +73,7 @@ import { archivos_borrar } from "./table-archivos_borrar";
 import { items_control } from "./table-items_control";
 import { items_control_opciones } from "./table-items_control_opciones";
 import { items_control_grupos } from "./table-items_control_grupos";
-import { controles_bien } from "./table-controles_bien";
+import { items_control_atributos } from "./table-items_control_atributos";import { controles_bien } from "./table-controles_bien";
 import { controles_bien_items } from "./table-controles_bien_items";
 import { bienes_control } from "./table-bienes_control";
 import { ProceduresControles } from "./procedures-controles";
@@ -389,7 +389,8 @@ export class AppInventario extends AppBackend{
                     {menuType: 'menu', name: 'config_control_bienes', label: 'control de bienes', menuContent: [
                         {menuType: 'table', name: 'items_control', label: 'ítems de control'},
                         {menuType: 'table', name: 'items_control_opciones', label: 'opciones de ítems'},
-                        {menuType: 'table', name: 'items_control_grupos', label: 'grupos de ítems'},                    ]},
+                        {menuType: 'table', name: 'items_control_grupos', label: 'grupos de ítems'},
+                        {menuType: 'table', name: 'items_control_atributos', label: 'atributos de ítems'},                    ]},
 
                     {menuType: 'menu', name: 'sistema', label: 'sistema y seguridad', menuContent: [
                         {menuType: 'table', name: 'usuarios', label: 'gestión de usuarios'},
@@ -483,6 +484,7 @@ export class AppInventario extends AppBackend{
             items_control,
             items_control_opciones,
             items_control_grupos,
+            items_control_atributos,
             controles_bien,
             controles_bien_items,
             bienes_control,

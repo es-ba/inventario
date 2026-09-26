@@ -13,7 +13,7 @@ import {
     Tabs,
     Typography,
 } from '@mui/material';
-import {Edit, ExpandMore, LocalShipping, OpenInNew} from '@mui/icons-material';
+import {ContentCopy, Edit, ExpandMore, LocalShipping, OpenInNew} from '@mui/icons-material';
 import type {GridColDef} from '@mui/x-data-grid';
 import type {FieldDefinition, FixedFields, TableDefinition} from 'frontend-plus';
 
@@ -26,7 +26,8 @@ import {TabPanel, propsDeSolapa} from '../base/tab-panel';
 import {useRowEditor} from '../base/use-row-editor';
 import type {Fila} from '../base/tipos-tabla';
 import {AdjuntosBien} from './adjuntos-bien';
-import {AuditoriaBien} from './auditoria-bien';
+import {HistorialBien} from './historial-bien';
+import {datosParaClonar} from './clonar-bien';
 import {BienHeader, ResumenDelBien} from './bien-header';
 import {AccionesBaja} from '../baja/acciones-baja';
 import {MoverBienes, AvisoMovimiento, ResultadoMovimiento} from '../mover-bienes';
@@ -256,10 +257,14 @@ function SeccionDeCampos({
 
 export function BienFormulario({
     ficha,
+    plantilla,
+    onClonar,
     onVolver,
     onGuardado,
 }:{
     ficha?:string,
+    plantilla?:Fila,
+    onClonar?:(plantilla:Fila, de:string) => void,
     onVolver:() => void,
     onGuardado?:(fila:Fila) => void,
 }){
@@ -281,7 +286,7 @@ export function BienFormulario({
 
     React.useEffect(() => {
         if(!ficha){
-            setFilaInicial(undefined);
+            setFilaInicial(plantilla);
             setCargando(false);
             return;
         }
@@ -311,7 +316,7 @@ export function BienFormulario({
                 }
             });
         return () => { cancelado = true; };
-    }, [conn, ficha, mostrarError, version]);
+    }, [conn, ficha, mostrarError, plantilla, version]);
 
     React.useEffect(() => {
         if(!ficha){
@@ -399,8 +404,8 @@ export function BienFormulario({
             contenido:<AdjuntosBien ficha={fichaActual}/>,
         },
         {
-            etiqueta:'Auditoría',
-            contenido:<AuditoriaBien ficha={fichaActual}/>,
+            etiqueta:'Historial',
+            contenido:<HistorialBien ficha={fichaActual}/>,
         },
         {
             etiqueta:'Declaraciones',
@@ -438,6 +443,12 @@ export function BienFormulario({
                     <Stack direction="row" justifyContent="flex-end" spacing={1} sx={{mb:1}}>
                         {guardado
                             ? <AccionesBaja fila={editor.row} onAplicada={() => { setVersion(v => v + 1); onGuardado?.(editor.row); }}/>
+                            : null}
+                        {guardado && onClonar && !editor.soloLectura
+                            ? <Button variant="outlined" startIcon={<ContentCopy/>}
+                                onClick={() => onClonar(datosParaClonar(editor.row), fichaActual)}>
+                                Clonar
+                            </Button>
                             : null}
                         {!editor.soloLectura
                             ? <Button variant="outlined" startIcon={<Edit/>} onClick={() => setEditando(true)}>

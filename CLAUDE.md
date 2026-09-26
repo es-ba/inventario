@@ -17,6 +17,8 @@ El frontend React vive en este repo, en `src/client/principal/`: pantallas de bi
 
 Vista rápida de bienes: el clic (o Enter) en una fila de la búsqueda (`busqueda-bienes.tsx`) abre un panel lateral (`principal/bien/vista-rapida-bien.tsx`) con datos principales y asignación, armados por funciones puras en `vista-rapida-datos.ts`; usa sólo la fila ya cargada. La búsqueda y la tabla `bienes` comparten la consulta base `sqlBienesConControl` (`table-bienes.ts`).
 
+Ficha del bien (`principal/bien/bien-formulario.tsx`): la solapa Historial (`historial-bien.tsx`) une eventos con sus cambios, movimientos y controles en una línea de tiempo; el armado y el orden son puros en `historial-datos.ts`. "Clonar" abre un alta con los campos de `CAMPOS_CLONABLES` (`clonar-bien.ts`); sólo aparece donde la pantalla pasa `onClonar` (hoy, `ws-principal.tsx`).
+
 El repo `frontend-inventario` **ya no se usa**. No trabajar ahí ni tomarlo como referencia.
 
 ## Comandos útiles
@@ -59,6 +61,9 @@ Registro de controles físicos de todo bien activo (`condicionControlable` en `c
 - Pantalla React: wScreen `controles` (`ws-controles.tsx`, `principal/control/`).
 - Agregar un ítem: filas en `items_control` (y en `items_control_opciones` si es `opcion`). Limitarlo a grupos: filas en `items_control_grupos`; sin filas aplica a todos. `items_control_grupos.tab` vive en `inventario-data/provisorio` porque referencia `grupos`.
 - Sumar un tipo de ítem: agregarlo a `TIPOS_DE_ITEM` (`src/common/controles.ts`), un `case` en `validarValor` (`controles-bien.ts`) y otro en `ValorDeItem` (`control-bien.tsx`).
+- Accesorios: un ítem de tipo `atributo` se vincula a un atributo de bien en `items_control_atributos` (uno a uno; el `.tab` vive en `inventario-data/provisorio` porque referencia `bienes_atributos`). Ofrece los valores de `bienes_atributo_valores` y `control_registrar` deja el valor en `bien_atributo`, sólo si el control queda como el último del bien (una fecha anterior no actualiza). Ítem vacío no toca el atributo; borrar el control no revierte. Vincular un accesorio nuevo: fila en `items_control` con tipo `atributo` y otra en `items_control_atributos`.
+- Listado (`bienes_control`): suma estado, responsable directo y atributos (`atributos_texto`); `atributos` y `ultimo_control` viajan como jsonb `[{clave, nombre, valor}]` con `visible:false`, para filtrar en el cliente por atributo/valor e ítem del último control/valor (`pasaFiltroDePar`, `opcionesDePares` y `SIN_DATO` en `src/common/controles.ts`).
+- Al abrir un bien: tarjeta "Estado actual" con las secciones de la vista rápida (`SeccionesDeBien` y `useDescripcionDeEstado`, exportados de `vista-rapida-bien.tsx`), sus atributos y el último control. Los ítems `atributo` muestran "hoy figura", y los atributos se releen al guardar.
 - En `bienes` (grilla y búsqueda React): `fecha_ultimo_control` y `situacion_control`, con el mismo cálculo que `bienes_control` (`sqlUltimoControl` y `sqlSituacionControl` en `controles-bien.ts`). En los bienes dados de baja la situación queda vacía.
 - Grilla de backend-plus: `bienes_control` en el menú "operaciones" ("control de bienes (grilla)"), junto a la pantalla; las dos entradas se ven con `puede_controlar`, para consultar, filtrar y exportar. No permite dar de alta controles.
 - Pantalla: Enter en el buscador abre la ficha; acepta el EAN-13 de la etiqueta (`fichaDesdeEAN13` en `src/common/codigos-barra.ts`). El listado queda montado mientras se ve un bien, así se conservan filtros y página.

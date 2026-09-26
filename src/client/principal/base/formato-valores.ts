@@ -107,6 +107,14 @@ export function aValorFechaInput(value:unknown):string{
     return iso ? iso[1] : texto;
 }
 
+export function aFechaDeGrilla(value:unknown):Date|null{
+    if(value instanceof Date){
+        return Number.isNaN(value.getTime()) ? null : value;
+    }
+    const ymd = aValorFechaInput(value);
+    return /^\d{4}-\d{2}-\d{2}$/.test(ymd) ? new Date(`${ymd}T00:00:00`) : null;
+}
+
 export function capitalizar(texto:string):string{
     const primera = texto.search(/\S/);
     return primera < 0 ? texto : texto.slice(0, primera) + texto.charAt(primera).toLocaleUpperCase('es') + texto.slice(primera + 1);

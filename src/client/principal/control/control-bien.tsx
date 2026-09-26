@@ -5,6 +5,7 @@ import {
     Button,
     Card,
     CardContent,
+    Chip,
     CircularProgress,
     Divider,
     MenuItem,
@@ -22,6 +23,8 @@ import {formatearValor} from '../base/formato-valores';
 import type {Fila} from '../base/tipos-tabla';
 import {armarGruposPorItem, itemAplica, VALORES_SI_NO} from '../../../common/controles';
 import {espacioDe, responsableDelSectorDe, textoDeReferencia} from './controles-listado';
+import {SeccionesDeBien, useDescripcionDeEstado} from '../bien/vista-rapida-bien';
+import {seccionesDeVistaRapida} from '../bien/vista-rapida-datos';
 
 declare module 'frontend-plus' {
     interface BEAPI {
@@ -38,11 +41,26 @@ type Catalogo = {
     items:Fila[],
     opciones:Fila[],
     grupos:Fila[],
+    vinculos:Fila[],
+    valoresDeAtributos:Fila[],
+    atributos:Fila[],
 };
 
 type ControlConItems = Fila & {items:Fila[]};
 
-const CATALOGO_VACIO:Catalogo = {items:[], opciones:[], grupos:[]};
+const CATALOGO_VACIO:Catalogo = {items:[], opciones:[], grupos:[], vinculos:[], valoresDeAtributos:[], atributos:[]};
+
+function textoDeFigura(valor:unknown):string{
+    return valor == null ? 'sin dato' : valor === 'SI' ? 'sí' : textoDeOpcion(valor);
+}
+
+function opcionesDelItem(catalogo:Catalogo, item:Fila):Fila[]{
+    if(item.tipo_valor !== 'atributo'){
+        return catalogo.opciones.filter(o => o.item === item.item).sort(porOrden);
+    }
+    const atributo = catalogo.vinculos.find(v => v.item === item.item)?.atributo;
+    return catalogo.valoresDeAtributos.filter(v => atributo != null && v.atributo === atributo).sort(porOrden);
+}
 
 function leer(conn:Connector, tabla:string, fixedFields:{fieldName:string, value:unknown}[] = []):Promise<Fila[]>{
     return conn.ajax.table_data({
@@ -69,7 +87,7 @@ function textoDeValor(tipo:unknown, valor:unknown):string{
     if(tipo === 'si_no'){
         return valor === 'SI' ? 'sí' : valor === 'NO' ? 'no' : String(valor ?? '');
     }
-    return tipo === 'opcion' ? textoDeOpcion(valor) : String(valor ?? '');
+    return tipo === 'opcion' || tipo === 'atributo' ? textoDeOpcion(valor) : String(valor ?? '');
 }
 
 function hoyLocal():string{
@@ -81,11 +99,13 @@ function ValorDeItem({
     item,
     opciones,
     valor,
+    figura,
     onCambiar,
 }:{
     item:Fila,
     opciones:Fila[],
     valor:string,
+    figura?:string,
     onCambiar:(valor:string) => void,
 }){
     const etiqueta = String(item.descripcion ?? item.item);
@@ -105,11 +125,13 @@ function ValorDeItem({
                 </ToggleButtonGroup>
             </Stack>;
         case 'opcion':
+        case 'atributo':
             return <TextField
                 select
                 fullWidth
                 label={etiqueta}
                 value={valor}
+                helperText={figura == null ? undefined : `hoy figura: ${figura}`}
                 onChange={evento => onCambiar(evento.target.value)}
             >
                 <MenuItem value="">Sin dato</MenuItem>
@@ -152,6 +174,13 @@ export function ControlBien({
     const [valores, setValores] = React.useState<Record<string, string>>({});
     const [guardando, setGuardando] = React.useState(false);
     const [error, setError] = React.useState<string|null>(null);
+    const [bienCompleto, setBienCompleto] = React.useState<Fila|null>(null);
+    const [atributosDelBien, setAtributosDelBien] = React.useState<Fila[]>([]);
+    const descripcionDeEstado = useDescripcionDeEstado();
+
+    const cargarAtributos = React.useCallback(async () => {
+        setAtributosDelBien(await leer(conn, 'bien_atributo', [{fieldName:'ficha', value:ficha}]));
+    }, [conn, ficha]);
 
     const cargarHistorial = React.useCallback(async () => {
         const controles = await leer(conn, 'controles_bien', [{fieldName:'ficha', value:ficha}]);
@@ -170,10 +199,16 @@ export function ControlBien({
             leer(conn, 'items_control'),
             leer(conn, 'items_control_opciones'),
             leer(conn, 'items_control_grupos'),
+            leer(conn, 'items_control_atributos'),
+            leer(conn, 'bienes_atributo_valores'),
+            leer(conn, 'bienes_atributos'),
+            leer(conn, 'bienes', [{fieldName:'ficha', value:ficha}]),
             cargarHistorial(),
-        ]).then(([items, opciones, grupos]) => {
+            cargarAtributos(),
+        ]).then(([items, opciones, grupos, vinculos, valoresDeAtributos, atributos, bienes]) => {
             if(!cancelado){
-                setCatalogo({items, opciones, grupos});
+                setCatalogo({items, opciones, grupos, vinculos, valoresDeAtributos, atributos});
+                setBienCompleto(bienes[0] ?? null);
             }
         }).catch(err => {
             if(!cancelado){
@@ -185,7 +220,24 @@ export function ControlBien({
             }
         });
         return () => { cancelado = true; };
-    }, [cargarHistorial, conn, mostrarError]);
+    }, [cargarAtributos, cargarHistorial, conn, ficha, mostrarError]);
+
+    const valorDeAtributo = React.useCallback(
+        (atributo:unknown) => atributosDelBien.find(a => a.atributo === atributo)?.valor ?? null,
+        [atributosDelBien],
+    );
+
+    const nombreDeAtributo = React.useCallback(
+        (atributo:unknown) => String(catalogo.atributos.find(a => a.atributo === atributo)?.nombre ?? atributo),
+        [catalogo.atributos],
+    );
+
+    const figuraDe = (item:Fila):string|undefined => {
+        if(item.tipo_valor !== 'atributo'){
+            return undefined;
+        }
+        return textoDeFigura(valorDeAtributo(catalogo.vinculos.find(v => v.item === item.item)?.atributo));
+    };
 
     const itemsDelBien = React.useMemo(() => {
         const gruposPorItem = armarGruposPorItem(catalogo.grupos);
@@ -234,7 +286,7 @@ export function ControlBien({
             setObservacion('');
             setValores({});
             setFecha(hoyLocal());
-            await cargarHistorial();
+            await Promise.all([cargarHistorial(), cargarAtributos()]);
         }catch(err){
             setError(err instanceof Error ? err.message : String(err));
         }finally{
@@ -268,6 +320,40 @@ export function ControlBien({
         {cargando
             ? <Box sx={{display:'flex', justifyContent:'center', p:6}}><CircularProgress/></Box>
             : <Stack spacing={3}>
+                <Card variant="outlined">
+                    <CardContent>
+                        <Typography variant="subtitle1" sx={{fontWeight:600, mb:1}}>Estado actual</Typography>
+                        {bienCompleto
+                            ? <SeccionesDeBien secciones={seccionesDeVistaRapida(bienCompleto, descripcionDeEstado)}/>
+                            : null}
+                        <Typography variant="subtitle2" color="primary" sx={{mb:0.5}}>Atributos</Typography>
+                        <Divider sx={{mb:1}}/>
+                        {atributosDelBien.length
+                            ? <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{mb:2}}>
+                                {[...atributosDelBien]
+                                    .sort((a, b) => nombreDeAtributo(a.atributo).localeCompare(nombreDeAtributo(b.atributo)))
+                                    .map(a => <Chip
+                                        key={String(a.atributo)}
+                                        size="small"
+                                        variant="outlined"
+                                        label={`${nombreDeAtributo(a.atributo)}: ${String(a.valor ?? '')}`}
+                                    />)}
+                            </Stack>
+                            : <Typography variant="body2" color="text.disabled" sx={{mb:2}}>Sin atributos cargados.</Typography>}
+                        <Typography variant="subtitle2" color="primary" sx={{mb:0.5}}>
+                            Último control{ultimo ? ` · ${formatearValor(ultimo.fecha)}` : ''}
+                        </Typography>
+                        <Divider sx={{mb:1}}/>
+                        {ultimo
+                            ? <Typography variant="body2">
+                                {ultimo.items.length
+                                    ? ultimo.items.map(item => `${String(itemPorCodigo.get(String(item.item))?.descripcion ?? item.item)}: ${textoDeValor(itemPorCodigo.get(String(item.item))?.tipo_valor, item.valor)}`).join(' · ')
+                                    : 'Sin ítems registrados.'}
+                            </Typography>
+                            : <Typography variant="body2" color="text.disabled">Nunca fue controlado.</Typography>}
+                    </CardContent>
+                </Card>
+
                 {permisos.controlar ? <Card variant="outlined">
                     <CardContent>
                         <Stack spacing={2}>
@@ -290,9 +376,8 @@ export function ControlBien({
                             {itemsDelBien.map(item => <ValorDeItem
                                 key={String(item.item)}
                                 item={item}
-                                opciones={catalogo.opciones
-                                    .filter(o => o.item === item.item)
-                                    .sort(porOrden)}
+                                opciones={opcionesDelItem(catalogo, item)}
+                                figura={figuraDe(item)}
                                 valor={valores[String(item.item)] ?? ''}
                                 onCambiar={valor => setValores(anteriores => ({...anteriores, [String(item.item)]:valor}))}
                             />)}

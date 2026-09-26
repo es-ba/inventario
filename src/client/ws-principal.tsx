@@ -12,6 +12,7 @@ import type {Connector, FixedFields} from 'frontend-plus';
 import {BusquedaBienes} from './principal/busqueda-bienes';
 import {BienFormulario} from './principal/bien/bien-formulario';
 import {useSalida} from './principal/base/contexto-base';
+import type {Fila} from './principal/base/tipos-tabla';
 import './ws-solicitudes';
 import './ws-bajas';
 import './ws-controles';
@@ -23,7 +24,7 @@ import {
 
 type Vista =
     {nombre:'busqueda'}
-    | {nombre:'bien', ficha?:string};
+    | {nombre:'bien', ficha?:string, clon?:{plantilla:Fila, de:string, vez:number}};
 
 function PantallaPrincipal({
     conn,
@@ -56,14 +57,17 @@ function PantallaPrincipal({
                 </IconButton>
                 <Typography variant="h6" component="h1">
                     {vista.nombre === 'bien'
-                        ? `Inventario - Bien ${vista.ficha ?? 'nuevo'}`
+                        ? `Inventario - Bien ${vista.ficha ?? (vista.clon ? `nuevo (copia de ${vista.clon.de})` : 'nuevo')}`
                         : 'Inventario - Principal'}
                 </Typography>
             </Toolbar>
         </AppBar>
         {vista.nombre === 'bien'
             ? <BienFormulario
+                key={vista.ficha ?? (vista.clon ? `clon-${vista.clon.vez}` : 'nuevo')}
                 ficha={vista.ficha}
+                plantilla={vista.clon?.plantilla}
+                onClonar={(plantilla, de) => setVista({nombre:'bien', clon:{plantilla, de, vez:Date.now()}})}
                 onVolver={() => setVista({nombre:'busqueda'})}
                 onGuardado={fila => setActualizacion(anterior => ({ficha:String(fila.ficha), version:(anterior?.version ?? 0) + 1}))}
             />

@@ -88,15 +88,15 @@ export function AccionesBaja({fila,onAplicada}:{fila:Fila,onAplicada:()=>void}){
                     </TextField> : null}
                     {accion === 'aprobar_directa' ? <FormFieldRenderer field={CAMPO_MOTIVO} row={{motivo_baja:motivo} as Fila}
                         setField={(_nombre, valor) => setMotivo(valor == null ? '' : String(valor))}/> : null}
-                    {accion === 'rechazar' || accion === 'restaurar' ? <TextField label="Motivo" value={motivo}
-                        onChange={evento=>setMotivo(evento.target.value)} multiline minRows={2} required fullWidth/> : null}
+                    {accion === 'rechazar' || accion === 'restaurar' ? <TextField label={accion === 'restaurar' ? 'Motivo (opcional)' : 'Motivo'} value={motivo}
+                        onChange={evento=>setMotivo(evento.target.value)} multiline minRows={2} required={accion === 'rechazar'} fullWidth/> : null}
                     {error ? <Alert severity="error">{error}</Alert> : null}
                 </Stack>
             </DialogContent>
             <DialogActions>
                 <Button disabled={trabajando} onClick={()=>setAccion(null)}>Cancelar</Button>
                 <Button variant="contained" onClick={()=>void ejecutar()} disabled={trabajando
-                    || ((accion === 'aprobar_directa' || accion === 'rechazar' || accion === 'restaurar') && !motivo.trim())}>{accion ? TITULOS[accion] : 'Confirmar'}</Button>
+                    || ((accion === 'aprobar_directa' || accion === 'rechazar') && !motivo.trim())}>{accion ? TITULOS[accion] : 'Confirmar'}</Button>
             </DialogActions>
         </Dialog>
     </>;

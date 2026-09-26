@@ -20,11 +20,31 @@ SELECT
     v.sector,
     v.espacio,
     v.responsable_sector,
+    v.estado,
+    v.responsable,
+    at.texto AS atributos_texto,
+    coalesce(at.pares, '[]'::jsonb) AS atributos,
+    coalesce(ic.pares, '[]'::jsonb) AS ultimo_control,
     uc.fecha AS fecha_ultimo_control,
     current_date - uc.fecha AS dias_desde_control,
     ${sqlSituacionControl('v', 'uc.fecha', dias)} AS situacion
 FROM (${sqlBienes}) v
 ${sqlUltimoControl('v')}
+LEFT JOIN LATERAL (
+    SELECT string_agg(coalesce(a.nombre, ba.atributo) || ': ' || ba.valor, ' · ' ORDER BY ba.atributo) AS texto,
+           jsonb_agg(jsonb_build_object('clave', ba.atributo, 'nombre', coalesce(a.nombre, ba.atributo), 'valor', ba.valor)
+               ORDER BY ba.atributo) AS pares
+      FROM bien_atributo ba
+      LEFT JOIN bienes_atributos a ON a.atributo = ba.atributo
+     WHERE ba.ficha = v.ficha
+) at ON true
+LEFT JOIN LATERAL (
+    SELECT jsonb_agg(jsonb_build_object('clave', ci.item, 'nombre', coalesce(i.descripcion, ci.item), 'valor', ci.valor)
+               ORDER BY i.orden, ci.item) AS pares
+      FROM controles_bien_items ci
+      LEFT JOIN items_control i ON i.item = ci.item
+     WHERE ci.control = uc.control
+) ic ON true
 WHERE ${condicionControlable('v')}
 `;
 }
@@ -50,6 +70,11 @@ export function bienes_control(context:TableContext):TableDefinition{
             {name:'sector'              , typeName:'text'   , title:'sector'         , nullable:true},
             {name:'espacio'             , typeName:'text'   , title:'espacio'        , nullable:true},
             {name:'responsable_sector'  , typeName:'text'   , title:'responsable del sector', nullable:true},
+            {name:'estado'              , typeName:'text'   , title:'estado'         , nullable:true},
+            {name:'responsable'         , typeName:'text'   , title:'responsable directo', nullable:true},
+            {name:'atributos_texto'     , typeName:'text'   , title:'atributos'      , nullable:true},
+            {name:'atributos'           , typeName:'jsonb'  , visible:false},
+            {name:'ultimo_control'      , typeName:'jsonb'  , visible:false},
             {name:'fecha_ultimo_control', typeName:'date'   , title:'último control' , nullable:true},
             {name:'dias_desde_control'  , typeName:'integer', title:'días'           , nullable:true},
             {name:'situacion'           , typeName:'text'   , title:'situación'},
@@ -63,6 +88,9 @@ export function bienes_control(context:TableContext):TableDefinition{
             {references:'espacios'            , fields:['espacio']            , displayFields:['numero', 'denominacion']},
             {references:'responsables'        , fields:[{source:'responsable_sector', target:'responsable'}],
                 alias:'responsable_sector', displayFields:['apellido', 'nombre']},
+            {references:'responsables'        , fields:['responsable']        ,
+                alias:'responsable', displayFields:['apellido', 'nombre']},
+            {references:'estados_bien'        , fields:[{source:'estado', target:'estado_bien'}], displayFields:['descripcion']},
         ],
         detailTables:[
             {table:'controles_bien', fields:['ficha'], abr:'Ctl', label:'controles'},
