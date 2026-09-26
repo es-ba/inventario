@@ -50,7 +50,9 @@ SELECT
     ult.sede_texto,
     ult.espacio_texto,
     ult.tipo_asignacion_texto,
-    ult.modalidad_uso_texto
+    ult.modalidad_uso_texto,
+    ult.fecha_ultimo_movimiento,
+    ult.usuario_ultimo_movimiento
     FROM bienes b
 LEFT JOIN grupos g ON g.grupo = b.grupo
 LEFT JOIN marcas ma ON ma.marca = b.marca
@@ -102,7 +104,9 @@ LEFT JOIN LATERAL (
             "concat_ws(' — ', nullif(btrim(e.numero), ''), nullif(btrim(e.denominacion), ''))",
         )} AS espacio_texto,
         ${codigoTextoSql('mb.tipo_asignacion', 'ta.descripcion')} AS tipo_asignacion_texto,
-        ${codigoTextoSql('mb.modalidad_uso', 'mu.descripcion')} AS modalidad_uso_texto
+        ${codigoTextoSql('mb.modalidad_uso', 'mu.descripcion')} AS modalidad_uso_texto,
+        coalesce(mb.fecha_modificacion, mb.fecha_creacion) AS fecha_ultimo_movimiento,
+        coalesce(mb.usuario_modificacion, mb.usuario_creacion) AS usuario_ultimo_movimiento
     FROM movimientos_bien mb
     LEFT JOIN sectores a ON a.sector = mb.sector
     LEFT JOIN responsables rs ON rs.responsable = a.responsable
@@ -204,6 +208,8 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'puesto'                      , typeName:'integer' , editable:false, inTable:false},
             {name:'fecha_ultimo_control'        , typeName:'date'    , editable:false, inTable:false, title:'último control'},
             {name:'situacion_control'           , typeName:'text'    , editable:false, inTable:false, title:'situación de control'},
+            {name:'fecha_ultimo_movimiento'     , typeName:'date'    , editable:false, inTable:false, title:'último movimiento'},
+            {name:'usuario_ultimo_movimiento'   , typeName:'text'    , editable:false, inTable:false, title:'movido por'},
             {name:'fecha_ultima_modificacion'   , typeName:'timestamp', editable:false, inTable:false, title:'última modificación'},
             {name:'usuario_ultima_modificacion' , typeName:'text'    , editable:false, inTable:false, title:'modificado por'},
             //{name:'codigo_barra'                , typeName:'text'    , inTable:false, editable:false},

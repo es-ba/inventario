@@ -214,7 +214,7 @@ function normalizedType(typeName: string): 'text' | 'number' | 'date' | 'boolean
     if (['decimal', 'bigint', 'integer', 'number'].includes(typeName)) {
         return 'number';
     }
-    if (typeName === 'date') {
+    if (typeName === 'date' || typeName === 'timestamp') {
         return 'date';
     }
     if (typeName === 'boolean') {
@@ -351,7 +351,8 @@ function buildCondition(
             throw new Error(`Campo no permitido: ${filter.target}`);
         }
         const internalName = sqlFieldName(filter.target, options);
-        return compareSql(`b.${quoteIdentifier(internalName)}`, field.typeName, filter, addValue);
+        const columna = `b.${quoteIdentifier(internalName)}`;
+        return compareSql(field.typeName === 'timestamp' ? `${columna}::date` : columna, field.typeName, filter, addValue);
     }
     const attribute = options.allowedAttributes?.[filter.target];
     if (options.allowedAttributes && !attribute) {

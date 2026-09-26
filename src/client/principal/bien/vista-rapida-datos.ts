@@ -46,6 +46,8 @@ export function seccionesDeVistaRapida(row:Fila, descripcionDeEstado:(estado:str
             dato('puesto', row.puesto),
             dato('en uso de', row.enusode),
             dato('responsable en uso de', row.enusode_responsable_nombre),
+            dato('último movimiento', row.fecha_ultimo_movimiento),
+            dato('movido por', row.usuario_ultimo_movimiento),
         ]},
     ];
 }

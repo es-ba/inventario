@@ -35,6 +35,10 @@ export const BIENES_GRID_ASSIGNMENT_FIELDS:readonly string[] = Object.freeze([
     'enusode_responsable_nombre',
     'fecha_ultimo_control',
     'situacion_control',
+    'fecha_ultimo_movimiento',
+    'usuario_ultimo_movimiento',
+    'fecha_ultima_modificacion',
+    'usuario_ultima_modificacion',
 ]);
 
 export function selectBienesGridFields<T extends BienesGridMetadataField>(

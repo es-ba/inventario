@@ -190,7 +190,7 @@ function normalizeAttributeType(value:unknown):string{
     if(/decimal|numeric|numero|número|integer|entero/.test(typeName)){
         return 'decimal';
     }
-    if(/date|fecha/.test(typeName)){
+    if(/date|fecha|timestamp/.test(typeName)){
         return 'date';
     }
     if(/boolean|logico|lógico|si\/no/.test(typeName)){
