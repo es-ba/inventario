@@ -1,0 +1,5 @@
+tipo|etiqueta|orden|activo|color
+MOVIMIENTO|Movimientos|10|true|primary
+BAJA|Bajas|20|true|error
+CONTROL|Controles por vencer|30|true|warning
+EGRESO|Egresos de personas|40|true|secondary

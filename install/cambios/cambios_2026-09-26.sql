@@ -103,4 +103,34 @@ on conflict ("item", "grupo") do nothing;
 update "estados_baja_acciones" set "campos_requeridos" = null
  where "accion_baja" = 'restaurar' and "campos_requeridos" = 'motivo_restauracion';
 
+create table "tipos_evento_calendario" (
+  "tipo" text,
+  "etiqueta" text,
+  "orden" integer,
+  "activo" boolean default 'true',
+  "color" text default 'default'
+, primary key ("tipo")
+);
+grant select, insert, update, delete on "tipos_evento_calendario" to inventario_admin;
+grant all on "tipos_evento_calendario" to inventario_owner;
+alter table "tipos_evento_calendario" add constraint "tipo<>''" check ("tipo"<>'');
+alter table "tipos_evento_calendario" add constraint "tipo invalid option" check ("tipo" in ('MOVIMIENTO','BAJA','CONTROL','EGRESO') );
+alter table "tipos_evento_calendario" add constraint "etiqueta<>''" check ("etiqueta"<>'');
+alter table "tipos_evento_calendario" alter column "activo" set not null;
+alter table "tipos_evento_calendario" add constraint "color<>''" check ("color"<>'');
+alter table "tipos_evento_calendario" add constraint "color invalid option" check ("color" in ('default','primary','secondary','success','warning','error','info') );
+alter table "tipos_evento_calendario" alter column "color" set not null;
+
+insert into "tipos_evento_calendario" ("tipo", "etiqueta", "orden", "activo", "color") values
+('MOVIMIENTO', 'Movimientos', 10, true, 'primary'),
+('BAJA', 'Bajas', 20, true, 'error'),
+('CONTROL', 'Controles por vencer', 30, true, 'warning'),
+('EGRESO', 'Egresos de personas', 40, true, 'secondary')
+on conflict ("tipo") do nothing;
+
+alter table "movimientos_bien" add column "momento" timestamp;
+alter table "movimientos_bien" alter column "momento" set default current_timestamp;
+alter table "controles_bien" add column "momento" timestamp;
+alter table "controles_bien" alter column "momento" set default current_timestamp;
+
 commit;

@@ -23,6 +23,10 @@ Pantallas React (`src/client/ws-*.tsx`): todas se arman con `PantallaInventario`
 
 Listado de solicitudes: los filtros son puros en `src/common/solicitudes.ts`. Los estados salen del catálogo `estados` y no se escriben en el código; "en curso" es tener `acciones` disponibles. Cada contador ignora su propio filtro y respeta los demás (`contarPorEstado`). El listado queda montado mientras se ve una solicitud.
 
+Hora de registro: `movimientos_bien.momento` y `controles_bien.momento` (timestamp, default `current_timestamp`, no editable) guardan cuándo se registró la fila. Los registros anteriores quedan en null: `movimientos_bien.tab` trae la columna vacía para que el dump no les ponga su propia hora, y en producción la columna se agrega sin default y después se le pone. En el historial de la ficha, los movimientos se ordenan por `momento`; los controles, por su `fecha`, y sólo usan la hora de `momento` si es del mismo día (`momentoDeControl`).
+
+Calendario (wScreen `calendario`, `ws-calendario.tsx` + `principal/calendario/`): vista mes y vista día, como el de Snipe-IT. Cuatro tipos de evento fijos en el código (`TIPOS_DE_EVENTO` en `src/common/calendario.ts`): movimientos (por día y solicitud), bajas (cada cambio de `estado_baja` del historial, con la etiqueta de `estados_baja`), controles por vencer (último control + vigencia) y egresos de siper de personas con bienes a cargo, sólo como aviso (no activa ni desactiva a nadie). Etiqueta, orden, activo y color de cada tipo están en el catálogo `tipos_evento_calendario`. El SQL de cada fuente está en `calendario-fuentes.ts`, y todas pasan por `bienes` para respetar la RLS. `calendario_eventos` devuelve el resumen de un rango (hasta 62 días), `calendario_dia` los grupos del día (con sus usuarios) y `calendario_dia_bienes` una página de bienes de un grupo (`sqlBienesDelGrupo`, hasta 100), con columnas según el tipo: de dónde a dónde en movimientos, hora, motivo y respaldo en bajas, último control en controles, a cargo como en egresos.
+
 El repo `frontend-inventario` **ya no se usa**. No trabajar ahí ni tomarlo como referencia.
 
 ## Comandos útiles

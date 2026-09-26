@@ -18,7 +18,7 @@ import {useEstructuraTabla} from './cache-tablas';
 import {capitalizar, etiquetaDeCampo, formatearValor} from './formato-valores';
 import {FormFieldRenderer, dependientesDeReferencia} from './form-field-renderer';
 import {useRowEditor} from './use-row-editor';
-import {bienesGridLocaleText} from '../localizacion-grid';
+import {gridLocaleText} from '../localizacion-grid';
 import {Fila, mensajeDeError} from './tipos-tabla';
 
 
@@ -181,7 +181,7 @@ export function DetailTable({
                 autosizeOptions={{includeHeaders:true, includeOutliers:true, expand:true}}
                 pageSizeOptions={[10, 25, 50]}
                 initialState={{pagination:{paginationModel:{pageSize:10}}}}
-                localeText={bienesGridLocaleText}
+                localeText={gridLocaleText('No hay registros')}
                 sx={{cursor:'pointer'}}
             />
         }

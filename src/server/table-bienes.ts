@@ -12,7 +12,7 @@ export function textoONuloSql(expresion:string):string{
     return `nullif(btrim(${expresion}), '')`;
 }
 
-function codigoTextoSql(codigo:string, texto:string):string{
+export function codigoTextoSql(codigo:string, texto:string):string{
     return `CASE
         WHEN nullif(btrim(${codigo}), '') IS NULL THEN NULL
         WHEN nullif(btrim(coalesce(${texto}, '')), '') IS NULL THEN btrim(${codigo})

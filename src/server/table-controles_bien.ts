@@ -22,6 +22,8 @@ export function controles_bien(context:TableContext):TableDefinition{
             {name:'usuario_creacion'   , typeName:'text'   , nullable:true, editable:false},
             {name:'fecha_creacion'     , typeName:'date'   , nullable:true, editable:false,
                 defaultDbValue:'current_date'},
+            {name:'momento'            , typeName:'timestamp', nullable:true, editable:false,
+                defaultDbValue:'current_timestamp', title:'registrado'},
         ],
         primaryKey:['control'],
         foreignKeys:[

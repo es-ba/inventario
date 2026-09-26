@@ -72,6 +72,14 @@ function unir(...partes:string[]):string{
     return partes.filter(parte => parte !== '').join(' · ');
 }
 
+export function momentoDeControl(control:Fila):{momento:string, fecha:unknown}{
+    const delControl = momentoDe(control.fecha);
+    const deCarga = momentoDe(control.momento);
+    return deCarga !== '' && deCarga.slice(0, 10) === delControl.slice(0, 10)
+        ? {momento:deCarga, fecha:control.momento}
+        : {momento:delControl, fecha:control.fecha};
+}
+
 export function tituloDeCambio(evento:Fila, cambios:Fila[]):string{
     const accion = texto(evento.accion).replace(/_/g, ' ');
     if(cambios.length === 1 && cambios[0].campo === '*'){
@@ -118,8 +126,8 @@ export function armarHistorial({
         ...movimientos.map(m => ({
             clave:`movimiento-${texto(m.orden)}`,
             tipo:'movimiento' as const,
-            momento:momentoDe(m.fecha_movimiento),
-            fecha:m.fecha_movimiento,
+            momento:momentoDe(m.momento ?? m.fecha_movimiento),
+            fecha:m.momento ?? m.fecha_movimiento,
             usuario:texto(m.usuario_creacion),
             titulo:unir('movimiento', texto(m.accion).toLowerCase()),
             detalle:detalleDeMovimiento(m),
@@ -129,8 +137,7 @@ export function armarHistorial({
         ...controles.map(c => ({
             clave:`control-${texto(c.control)}`,
             tipo:'control' as const,
-            momento:momentoDe(c.fecha),
-            fecha:c.fecha,
+            ...momentoDeControl(c),
             usuario:texto(c.usuario_creacion),
             titulo:unir('control', c.items.length === 0 ? 'sin ítems' : c.items.length === 1 ? '1 ítem' : `${c.items.length} ítems`),
             detalle:[

@@ -15,7 +15,7 @@ import type {FixedFields} from 'frontend-plus';
 import {useAvisos, useConexion} from '../base/contexto-base';
 import {useDatosReferencial} from '../base/cache-tablas';
 import {formatearValor} from '../base/formato-valores';
-import {bienesGridLocaleText} from '../localizacion-grid';
+import {gridLocaleText} from '../localizacion-grid';
 import type {Fila} from '../base/tipos-tabla';
 import {textoDeReferencia, codigo} from '../base/referencias';
 import {AccionesBaja} from './acciones-baja';
@@ -223,7 +223,7 @@ export function BajasListado({
                 density="compact"
                 pageSizeOptions={[25, 50, 100]}
                 initialState={{pagination:{paginationModel:{pageSize:25}}}}
-                localeText={bienesGridLocaleText}
+                localeText={gridLocaleText('No hay bienes en proceso de baja')}
                 sx={{cursor:'pointer'}}
             />
         }

@@ -7,7 +7,7 @@ import type {FixedFields} from 'frontend-plus';
 import {useAvisos, useConexion, useInfoUsuario, usePermisos} from '../base/contexto-base';
 import {useDatosReferencial} from '../base/cache-tablas';
 import {formatearValor} from '../base/formato-valores';
-import {bienesGridLocaleText} from '../localizacion-grid';
+import {gridLocaleText} from '../localizacion-grid';
 import type {Fila} from '../base/tipos-tabla';
 import {codigo, textoDeReferencia} from '../base/referencias';
 import {EN_CURSO, TODAS, contarPorEstado, pasaSolicitud} from '../../../common/solicitudes';
@@ -230,7 +230,7 @@ export function SolicitudesListado({
                 autoHeight
                 density="compact"
                 pageSizeOptions={[25, 50, 100]}
-                localeText={bienesGridLocaleText}
+                localeText={gridLocaleText('No hay solicitudes')}
                 sx={{cursor:'pointer'}}
             />
         }

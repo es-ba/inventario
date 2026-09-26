@@ -38,6 +38,7 @@ login:
       formImg: unlogged/tables-lock.png
     noLoggedUrlPath: /login
 client-setup:
+  title: Inventario
   skin: modern
   menu: true
   lang: es

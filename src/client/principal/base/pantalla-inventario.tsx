@@ -4,9 +4,13 @@ import {Menu as MenuIcon} from '@mui/icons-material';
 
 import {useSalida} from './contexto-base';
 import {volverAlMenu} from '../render-connected-app-inventario';
+import {tituloDePagina} from './formato-valores';
 
 export function PantallaInventario({titulo, children}:{titulo:React.ReactNode, children:React.ReactNode}){
     const solicitarSalida = useSalida();
+    React.useEffect(() => {
+        document.title = tituloDePagina(titulo);
+    }, [titulo]);
     return <Paper square elevation={0} sx={{minHeight:'100vh'}}>
         <AppBar position="static">
             <Toolbar>

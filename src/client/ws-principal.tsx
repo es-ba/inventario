@@ -9,6 +9,7 @@ import './ws-solicitudes';
 import './ws-bajas';
 import './ws-controles';
 import './ws-siper';
+import './ws-calendario';
 import {renderConnectedAppInventario} from './principal/render-connected-app-inventario';
 
 type Vista =

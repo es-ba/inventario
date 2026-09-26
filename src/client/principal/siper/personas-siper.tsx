@@ -22,7 +22,7 @@ import {useAvisos, useConexion} from '../base/contexto-base';
 import {formatearValor} from '../base/formato-valores';
 import {TabPanel, propsDeSolapa} from '../base/tab-panel';
 import type {Fila} from '../base/tipos-tabla';
-import {bienesGridLocaleText} from '../localizacion-grid';
+import {gridLocaleText} from '../localizacion-grid';
 import {BienFormulario} from '../bien/bien-formulario';
 
 declare module 'frontend-plus' {
@@ -174,7 +174,7 @@ function Personas({version, onCambio}:{version:number, onCambio:() => void}){
                 density="compact"
                 pageSizeOptions={[25, 50, 100]}
                 initialState={{pagination:{paginationModel:{pageSize:25}}}}
-                localeText={bienesGridLocaleText}
+                localeText={gridLocaleText('No hay personas')}
             />}
         <Dialog open={dialogo === 'inactivar'} onClose={() => setDialogo(null)} maxWidth="sm" fullWidth>
             <DialogTitle>Desactivar {aInactivar.length} {aInactivar.length === 1 ? 'persona' : 'personas'}</DialogTitle>
@@ -278,7 +278,7 @@ function ACargoDeInactivos({version, onAbrirBien}:{version:number, onAbrirBien:(
                 density="compact"
                 pageSizeOptions={[25, 50, 100]}
                 initialState={{pagination:{paginationModel:{pageSize:25}}}}
-                localeText={bienesGridLocaleText}
+                localeText={gridLocaleText('No hay bienes a cargo de responsables inactivos')}
             />}
     </Stack>;
 }

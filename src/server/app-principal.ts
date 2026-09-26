@@ -73,7 +73,9 @@ import { archivos_borrar } from "./table-archivos_borrar";
 import { items_control } from "./table-items_control";
 import { items_control_opciones } from "./table-items_control_opciones";
 import { items_control_grupos } from "./table-items_control_grupos";
-import { items_control_atributos } from "./table-items_control_atributos";import { controles_bien } from "./table-controles_bien";
+import { items_control_atributos } from "./table-items_control_atributos";
+import { tipos_evento_calendario } from "./table-tipos_evento_calendario";
+import { ProceduresCalendario } from "./procedures-calendario";import { controles_bien } from "./table-controles_bien";
 import { controles_bien_items } from "./table-controles_bien_items";
 import { bienes_control } from "./table-bienes_control";
 import { ProceduresControles } from "./procedures-controles";
@@ -255,6 +257,7 @@ export class AppInventario extends AppBackend{
             ...ProceduresBajas,
             ...ProceduresControles,
             ...ProceduresSiper,
+            ...ProceduresCalendario,
         ].map(be.procedureDefCompleter, be);
     }
 
@@ -285,6 +288,7 @@ export class AppInventario extends AppBackend{
             || puedeElRol(context.user?.rol, 'puede_restaurar_baja');
         var menuContent: MenuInfoBase[] = [
             {menuType:'principal', name:'principal', label:'principal'     },
+            {menuType:'calendario', name:'calendario', label:'calendario'   },
             {menuType: 'menu', name: 'mis_bienes', label: 'mis bienes', menuContent:
                 VINCULOS_CON_EL_BIEN.map((vinculo, i) => ({
                     menuType: 'table', name: vinculo.mio.tabla, label: vinculo.mio.label,
@@ -390,7 +394,9 @@ export class AppInventario extends AppBackend{
                         {menuType: 'table', name: 'items_control', label: 'ítems de control'},
                         {menuType: 'table', name: 'items_control_opciones', label: 'opciones de ítems'},
                         {menuType: 'table', name: 'items_control_grupos', label: 'grupos de ítems'},
-                        {menuType: 'table', name: 'items_control_atributos', label: 'atributos de ítems'},                    ]},
+                        {menuType: 'table', name: 'items_control_atributos', label: 'atributos de ítems'},
+                    ]},
+                    {menuType: 'table', name: 'tipos_evento_calendario', label: 'tipos de evento del calendario'},
 
                     {menuType: 'menu', name: 'sistema', label: 'sistema y seguridad', menuContent: [
                         {menuType: 'table', name: 'usuarios', label: 'gestión de usuarios'},
@@ -485,6 +491,7 @@ export class AppInventario extends AppBackend{
             items_control_opciones,
             items_control_grupos,
             items_control_atributos,
+            tipos_evento_calendario,
             controles_bien,
             controles_bien_items,
             bienes_control,

@@ -115,6 +115,15 @@ export function aFechaDeGrilla(value:unknown):Date|null{
     return /^\d{4}-\d{2}-\d{2}$/.test(ymd) ? new Date(`${ymd}T00:00:00`) : null;
 }
 
+export const TITULO_DEL_SISTEMA = 'Inventario';
+
+export function tituloDePagina(titulo:unknown):string{
+    if(typeof titulo !== 'string' || titulo.trim() === ''){
+        return TITULO_DEL_SISTEMA;
+    }
+    return titulo.startsWith(TITULO_DEL_SISTEMA) ? titulo : `${titulo} · ${TITULO_DEL_SISTEMA}`;
+}
+
 export function capitalizar(texto:string):string{
     const primera = texto.search(/\S/);
     return primera < 0 ? texto : texto.slice(0, primera) + texto.charAt(primera).toLocaleUpperCase('es') + texto.slice(primera + 1);

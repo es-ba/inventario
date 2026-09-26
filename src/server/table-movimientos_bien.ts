@@ -55,6 +55,7 @@ export function movimientos_bien(context:TableContext):TableDefinition{
             {name:'detalle'                     , typeName:'text'    , nullable:true},
             {name:'fecha_movimiento'            , typeName:'date'    , nullable:false, defaultDbValue:'current_date', editable:false},
             {name:'fecha_creacion'              , typeName:'date'    , nullable:false, defaultDbValue:'current_date', editable:false},
+            {name:'momento'                     , typeName:'timestamp', nullable:true, defaultDbValue:'current_timestamp', editable:false, title:'registrado'},
             {name:'fecha_modificacion'          , typeName:'date'    , nullable:true, editable:false},
             {name:'usuario_creacion'            , typeName:'text'    , nullable:true, editable:false},
             {name:'usuario_modificacion'        , typeName:'text'    , nullable:true, editable:false},
