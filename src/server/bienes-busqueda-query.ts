@@ -16,6 +16,8 @@ export type BienesBusquedaFieldInfo = {
 
 export type BienesBusquedaQueryOptions = {
     baseSql: string;
+    baseSqlSimple?: string;
+    camposSimples?: ReadonlySet<string>;
     visibilitySql: string;
     allowedFields: Record<string, BienesBusquedaFieldInfo>;
     resolveSqlFieldName?: (publicName:string) => string;
@@ -442,10 +444,32 @@ function quickSearchSql(
     };
 }
 
+function soloCamposSimples(
+    request: BienesBusquedaRequest,
+    options: BienesBusquedaQueryOptions,
+    busquedaRapida: BusquedaRapida | null,
+): boolean {
+    if (options.baseSqlSimple == null || (request.grupoFiltro ?? []).length) {
+        return false;
+    }
+    const usados = [
+        ...request.filters.filter((filter) => filter.source === 'field').map((filter) => filter.target),
+        ...request.gridFilters.map((filter) => filter.target),
+        ...(busquedaRapida?.candidatos ?? []),
+    ];
+    return usados.every((campo) => options.camposSimples?.has(campo));
+}
+
 function buildFiltradoCte(
     request: BienesBusquedaRequest,
     options: BienesBusquedaQueryOptions,
-): {cte: string, filterValues: unknown[], addValue: (value: unknown) => string, busquedaRapida: BusquedaRapida | null} {
+): {
+    cte: string,
+    cteCount: string,
+    filterValues: unknown[],
+    addValue: (value: unknown) => string,
+    busquedaRapida: BusquedaRapida | null,
+} {
     const filterValues: unknown[] = [];
     const addValue = (value: unknown): string => {
         filterValues.push(value);
@@ -478,12 +502,15 @@ function buildFiltradoCte(
             ? `(${expresion}) IS NULL`
             : `(${expresion}) = ${addValue(valor)}::text`);
     }
-    const cte = `WITH bienes_filtrados AS (
+    const armarCte = (base: string) => `WITH bienes_filtrados AS (
         SELECT b.*
-          FROM (${options.baseSql}) b
+          FROM (${base}) b
          WHERE ${where.join('\n           AND ')}
     )`;
-    return {cte, filterValues, addValue, busquedaRapida};
+    const baseCount = soloCamposSimples(request, options, busquedaRapida)
+        ? options.baseSqlSimple as string
+        : options.baseSql;
+    return {cte:armarCte(options.baseSql), cteCount:armarCte(baseCount), filterValues, addValue, busquedaRapida};
 }
 
 function sqlDeDimension(
@@ -505,7 +532,7 @@ export function buildBienesBusquedaQueries(
     options: BienesBusquedaQueryOptions,
 ): BienesBusquedaQueries {
     const request = parseBienesBusquedaRequest(requestValue);
-    const {cte, filterValues, busquedaRapida} = buildFiltradoCte(request, options);
+    const {cte, cteCount, filterValues, busquedaRapida} = buildFiltradoCte(request, options);
     const relevancia = busquedaRapida && !request.sortModel.length
         ? relevanciaSql(busquedaRapida, options)
         : null;
@@ -521,7 +548,7 @@ export function buildBienesBusquedaQueries(
         }
         return `bf.${quoteIdentifier(sqlFieldName(field, options))} ${sort.toUpperCase()}`;
     }).join(', ');
-    const countSql = `${cte}
+    const countSql = `${cteCount}
         SELECT count(*)::integer AS total
           FROM bienes_filtrados`;
     const dataValues = [...filterValues];

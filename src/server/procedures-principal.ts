@@ -132,6 +132,11 @@ async function opcionesBusquedaBienes(context:ProcedureContext, withoutPaginatio
     );
     const options:BienesBusquedaQueryOptions = {
         baseSql:sqlBienesConControl(diasDeVigencia(context.be.config)),
+        baseSqlSimple:'SELECT * FROM bienes',
+        camposSimples:new Set(tableDef.fields
+            .filter(field => field.inTable !== false
+                && resolveBienesPresentationSqlFieldName(field.name) === field.name)
+            .map(field => field.name)),
         visibilitySql:sqlVisibilidad('b.ficha'),
         allowedFields,
         resolveSqlFieldName:resolveBienesPresentationSqlFieldName,

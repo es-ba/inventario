@@ -175,18 +175,22 @@ function paginado(sql:string, orden:string):string{
 export function sqlBienesDelGrupo(tipo:TipoDeEvento, dias:number):string{
     switch(tipo){
         case 'MOVIMIENTO':
-            return paginado(`
-SELECT ${columnasDelBien('b')}, count(*) OVER () AS total,
+            return `
+SELECT ${columnasDelBien('b')}, mb.total,
        to_char(mb.momento, 'HH24:MI') AS hora, mb.usuario_creacion AS usuario,
        antes.sector AS de_sector, antes.responsable AS de_responsable, antes.espacio AS de_espacio,
        despues.sector AS a_sector, despues.responsable AS a_responsable, despues.espacio AS a_espacio
+  FROM (${paginado(`
+SELECT mb.ficha, mb.orden, mb.momento, mb.usuario_creacion, count(*) OVER () AS total
   FROM movimientos_bien mb
+  JOIN bienes b ON b.ficha = mb.ficha
+ WHERE mb.fecha_movimiento = $1::date
+   AND ${GRUPO_DE_MOVIMIENTO} = $2`, 'mb.momento NULLS LAST, mb.ficha, mb.orden')}) mb
   JOIN bienes b ON b.ficha = mb.ficha
   ${joinsDelBien('b')}
   ${lateralUbicacion('antes', 'm.ficha = mb.ficha AND m.orden < mb.orden')}
   ${lateralUbicacion('despues', 'm.ficha = mb.ficha AND m.orden = mb.orden')}
- WHERE mb.fecha_movimiento = $1::date
-   AND ${GRUPO_DE_MOVIMIENTO} = $2`, 'mb.momento NULLS LAST, b.ficha, mb.orden');
+ ORDER BY mb.momento NULLS LAST, b.ficha, mb.orden`;
         case 'BAJA':
             return paginado(`
 SELECT ${columnasDelBien('b')}, count(*) OVER () AS total,
