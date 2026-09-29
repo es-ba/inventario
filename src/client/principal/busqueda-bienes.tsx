@@ -86,9 +86,17 @@ import {EdicionMasivaBienes} from './edicion-masiva-bienes';
 import {MoverBienes, AvisoMovimiento, ResultadoMovimiento} from './mover-bienes';
 import type {Fila} from './base/tipos-tabla';
 import {BajaBienes} from './baja-bienes';
-import {usePermisos} from './base/contexto-base';
+import {useInfoUsuario, usePermisos} from './base/contexto-base';
 import {AccionesBaja} from './baja/acciones-baja';
 import {aFechaDeGrilla, etiquetaDeCampo, formatearValor} from './base/formato-valores';
+import {
+    guardarColumnas,
+    leerColumnas,
+    modeloInicial,
+    ordenDeColumnas,
+    textoDeCoincidencia,
+    textoSinCodigo,
+} from './columnas-busqueda';
 
 declare module 'frontend-plus' {
     interface FieldDefinition {
@@ -276,6 +284,15 @@ export function BusquedaBienes({
     fichasExcluidas,
 }:BusquedaBienesProps){
     const permisos = usePermisos();
+    const {usuario} = useInfoUsuario();
+    const [columnasElegidas, setColumnasElegidas] = React.useState<Record<string, boolean>|null>(null);
+    React.useEffect(() => {
+        setColumnasElegidas(usuario ? leerColumnas(usuario) : null);
+    }, [usuario]);
+    const elegirColumnas = React.useCallback((modelo:Record<string, boolean>|null) => {
+        setColumnasElegidas(modelo);
+        if(usuario){ guardarColumnas(usuario, modelo); }
+    }, [usuario]);
     const [tableDefinition, setTableDefinition] = React.useState<TableDefinition|null>(null);
     const [metadataLoading, setMetadataLoading] = React.useState(true);
     const [metadataError, setMetadataError] = React.useState<string|null>(null);
@@ -295,7 +312,7 @@ export function BusquedaBienes({
     const [paginationModel, setPaginationModel] =
         React.useState<GridPaginationModel>({page:0, pageSize:25});
     const [sortModel, setSortModel] =
-        React.useState<GridSortModel>([{field:'ficha', sort:'asc'}]);
+        React.useState<GridSortModel>([]);
     const [filterModel, setFilterModel] =
         React.useState<GridFilterModel>({items:[], quickFilterValues:[]});
     const [searchVersion, setSearchVersion] = React.useState(0);
@@ -533,6 +550,8 @@ export function BusquedaBienes({
         if(!tableDefinition){
             return [];
         }
+        const tituloDeCampo = (nombre:string) =>
+            tableDefinition.fields.find(field => field.name === nombre)?.title ?? nombre;
         const baseColumns = selectBienesGridFields(tableDefinition.fields)
             .map((field:FieldDefinition):GridColDef<BienesBusquedaRow> => {
                 const type = gridColumnType(field.typeName);
@@ -541,13 +560,24 @@ export function BusquedaBienes({
                     headerName:etiquetaDeCampo(field),
                     type,
                     filterOperators:supportedGridFilterOperators(type),
-                    minWidth:130,
+                    minWidth:110,
                     flex:field.name === 'detalle' || field.name === 'observacion' ? 1.6 : 1,
                     valueGetter:(_value, row) => gridValue(row[field.name], type),
-                    renderCell:(params:GridRenderCellParams<BienesBusquedaRow>) =>
-                        params.value instanceof Date
-                            ? params.value.toLocaleDateString('es-AR')
-                            : formatearValor(params.value),
+                    renderCell:(params:GridRenderCellParams<BienesBusquedaRow>) => {
+                        if(params.value instanceof Date){
+                            return params.value.toLocaleDateString('es-AR');
+                        }
+                        const completo = formatearValor(params.value);
+                        const texto = textoSinCodigo(completo, (params.row as Record<string, unknown>)[`${field.name}_codigo`]);
+                        const contenido = texto === completo ? completo : <span title={completo}>{texto}</span>;
+                        const coincidencia = field.name === 'detalle' ? textoDeCoincidencia(params.row.coincide_en, tituloDeCampo) : '';
+                        return coincidencia
+                            ? <Box sx={{display:'flex', alignItems:'center', gap:1, minWidth:0}}>
+                                <Box component="span" sx={{overflow:'hidden', textOverflow:'ellipsis'}}>{contenido}</Box>
+                                <Typography variant="caption" color="text.secondary" noWrap sx={{flexShrink:0}}>{coincidencia}</Typography>
+                            </Box>
+                            : contenido;
+                    },
                 };
             });
         const attributesColumn:GridColDef<BienesBusquedaRow> = {
@@ -618,16 +648,13 @@ export function BusquedaBienes({
                         : null}
                 </Stack>,
         };
-        return [...baseColumns, attributesColumn, actionsColumn];
+        return ordenDeColumnas([...baseColumns, attributesColumn, actionsColumn]);
     }, [abrirBien, expandedRowIds, permisos.restaurarBaja, tab, tableDefinition]);
 
-    const columnVisibilityModel = React.useMemo(() => {
-        const model:Record<string, boolean> = {};
-        (tableDefinition?.hiddenColumns ?? []).forEach(field => {
-            model[field] = false;
-        });
-        return model;
-    }, [tableDefinition]);
+    const columnVisibilityModel = React.useMemo(() => ({
+        ...modeloInicial(columns.map(column => column.field)),
+        ...columnasElegidas,
+    }), [columns, columnasElegidas]);
 
     const [ejecutandoAccion, setEjecutandoAccion] = React.useState(false);
 
@@ -656,6 +683,9 @@ export function BusquedaBienes({
         <GridToolbarContainer>
             {rowSelectionModel.length === 0 ? <>
             <GridToolbarColumnsButton/>
+            {columnasElegidas
+                ? <Button size="small" onClick={() => elegirColumnas(null)}>Restablecer columnas</Button>
+                : null}
             {onNuevoBien && permisos.guardar
                 ? <Button
                     size="small"
@@ -752,6 +782,8 @@ export function BusquedaBienes({
     [
         accionSeleccion,
         clearSelection,
+        columnasElegidas,
+        elegirColumnas,
         ejecutandoAccion,
         ejecutarAccionSeleccion,
         exportRows,
@@ -957,9 +989,10 @@ export function BusquedaBienes({
                     keepNonExistentRowsSelected
                     slots={{toolbar:Toolbar}}
                     slotProps={{columnsManagement:{getTogglableColumns}}}
+                    columnVisibilityModel={columnVisibilityModel}
+                    onColumnVisibilityModelChange={elegirColumnas}
                     initialState={{
                         density:'compact',
-                        columns:{columnVisibilityModel},
                     }}
                     getRowHeight={({id}) => expandedRowIds.has(String(id)) ? 'auto' : null}
                     localeText={bienesGridLocaleText}

@@ -1,6 +1,5 @@
 set role to inventario_owner;
 set search_path = "inventario", public;
-set client_encoding = 'UTF8';
 
 begin;
 

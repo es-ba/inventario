@@ -265,7 +265,7 @@ export class AppInventario extends AppBackend{
         var es = context.es ?? {} as Context["es"]
         es.admin = context.user && context.user.rol=="admin"
         es.superior = es.admin || context.user && context.user.rol=="superior"
-        es.administrativo = es.superior || context.user && context.user.rol=="administrativo"
+        es.administrativo = es.superior || context.user && ["administrador","administrativo"].includes(context.user.rol)
         es.lectura = es.administrativo || context.user && context.user.rol=="lectura"
 
         context.es = es;

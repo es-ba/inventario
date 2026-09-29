@@ -386,18 +386,9 @@ export function BienFormulario({
         },
         {
             etiqueta:'Movimientos',
-            contenido:<>
-                {permisos.mover
-                    ? <Stack direction="row" justifyContent="flex-end" sx={{mb:1}}>
-                        <Button startIcon={<LocalShipping/>} onClick={() => setMoverAbierto(true)}>
-                            Mover este bien
-                        </Button>
-                    </Stack>
-                    : null}
-                <DetailTable key={version} tabla="movimientos_bien" camposFijos={{ficha:fichaActual}}
-                    titulo="" columnasCalculadas={COLUMNAS_DE_MOVIMIENTOS}
-                    columnasExtra={COLUMNA_SOLICITUD_ORIGEN} soloLectura tituloDetalle="Detalle del movimiento"/>
-            </>,
+            contenido:<DetailTable key={version} tabla="movimientos_bien" camposFijos={{ficha:fichaActual}}
+                titulo="" columnasCalculadas={COLUMNAS_DE_MOVIMIENTOS}
+                columnasExtra={COLUMNA_SOLICITUD_ORIGEN} soloLectura tituloDetalle="Detalle del movimiento"/>,
         },
         {
             etiqueta:'Adjuntos',
@@ -440,7 +431,7 @@ export function BienFormulario({
         <TabPanel value={solapa} index={0} sinRelleno>
             {!editando
                 ? <>
-                    <Stack direction="row" justifyContent="flex-end" spacing={1} sx={{mb:1}}>
+                    <Stack direction="row" justifyContent="flex-end" spacing={1} flexWrap="wrap" useFlexGap sx={{mb:1}}>
                         {guardado
                             ? <AccionesBaja fila={editor.row} onAplicada={() => { setVersion(v => v + 1); onGuardado?.(editor.row); }}/>
                             : null}
@@ -448,6 +439,11 @@ export function BienFormulario({
                             ? <Button variant="outlined" startIcon={<ContentCopy/>}
                                 onClick={() => onClonar(datosParaClonar(editor.row), fichaActual)}>
                                 Clonar
+                            </Button>
+                            : null}
+                        {guardado && permisos.mover && editor.row.activo !== false
+                            ? <Button variant="outlined" startIcon={<LocalShipping/>} onClick={() => setMoverAbierto(true)}>
+                                Mover
                             </Button>
                             : null}
                         {!editor.soloLectura

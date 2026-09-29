@@ -370,11 +370,40 @@ function buildCondition(
     )`;
 }
 
+const CAMPOS_DE_IDENTIFICACION = ['ficha', 'numero_integrado', 'serie', 'detalle', 'grupo', 'marca', 'modelo'];
+
+type BusquedaRapida = {condicion: string, terminos: string[], candidatos: string[]};
+
+function coincideSql(alias: string, field: string, options: BienesBusquedaQueryOptions, parameter: string): string {
+    return `coalesce(${alias}.${quoteIdentifier(sqlFieldName(field, options))}::text, '') ILIKE '%' || ${parameter} || '%'`;
+}
+
+function relevanciaSql({terminos, candidatos}: BusquedaRapida, options: BienesBusquedaQueryOptions) {
+    const identificacion = CAMPOS_DE_IDENTIFICACION.filter((field) => candidatos.includes(field));
+    const casos = [
+        terminos.length === 1 && candidatos.includes('ficha')
+            ? `WHEN lower(bf.ficha::text) = lower(${terminos[0]}) THEN 0` : '',
+        identificacion.length
+            ? `WHEN ${terminos.map((parameter) =>
+                `(${identificacion.map((field) => coincideSql('bf', field, options, parameter)).join(' OR ')})`
+            ).join(' AND ')} THEN 1` : '',
+    ].filter(Boolean);
+    const rango = casos.length ? `CASE ${casos.join(' ')} ELSE 2 END` : '2';
+    const coincideEn = `array_remove(ARRAY[${candidatos.map((field) =>
+        `CASE WHEN ${terminos.map((parameter) => coincideSql('bf', field, options, parameter)).join(' OR ')} THEN '${field}' END`
+    ).join(', ')}]::text[], NULL)`;
+    return {
+        lateral: `\n         CROSS JOIN LATERAL (SELECT ${rango} AS rango) relevancia`,
+        columna: `,\n               CASE WHEN relevancia.rango = 2 THEN ${coincideEn} ELSE '{}'::text[] END AS coincide_en`,
+        orden: 'relevancia.rango, ',
+    };
+}
+
 function quickSearchSql(
     quickSearch: string,
     options: BienesBusquedaQueryOptions,
     addValue: (value: unknown) => string,
-): string | null {
+): BusquedaRapida | null {
     if (!quickSearch) {
         return null;
     }
@@ -403,19 +432,20 @@ function quickSearchSql(
     if (!candidates.length) {
         return null;
     }
-    const terms = quickSearch.split(/\s+/).filter(Boolean);
-    return `(${terms.map((term) => {
-        const parameter = addValue(term);
-        return `(${candidates.map((field) =>
-            `coalesce(b.${quoteIdentifier(sqlFieldName(field, options))}::text, '') ILIKE '%' || ${parameter} || '%'`
-        ).join(' OR ')})`;
-    }).join(' AND ')})`;
+    const terminos = quickSearch.split(/\s+/).filter(Boolean).map((term) => addValue(term));
+    return {
+        condicion: `(${terminos.map((parameter) =>
+            `(${candidates.map((field) => coincideSql('b', field, options, parameter)).join(' OR ')})`
+        ).join(' AND ')})`,
+        terminos,
+        candidatos: candidates,
+    };
 }
 
 function buildFiltradoCte(
     request: BienesBusquedaRequest,
     options: BienesBusquedaQueryOptions,
-): {cte: string, filterValues: unknown[], addValue: (value: unknown) => string} {
+): {cte: string, filterValues: unknown[], addValue: (value: unknown) => string, busquedaRapida: BusquedaRapida | null} {
     const filterValues: unknown[] = [];
     const addValue = (value: unknown): string => {
         filterValues.push(value);
@@ -438,9 +468,9 @@ function buildFiltradoCte(
             buildCondition({...filter, source: 'field'}, options, addValue)
         ).join(' AND ')})`);
     }
-    const quickCondition = quickSearchSql(request.quickSearch, options, addValue);
-    if (quickCondition) {
-        where.push(quickCondition);
+    const busquedaRapida = quickSearchSql(request.quickSearch, options, addValue);
+    if (busquedaRapida) {
+        where.push(busquedaRapida.condicion);
     }
     for (const {dimension, valor} of request.grupoFiltro ?? []) {
         const expresion = sqlDeDimension(dimension, options, addValue).valor;
@@ -453,7 +483,7 @@ function buildFiltradoCte(
           FROM (${options.baseSql}) b
          WHERE ${where.join('\n           AND ')}
     )`;
-    return {cte, filterValues, addValue};
+    return {cte, filterValues, addValue, busquedaRapida};
 }
 
 function sqlDeDimension(
@@ -475,7 +505,10 @@ export function buildBienesBusquedaQueries(
     options: BienesBusquedaQueryOptions,
 ): BienesBusquedaQueries {
     const request = parseBienesBusquedaRequest(requestValue);
-    const {cte, filterValues} = buildFiltradoCte(request, options);
+    const {cte, filterValues, busquedaRapida} = buildFiltradoCte(request, options);
+    const relevancia = busquedaRapida && !request.sortModel.length
+        ? relevanciaSql(busquedaRapida, options)
+        : null;
     const requestedSorts = request.sortModel.length
         ? request.sortModel
         : [{field: 'ficha', sort: 'asc' as const}];
@@ -511,9 +544,9 @@ export function buildBienesBusquedaQueries(
                      FROM bien_atributo ba
                      LEFT JOIN bienes_atributos a USING (atributo)
                     WHERE ba.ficha = bf.ficha
-               ), '[]'::jsonb) AS atributos
-          FROM bienes_filtrados bf
-         ORDER BY ${orderBy}${paginationSql}`;
+               ), '[]'::jsonb) AS atributos${relevancia?.columna ?? ''}
+          FROM bienes_filtrados bf${relevancia?.lateral ?? ''}
+         ORDER BY ${relevancia?.orden ?? ''}${orderBy}${paginationSql}`;
     return {
         dataSql,
         countSql,

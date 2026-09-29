@@ -84,6 +84,7 @@ const bienesBusquedaRowDescription = {
     modalidad_uso:is.nullable.string,
     enusode:is.nullable.string,
     atributos:is.array.object(bienAtributoResumenDescription),
+    coincide_en:is.optional.array.string,
 };
 
 export const bien_busqueda = {
