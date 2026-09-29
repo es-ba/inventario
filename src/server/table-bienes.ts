@@ -35,24 +35,39 @@ SELECT
     ult.puesto,
     ult.tipo_asignacion,
     ult.modalidad_uso,
-    ult.enusode,
+    ${textoONuloSql('ult.enusode')} AS enusode,
     ult.enusode_responsable,
-    ult.enusode_responsable_nombre,
-    ult.nombre_sector,
-    ult.sector_sigla,
-    ult.responsable_sector,
-    ult.responsable_sector_nombre,
-    ult.sede_nombre,
-    ult.responsable_nombre,
-    ult.espacio_numero,
-    ult.responsable_texto,
-    ult.sector_texto,
-    ult.sede_texto,
-    ult.espacio_texto,
-    ult.tipo_asignacion_texto,
-    ult.modalidad_uso_texto,
-    ult.fecha_ultimo_movimiento,
-    ult.usuario_ultimo_movimiento
+    ${textoONuloSql(`concat_ws(', ',
+        nullif(btrim(eur.apellido), ''),
+        nullif(btrim(eur.nombre), '')
+    )`)} AS enusode_responsable_nombre,
+    ${textoONuloSql('a.nombre_sector')} AS nombre_sector,
+    ${textoONuloSql('a.sigla')} AS sector_sigla,
+    ${textoONuloSql('a.responsable')} AS responsable_sector,
+    ${textoONuloSql(`concat_ws(', ',
+        nullif(btrim(rs.apellido), ''),
+        nullif(btrim(rs.nombre), '')
+    )`)} AS responsable_sector_nombre,
+    ${textoONuloSql('s.descripcion')} AS sede_nombre,
+    ${textoONuloSql(`concat_ws(', ',
+        nullif(btrim(r.apellido), ''),
+        nullif(btrim(r.nombre), '')
+    )`)} AS responsable_nombre,
+    ${textoONuloSql('e.numero')} AS espacio_numero,
+    ${codigoTextoSql(
+        'ult.responsable',
+        "concat_ws(', ', nullif(btrim(r.apellido), ''), nullif(btrim(r.nombre), ''))",
+    )} AS responsable_texto,
+    ${codigoTextoSql('ult.sector', 'a.sigla')} AS sector_texto,
+    ${codigoTextoSql('ult.sede', 's.descripcion')} AS sede_texto,
+    ${codigoTextoSql(
+        'ult.espacio',
+        "concat_ws(' — ', nullif(btrim(e.numero), ''), nullif(btrim(e.denominacion), ''))",
+    )} AS espacio_texto,
+    ${codigoTextoSql('ult.tipo_asignacion', 'ta.descripcion')} AS tipo_asignacion_texto,
+    ${codigoTextoSql('ult.modalidad_uso', 'mu.descripcion')} AS modalidad_uso_texto,
+    coalesce(ult.fecha_modificacion, ult.fecha_creacion) AS fecha_ultimo_movimiento,
+    coalesce(ult.usuario_modificacion, ult.usuario_creacion) AS usuario_ultimo_movimiento
     FROM bienes b
 LEFT JOIN grupos g ON g.grupo = b.grupo
 LEFT JOIN marcas ma ON ma.marca = b.marca
@@ -65,61 +80,20 @@ LEFT JOIN cuentas cue
       AND cue.clase = b.clase
       AND cue.cuenta = b.cuenta
 LEFT JOIN LATERAL (
-    SELECT 
-        mb.sector,
-        ${textoONuloSql('a.nombre_sector')} AS nombre_sector,
-        ${textoONuloSql('a.sigla')} AS sector_sigla,
-        ${textoONuloSql('a.responsable')} AS responsable_sector,
-        ${textoONuloSql(`concat_ws(', ',
-            nullif(btrim(rs.apellido), ''),
-            nullif(btrim(rs.nombre), '')
-        )`)} AS responsable_sector_nombre,
-        mb.sede,
-        ${textoONuloSql('s.descripcion')} AS sede_nombre,
-        mb.responsable,
-        ${textoONuloSql(`concat_ws(', ',
-            nullif(btrim(r.apellido), ''),
-            nullif(btrim(r.nombre), '')
-        )`)} AS responsable_nombre,
-        mb.espacio,
-        mb.puesto,
-        ${textoONuloSql('e.numero')} AS espacio_numero,
-        mb.tipo_asignacion,
-        mb.modalidad_uso,
-        ${textoONuloSql('mb.enusode')} AS enusode,
-        mb.enusode_responsable,
-        ${textoONuloSql(`concat_ws(', ',
-            nullif(btrim(eur.apellido), ''),
-            nullif(btrim(eur.nombre), '')
-        )`)} AS enusode_responsable_nombre,
-        ${codigoTextoSql(
-            'mb.responsable',
-            "concat_ws(', ', nullif(btrim(r.apellido), ''), nullif(btrim(r.nombre), ''))",
-        )} AS responsable_texto,
-        ${''}
-        ${codigoTextoSql('mb.sector', 'a.sigla')} AS sector_texto,
-        ${codigoTextoSql('mb.sede', 's.descripcion')} AS sede_texto,
-        ${codigoTextoSql(
-            'mb.espacio',
-            "concat_ws(' — ', nullif(btrim(e.numero), ''), nullif(btrim(e.denominacion), ''))",
-        )} AS espacio_texto,
-        ${codigoTextoSql('mb.tipo_asignacion', 'ta.descripcion')} AS tipo_asignacion_texto,
-        ${codigoTextoSql('mb.modalidad_uso', 'mu.descripcion')} AS modalidad_uso_texto,
-        coalesce(mb.fecha_modificacion, mb.fecha_creacion) AS fecha_ultimo_movimiento,
-        coalesce(mb.usuario_modificacion, mb.usuario_creacion) AS usuario_ultimo_movimiento
+    SELECT mb.*
     FROM movimientos_bien mb
-    LEFT JOIN sectores a ON a.sector = mb.sector
-    LEFT JOIN responsables rs ON rs.responsable = a.responsable
-    LEFT JOIN sedes s ON s.sede = mb.sede
-    LEFT JOIN responsables r ON r.responsable = mb.responsable
-    LEFT JOIN responsables eur ON eur.responsable = mb.enusode_responsable
-    LEFT JOIN espacios e ON e.espacio = mb.espacio
-    LEFT JOIN tipo_asignacion ta ON ta.tipo_asignacion = mb.tipo_asignacion
-    LEFT JOIN modalidad_uso mu ON mu.modalidad_uso = mb.modalidad_uso
     WHERE mb.ficha = b.ficha
     ORDER BY mb.orden DESC
     LIMIT 1
 ) ult ON true
+LEFT JOIN sectores a ON a.sector = ult.sector
+LEFT JOIN responsables rs ON rs.responsable = a.responsable
+LEFT JOIN sedes s ON s.sede = ult.sede
+LEFT JOIN responsables r ON r.responsable = ult.responsable
+LEFT JOIN responsables eur ON eur.responsable = ult.enusode_responsable
+LEFT JOIN espacios e ON e.espacio = ult.espacio
+LEFT JOIN tipo_asignacion ta ON ta.tipo_asignacion = ult.tipo_asignacion
+LEFT JOIN modalidad_uso mu ON mu.modalidad_uso = ult.modalidad_uso
 `;
 
 export function sqlBienesConControl(dias:number):string{
