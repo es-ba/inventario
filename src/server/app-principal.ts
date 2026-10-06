@@ -300,7 +300,7 @@ export class AppInventario extends AppBackend{
             {menuType: 'menu', name: 'bienes' , label: 'inventario', menuContent: [
                 {menuType: 'table', name: 'bienes', label: 'todos', selectedByDefault: true},
                 {menuType: 'table', name: 'bienes_activos', table: 'bienes', label: 'bienes en alta', ff: {activo: true}},
-                {menuType: 'table', name: 'bienes_inactivos', table: 'bienes', label: 'bienes en baja', ff: {activo: false}},
+                ...(puedeGestionarBajas ? [{menuType: 'table', name: 'bienes_inactivos', table: 'bienes', label: 'bienes en baja', ff: {activo: false}}] : []),
             ]},
         ];
 

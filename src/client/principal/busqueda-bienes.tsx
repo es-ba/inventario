@@ -284,6 +284,7 @@ export function BusquedaBienes({
     fichasExcluidas,
 }:BusquedaBienesProps){
     const permisos = usePermisos();
+    const veInactivos = permisos.guardar || permisos.aprobarBaja || permisos.restaurarBaja;
     const {usuario} = useInfoUsuario();
     const [columnasElegidas, setColumnasElegidas] = React.useState<Record<string, boolean>|null>(null);
     React.useEffect(() => {
@@ -817,8 +818,8 @@ export function BusquedaBienes({
                 }}
             >
                 <Tab label="Bienes activos"/>
-                <Tab label="Bienes en baja"/>
-                <Tab label="Todos"/>
+                {veInactivos ? <Tab label="Bienes en baja"/> : null}
+                {veInactivos ? <Tab label="Todos"/> : null}
             </Tabs>
             <Box sx={{flex:1}}/>
             <ToggleButtonGroup

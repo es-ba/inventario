@@ -81,7 +81,7 @@ export function politicasBienes(columnaFicha:string = 'ficha'):PoliticasDeTabla{
         + ` OR (${accionBaja} = 'restaurar' AND ${PUEDE_RESTAURAR_BAJA}))`;
     const modificacionVisible = `${modificacion} AND ${visibilidad}`;
     return {
-        select:{using:visibilidad},
+        select:{using:`${visibilidad} AND (activo OR ${PUEDE_GUARDAR} OR ${PUEDE_APROBAR_BAJA} OR ${PUEDE_RESTAURAR_BAJA})`},
         insert:{check:`(${PUEDE_GUARDAR}) AND ${visibilidad}`},
         update:{using:modificacionVisible, check:modificacionVisible},
         delete:{using:`(${PUEDE_ELIMINAR}) AND ${visibilidad}`},
