@@ -25,6 +25,7 @@ export const BIENES_GRID_ASSIGNMENT_FIELDS:readonly string[] = Object.freeze([
     'responsable_sector_nombre',
     'responsable_nombre',
     'sector_sigla',
+    'nombre_sector',
     'sede_nombre',
     'espacio',
     'espacio_numero',

@@ -7,6 +7,7 @@ export const COLUMNAS_INICIALES:readonly string[] = Object.freeze([
     'serie',
     'estado',
     'sector_sigla',
+    'nombre_sector',
     'responsable_sector_nombre',
     'espacio',
     'tipo_asignacion',
