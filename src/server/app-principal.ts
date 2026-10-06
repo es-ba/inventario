@@ -78,6 +78,7 @@ import { tipos_evento_calendario } from "./table-tipos_evento_calendario";
 import { ProceduresCalendario } from "./procedures-calendario";import { controles_bien } from "./table-controles_bien";
 import { controles_bien_items } from "./table-controles_bien_items";
 import { bienes_control } from "./table-bienes_control";
+import { movimientos_consulta } from "./table-movimientos_consulta";
 import { ProceduresControles } from "./procedures-controles";
 import { ProceduresSiper } from "./procedures-siper";
 import { siper_personas } from "./table-siper_personas";
@@ -160,6 +161,7 @@ export class AppInventario extends AppBackend{
         super();
     }
     override async postConfig(){
+        // (this.messages as any).unlogged.login.title = 'Inventario';
         cronMantenimiento(this);
         await cargarAtributosDeBienes(this);
         await cargarCapacidadesDeRoles(this);
@@ -288,7 +290,7 @@ export class AppInventario extends AppBackend{
             || puedeElRol(context.user?.rol, 'puede_restaurar_baja');
         var menuContent: MenuInfoBase[] = [
             {menuType:'principal', name:'principal', label:'principal'     },
-            {menuType:'calendario', name:'calendario', label:'calendario'   },
+            ...(puedeGuardar ? [{menuType:'calendario', name:'calendario', label:'calendario'}] : []),
             {menuType: 'menu', name: 'mis_bienes', label: 'mis bienes', menuContent:
                 VINCULOS_CON_EL_BIEN.map((vinculo, i) => ({
                     menuType: 'table', name: vinculo.mio.tabla, label: vinculo.mio.label,
@@ -330,10 +332,12 @@ export class AppInventario extends AppBackend{
                 {menuType: 'table', name: 'reporte_bienes_por_responsable', label: 'bienes por responsable'},
                 {menuType: 'table', name: 'reporte_bienes_por_espacio', label: 'bienes por espacio'},
                 {menuType: 'table', name: 'parque_tecnologico', label: 'parque tecnológico'},
+                {menuType: 'movimientos', name: 'consulta_movimientos', label: 'consulta de movimientos'},
+                {menuType: 'table', name: 'movimientos_consulta', label: 'movimientos (grilla)'},
             ]}
         );
 
-        if(puedeGuardar){
+        if(context.forDump || puedeElRol(context.user?.rol, 'puede_gestionar_datos')){
             menuContent.push(
                 {menuType: 'menu', name: 'gestion', label: 'gestion de datos', menuContent: [
                     {menuType: 'table', name: 'sectores', label: 'sectores'},
@@ -495,6 +499,7 @@ export class AppInventario extends AppBackend{
             controles_bien,
             controles_bien_items,
             bienes_control,
+            movimientos_consulta,
             siper_personas,
             siper_recepciones,
             siper_conciliacion,

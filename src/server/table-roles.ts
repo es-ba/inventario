@@ -20,8 +20,9 @@ export function roles(context:TableContext):TableDefinition{
             {name:'puede_restaurar_baja' , typeName:'boolean'},
             {name:'puede_eliminar' , typeName:'boolean'},
             {name:'puede_guardar' , typeName:'boolean'},
-            {name:'puede_mover' , typeName:'boolean'},
-            {name:'puede_controlar' , typeName:'boolean'},
+            {name:'puede_mover' , typeName:'boolean'},
+            {name:'puede_controlar' , typeName:'boolean'},
+            {name:'puede_gestionar_datos' , typeName:'boolean'},
         ],
         primaryKey:['rol'],
       

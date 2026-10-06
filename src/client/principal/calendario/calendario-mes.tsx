@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Box, Button, Chip, CircularProgress, IconButton, Stack, Typography} from '@mui/material';
+import {Box, Button, CircularProgress, IconButton, Stack, Typography} from '@mui/material';
 import {ChevronLeft, ChevronRight} from '@mui/icons-material';
 
 import {useAvisos, useConexion} from '../base/contexto-base';
@@ -12,7 +12,7 @@ import {
     sumarMeses,
     textoDeFecha,
 } from '../../../common/calendario';
-import {TipoVisible, textoDelEvento} from './calendario-comun';
+import {TipoVisible, colorDelTipo, fondoDelTipo, textoDelEvento} from './calendario-comun';
 
 const EVENTOS_POR_DIA = 4;
 
@@ -66,15 +66,16 @@ export function CalendarioMes({
             </Typography>
             {cargando ? <CircularProgress size={20}/> : null}
         </Stack>
-        <Box sx={{display:'grid', gridTemplateColumns:'repeat(7, minmax(0, 1fr))', border:1, borderColor:'divider'}}>
-            {dias.slice(0, 7).map(dia => <Box key={`cabecera-${dia}`}
-                sx={{p:0.5, textAlign:'center', borderBottom:1, borderColor:'divider', bgcolor:'action.hover'}}>
-                <Typography variant="caption" sx={{textTransform:'capitalize', fontWeight:600}}>
+        <Box sx={{display:'grid', gridTemplateColumns:'repeat(7, minmax(0, 1fr))', gap:'1px', p:'1px',
+            bgcolor:'divider', borderRadius:2, overflow:'hidden'}}>
+            {dias.slice(0, 7).map(dia => <Box key={`cabecera-${dia}`} sx={{p:0.75, textAlign:'center', bgcolor:'grey.100'}}>
+                <Typography variant="caption" color="text.secondary" sx={{textTransform:'capitalize', fontWeight:600}}>
                     {textoDeFecha(dia, {weekday:'short'})}
                 </Typography>
             </Box>)}
             {dias.map(dia => {
                 const eventos = porDia.get(dia) ?? [];
+                const visibles = eventos.length > EVENTOS_POR_DIA ? eventos.slice(0, EVENTOS_POR_DIA - 1) : eventos;
                 const esHoy = dia === hoy;
                 return <Box
                     key={dia}
@@ -82,31 +83,34 @@ export function CalendarioMes({
                     aria-label={textoDeFecha(dia, {weekday:'long', day:'numeric', month:'long', year:'numeric'})}
                     onClick={() => onElegirDia(dia)}
                     sx={{
-                        minHeight:118, p:0.5, cursor:'pointer', overflow:'hidden',
-                        borderRight:1, borderBottom:1, borderColor:'divider',
-                        bgcolor:mismoMes(dia, fecha) ? 'background.paper' : 'action.hover',
-                        '&:hover':{bgcolor:'action.selected'},
+                        minHeight:128, p:0.5, cursor:'pointer', overflow:'hidden',
+                        bgcolor:mismoMes(dia, fecha) ? 'background.paper' : 'grey.50',
+                        '&:hover':{bgcolor:'grey.100'},
                     }}
                 >
                     <Typography variant="body2" sx={{
-                        fontWeight:esHoy ? 700 : 400,
+                        width:26, height:26, display:'flex', alignItems:'center', justifyContent:'center', borderRadius:'50%',
                         color:mismoMes(dia, fecha) ? 'text.primary' : 'text.disabled',
-                        ...(esHoy ? {bgcolor:'primary.main', color:'primary.contrastText', borderRadius:'50%',
-                            width:26, height:26, display:'flex', alignItems:'center', justifyContent:'center'} : {}),
+                        ...(esHoy ? {fontWeight:700, bgcolor:'primary.main', color:'primary.contrastText'} : {}),
                     }}>
                         {Number(dia.slice(8))}
                     </Typography>
-                    <Stack spacing={0.5} sx={{mt:0.5}}>
-                        {eventos.slice(0, EVENTOS_POR_DIA).map(e => <Chip
-                            key={`${e.tipo}-${e.grupo}`}
-                            size="small"
-                            color={tipoPorCodigo.get(e.tipo)?.color ?? 'default'}
-                            label={textoDelEvento(tipoPorCodigo.get(e.tipo), e.titulo, e.cantidad)}
-                            title={textoDelEvento(tipoPorCodigo.get(e.tipo), e.titulo, e.cantidad)}
-                            sx={{justifyContent:'flex-start', maxWidth:'100%'}}
-                        />)}
-                        {eventos.length > EVENTOS_POR_DIA
-                            ? <Typography variant="caption" color="text.secondary">+{eventos.length - EVENTOS_POR_DIA} más</Typography>
+                    <Stack spacing={0.25} sx={{mt:0.5}}>
+                        {visibles.map(e => {
+                            const tipo = tipoPorCodigo.get(e.tipo);
+                            const color = tipo?.color ?? 'default';
+                            return <Box
+                                key={`${e.tipo}-${e.grupo}`}
+                                title={textoDelEvento(tipo, e.titulo, e.cantidad)}
+                                sx={{display:'flex', gap:0.5, px:0.75, borderRadius:1,
+                                    bgcolor:fondoDelTipo(color), borderLeft:3, borderColor:colorDelTipo(color)}}
+                            >
+                                <Typography variant="caption" noWrap sx={{flex:1}}>{textoDelEvento(tipo, e.titulo)}</Typography>
+                                <Typography variant="caption" sx={{fontWeight:700}}>{e.cantidad}</Typography>
+                            </Box>;
+                        })}
+                        {eventos.length > visibles.length
+                            ? <Typography variant="caption" color="text.secondary" sx={{px:0.75}}>+{eventos.length - visibles.length} más</Typography>
                             : null}
                     </Stack>
                 </Box>;

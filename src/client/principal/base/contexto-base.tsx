@@ -21,7 +21,7 @@ const SIN_PERMISOS:InfoUsuario = {
     nombre:null, apellido:null, responsable:null, sector:null,
     puede_ver_todo:false, puede_ver_propio:false, puede_ver_dependientes:false,
     puede_ver_claves:false, puede_aprobar_baja:false, puede_restaurar_baja:false, puede_eliminar:false,
-    puede_guardar:false, puede_mover:false, puede_controlar:false,
+    puede_guardar:false, puede_mover:false, puede_controlar:false, puede_gestionar_datos:false,
 };
 
 export type PedidoDeConfirmacion = {

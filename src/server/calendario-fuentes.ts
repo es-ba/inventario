@@ -37,7 +37,7 @@ export function tiposConocidos(tipos:unknown[]):TipoDeEvento[]{
     return TIPOS_DE_EVENTO.filter(tipo => tipos.includes(tipo));
 }
 
-const NOMBRE_DE_PERSONA = (alias:string) =>
+export const NOMBRE_DE_PERSONA = (alias:string) =>
     `concat_ws(', ', nullif(btrim(${alias}.apellido), ''), nullif(btrim(${alias}.nombre), ''))`;
 
 const GRUPO_DE_MOVIMIENTO = `coalesce('acta:' || mb.acta_origen::text, 'accion:' || coalesce(mb.accion, ''))`;

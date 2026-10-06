@@ -25,6 +25,7 @@ import type {Fila} from '../base/tipos-tabla';
 import {SolicitudAcciones, accionesDe, etiquetaDeAccion} from './solicitud-acciones';
 import {SolicitudBienes} from './solicitud-bienes';
 import {SolicitudDocumentos} from './solicitud-documentos';
+import {SolicitudMovimientos} from './solicitud-movimientos';
 
 
 const ESTADO_EDITABLE = 'B';
@@ -212,6 +213,7 @@ export function SolicitudFormulario({
             <Tab label="Bienes" {...propsDeSolapa(1)}/>
             <Tab label="Documentos" {...propsDeSolapa(2)}/>
             <Tab label="Adjuntos" {...propsDeSolapa(3)}/>
+            <Tab label="Movimientos" {...propsDeSolapa(4)}/>
         </Tabs>
 
         <TabPanel value={solapa} index={0} sinRelleno>
@@ -273,6 +275,10 @@ export function SolicitudFormulario({
                     subir={subirAdjunto}
                 />
                 : <Alert severity="info">Guardá la solicitud para subir adjuntos.</Alert>}
+        </TabPanel>
+
+        <TabPanel value={solapa} index={4} sinRelleno>
+            <SolicitudMovimientos acta={guardada ? actaActual : ''}/>
         </TabPanel>
     </Box>;
 }

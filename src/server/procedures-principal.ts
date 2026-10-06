@@ -165,7 +165,8 @@ export const ProceduresInventario:ProcedureDef[] = [
                         roles.puede_ver_todo, roles.puede_ver_propio, roles.puede_ver_dependientes,
                         roles.puede_ver_claves, roles.puede_aprobar_baja,
                         roles.puede_restaurar_baja, roles.puede_eliminar,
-                        roles.puede_guardar, roles.puede_mover, roles.puede_controlar
+                        roles.puede_guardar, roles.puede_mover, roles.puede_controlar,
+                        roles.puede_gestionar_datos
                     from usuarios u
                         inner join roles using(rol)
                         left join responsables r using (responsable)

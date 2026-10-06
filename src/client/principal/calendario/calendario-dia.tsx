@@ -3,7 +3,6 @@ import {
     Alert,
     Box,
     Button,
-    Chip,
     CircularProgress,
     IconButton,
     Link,
@@ -17,27 +16,13 @@ import {DataGrid, GridColDef, GridPaginationModel} from '@mui/x-data-grid';
 import {useAvisos, useConexion} from '../base/contexto-base';
 import {formatearValor} from '../base/formato-valores';
 import {bienesGridLocaleText} from '../localizacion-grid';
-import {unmountConnectedAppInventario} from '../render-connected-app-inventario';
+import {irA} from '../render-connected-app-inventario';
+import {Ubicacion} from '../base/ubicacion';
 import {hoyYmd, sumarDias, textoDeFecha} from '../../../common/calendario';
-import {BienDelGrupo, GrupoDelDia, TipoVisible} from './calendario-comun';
-
-function irA(hash:string){
-    unmountConnectedAppInventario();
-    location.hash = hash;
-}
+import {BienDelGrupo, ChipDeTipo, GrupoDelDia, TipoVisible, colorDelTipo, fondoDelTipo} from './calendario-comun';
 
 function texto(valor:unknown):string{
     return formatearValor(valor).trim();
-}
-
-function Ubicacion({sector, responsable, espacio}:{sector:unknown, responsable:unknown, espacio:unknown}){
-    const lineas = [texto(sector), texto(responsable), texto(espacio)].filter(l => l !== '');
-    if(lineas.length === 0){
-        return <Typography variant="body2" color="text.disabled">—</Typography>;
-    }
-    return <Box sx={{py:0.5}}>
-        {lineas.map((l, i) => <Typography key={i} variant="body2" sx={{lineHeight:1.3}}>{l}</Typography>)}
-    </Box>;
 }
 
 const A_CARGO_COMO:Record<string, string> = {
@@ -145,6 +130,7 @@ function TablaDeBienes({fecha, grupo}:{fecha:string, grupo:GrupoDelDia}){
         autoHeight
         density="compact"
         localeText={bienesGridLocaleText}
+        sx={{border:0, borderRadius:0}}
     />;
 }
 
@@ -199,10 +185,10 @@ export function CalendarioDia({
 
         {porTipo.length
             ? <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{mb:2}}>
-                {porTipo.map(({tipo, grupos:delTipo}) => <Chip
+                {porTipo.map(({tipo, grupos:delTipo}) => <ChipDeTipo
                     key={tipo.tipo}
-                    color={tipo.color}
-                    variant={ocultos.has(tipo.tipo) ? 'outlined' : 'filled'}
+                    tipo={tipo}
+                    oculto={ocultos.has(tipo.tipo)}
                     label={`${tipo.etiqueta}: ${delTipo.reduce((suma, g) => suma + Number(g.cantidad), 0)}`}
                 />)}
             </Stack>
@@ -213,14 +199,14 @@ export function CalendarioDia({
             : <Stack spacing={3}>
                 {visibles.map(({tipo, grupos:delTipo}) => <Box key={tipo.tipo}>
                     <Typography variant="subtitle1" sx={{
-                        mb:1, fontWeight:600, pl:1, borderLeft:4,
-                        borderColor:tipo.color === 'default' ? 'grey.500' : `${tipo.color}.main`,
+                        mb:1, fontWeight:600, pl:1, borderLeft:4, borderColor:colorDelTipo(tipo.color),
                     }}>
                         {tipo.etiqueta}
                     </Typography>
                     <Stack spacing={2}>
-                        {delTipo.map(g => <Paper key={`${g.tipo}-${g.grupo}`} variant="outlined" sx={{p:1.5}}>
-                            <Stack direction="row" alignItems="center" spacing={1.5} flexWrap="wrap" useFlexGap sx={{mb:1}}>
+                        {delTipo.map(g => <Paper key={`${g.tipo}-${g.grupo}`} variant="outlined" sx={{overflow:'hidden'}}>
+                            <Stack direction="row" alignItems="center" spacing={1.5} flexWrap="wrap" useFlexGap
+                                sx={{px:1.5, py:0.75, minHeight:46, bgcolor:fondoDelTipo(tipo.color), borderBottom:1, borderColor:'divider'}}>
                                 {g.hora ? <Typography sx={{fontWeight:600}} color="text.secondary">{g.hora}</Typography> : null}
                                 {g.titulo ? <Typography sx={{fontWeight:600}}>{g.titulo}</Typography> : null}
                                 <Typography color="text.secondary">

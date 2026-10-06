@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Chip, Stack} from '@mui/material';
+import {Chip, ChipProps, Stack, Theme, alpha} from '@mui/material';
 
 import type {ColorDeEvento, ResumenDeEvento} from '../../../common/calendario';
 
@@ -40,13 +40,30 @@ export function Leyenda({
     onAlternar:(tipo:string) => void,
 }){
     return <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-        {tipos.map(t => <Chip
+        {tipos.map(t => <ChipDeTipo
             key={t.tipo}
+            tipo={t}
+            oculto={ocultos.has(t.tipo)}
             label={t.etiqueta}
-            color={t.color}
-            variant={ocultos.has(t.tipo) ? 'outlined' : 'filled'}
             onClick={() => onAlternar(t.tipo)}
             title={ocultos.has(t.tipo) ? 'Mostrar' : 'Ocultar'}
         />)}
     </Stack>;
+}
+
+export const colorDelTipo = (color:ColorDeEvento) => (theme:Theme) =>
+    color === 'default' ? theme.palette.grey[600] : theme.palette[color].main;
+
+export const fondoDelTipo = (color:ColorDeEvento) => (theme:Theme) => alpha(colorDelTipo(color)(theme), 0.12);
+
+export function ChipDeTipo({tipo, oculto, ...props}:{tipo:TipoVisible, oculto:boolean} & ChipProps){
+    return <Chip
+        color={tipo.color}
+        variant="outlined"
+        {...props}
+        sx={{
+            color:'text.primary', fontWeight:500,
+            ...(oculto ? {opacity:0.6, textDecoration:'line-through'} : {bgcolor:fondoDelTipo(tipo.color)}),
+        }}
+    />;
 }

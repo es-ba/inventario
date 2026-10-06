@@ -49,6 +49,11 @@ export function volverAlMenu():void{
     location.hash = '';
 }
 
+export function irA(hash:string):void{
+    unmountConnectedAppInventario();
+    location.hash = hash;
+}
+
 export function renderConnectedAppInventario(
     conn:Connector,
     addrParams:AddrParamsInventario,

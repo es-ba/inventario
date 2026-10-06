@@ -14,7 +14,9 @@ export function codigo(fila:Fila, campo:string):string{
     return String(fila[campo] ?? '').trim();
 }
 
-export function leerTabla(conn:Connector, tabla:string, fixedFields:{fieldName:string, value:unknown}[] = []):Promise<Fila[]>{
+export type CampoFijo = {fieldName:string, value:unknown, until?:unknown};
+
+export function leerTabla(conn:Connector, tabla:string, fixedFields:CampoFijo[] = []):Promise<Fila[]>{
     return conn.ajax.table_data({
         table:tabla,
         fixedFields:fixedFields as FixedFields,
