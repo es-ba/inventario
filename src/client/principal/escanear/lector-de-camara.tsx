@@ -67,6 +67,6 @@ export function LectorDeCamara({onLeido, onSinCamara}:{
         ref={video}
         playsInline
         muted
-        style={{display:'block', width:'100%', maxHeight:'50vh', objectFit:'cover', borderRadius:4, background:'#000'}}
+        style={{display:'block', width:'100%', aspectRatio:'4 / 3', maxHeight:'55vh', objectFit:'cover', borderRadius:8, background:'#000'}}
     />;
 }
