@@ -11,6 +11,7 @@ import './ws-controles';
 import './ws-siper';
 import './ws-calendario';
 import './ws-movimientos';
+import './ws-escanear';
 import {renderConnectedAppInventario} from './principal/render-connected-app-inventario';
 
 type Vista =

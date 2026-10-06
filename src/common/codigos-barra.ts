@@ -34,6 +34,11 @@ export function fichaDesdeEAN13(texto:unknown):string|null{
     return codigo.slice(0, 12).replace(/^0+(?=\d)/, '');
 }
 
+export function fichaDesdeCodigoLeido(texto:unknown):string|null{
+    const codigo = String(texto ?? '').trim();
+    return fichaDesdeEAN13(/^\d{12}$/.test(codigo) ? `0${codigo}` : codigo);
+}
+
 export function prepararEtiquetasCodigosBarra(
     rows:readonly BienesBusquedaRow[],
 ):EtiquetaCodigoBarra[]{

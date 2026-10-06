@@ -406,6 +406,9 @@ export class AppInventario extends AppBackend{
                         {menuType: 'table', name: 'usuarios', label: 'gestión de usuarios'},
                         {menuType: 'table', name: 'roles', label: 'roles de acceso'},
                     ]},
+                ]},
+                {menuType: 'menu', name: 'desarrollo', label: 'desarrollo', menuContent: [
+                    {menuType: 'escanear', name: 'escanear', label: 'escanear'},
                 ]}
             );
         }
