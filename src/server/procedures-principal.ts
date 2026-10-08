@@ -38,6 +38,8 @@ import { DocumentoEmitido, analizarFirmaPdf, verificarDeclaracionFirmada } from 
 import { setAtributosDeBienes } from './reportes-bienes';
 import { describirPlan, planificarEdicionMasiva } from './bienes-edicion-masiva';
 import { generarDocumentoSolicitud } from './solicitud-documento-render';
+import { rutaDeAdjunto } from './nombre-archivo';
+import { NOMBRE_DE_FOTO, PESO_MAXIMO, esJpeg } from '../common/fotos';
 import { operacionDeActa } from './solicitud-documento';
 import type { TipoDocumentoSolicitud } from './solicitud-documento';
 import { createHash } from 'node:crypto';
@@ -52,6 +54,24 @@ function puestoNumerico(valor:unknown):number|null{
         throw new Error('El puesto tiene que ser un número entero');
     }
     return numero;
+}
+
+async function validarFoto(ruta:string):Promise<void>{
+    const inicio = Buffer.alloc(3);
+    const {size} = await fs.stat(ruta);
+    const fd = await fs.open(ruta, 'r');
+    try{
+        await fs.read(fd, inicio, 0, 3, 0);
+    }finally{
+        await fs.close(fd);
+    }
+    const motivo = size > PESO_MAXIMO ? 'La foto pesa más de 5 MB.'
+        : !esJpeg(inicio) ? 'La foto tiene que ser una imagen JPEG.'
+        : null;
+    if(motivo != null){
+        await fs.remove(ruta);
+        throw new Error(motivo);
+    }
 }
 
 function numeroDeActa(valor:unknown):number{
@@ -569,6 +589,7 @@ export const ProceduresInventario:ProcedureDef[] = [
         progress: true,
         parameters:[
             {name:'ficha', typeName:'text'},
+            {name:'es_foto', typeName:'boolean', defaultValue:false},
         ],
         files:{count:1},
         coreFunction: async function(context:ProcedureContext, parameters:any, files?:UploadedFileInfo[]){
@@ -577,17 +598,23 @@ export const ProceduresInventario:ProcedureDef[] = [
             context.informProgress({message: be.messages.fileUploaded});
             const file = files![0];
             const tipoAdjunto = is.object({archivo: is.string, numero_adjunto: is.number});
-            const originalFilename = file.originalFilename;
-            const filename = `${parameters.ficha}/${originalFilename}`;
+            const esFoto = parameters.es_foto === true;
+            if(esFoto){
+                await validarFoto(file.path);
+            }
+            const numero = (await client.query(
+                `select nextval('numero_adjunto_seq') as numero`
+            ).fetchUniqueRow()).row.numero;
+            const filename = rutaDeAdjunto(parameters.ficha, numero, esFoto ? NOMBRE_DE_FOTO : file.originalFilename);
             const row = guarantee(tipoAdjunto, (await client.query(`
-                insert into adjuntos_bienes (ficha, usuario, archivo)
-                    values ($1, $2, $3)
+                insert into adjuntos_bienes (ficha, numero_adjunto, usuario, archivo, es_foto)
+                    values ($1, $2, $3, $4, $5)
                     returning *
             `,
-                [parameters.ficha, context.username, filename]
+                [parameters.ficha, numero, context.username, filename, esFoto]
             ).fetchUniqueRow()).row);
             try {
-                await fs.move(file.path, `local-attachments/${row.archivo}`, {overwrite:true});
+                await fs.move(file.path, `local-attachments/${row.archivo}`, {overwrite:false});
             } catch(err) {
                 await client.query(`
                     delete from adjuntos_bienes where ficha = $1 and numero_adjunto = $2
@@ -616,17 +643,19 @@ export const ProceduresInventario:ProcedureDef[] = [
             context.informProgress({message: be.messages.fileUploaded});
             const file = files![0];
             const tipoAdjunto = is.object({archivo: is.string, numero_adjunto: is.number});
-            const originalFilename = file.originalFilename;
-            const filename = `solicitudes/${parameters.acta}/${originalFilename}`;
+            const numero = (await client.query(
+                `select nextval('adjuntos_solicitudes_numero_adjunto_seq') as numero`
+            ).fetchUniqueRow()).row.numero;
+            const filename = rutaDeAdjunto(`solicitudes/${parameters.acta}`, numero, file.originalFilename);
             const row = guarantee(tipoAdjunto, (await client.query(`
-                insert into adjuntos_solicitudes (acta, usuario, detalle, archivo)
-                    values ($1, $2, $3, $4)
+                insert into adjuntos_solicitudes (acta, numero_adjunto, usuario, detalle, archivo)
+                    values ($1, $2, $3, $4, $5)
                     returning *
             `,
-                [parameters.acta, context.username, parameters.detalle ?? null, filename]
+                [parameters.acta, numero, context.username, parameters.detalle ?? null, filename]
             ).fetchUniqueRow()).row);
             try {
-                await fs.move(file.path, `local-attachments/${row.archivo}`, {overwrite:true});
+                await fs.move(file.path, `local-attachments/${row.archivo}`, {overwrite:false});
             } catch(err) {
                 await client.query(`
                     delete from adjuntos_solicitudes where acta = $1 and numero_adjunto = $2

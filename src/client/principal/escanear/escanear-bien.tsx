@@ -6,6 +6,7 @@ import type {Fila} from '../base/tipos-tabla';
 import {irA} from '../render-connected-app-inventario';
 import {useDescripcionDeEstado} from '../bien/vista-rapida-bien';
 import {colorDeEstado} from '../bien/presentacion-bien';
+import {FotoDelBien} from '../bien/foto-del-bien';
 import {fichaDesdeCodigoLeido} from '../../../common/codigos-barra';
 import {LectorDeCamara, MotivoSinCamara} from './lector-de-camara';
 import {consultaPorFicha, seccionesDeEscaneo} from './escaneo-datos';
@@ -33,6 +34,9 @@ function BienLeido({bien}:{bien:Fila}){
             {estado ? <Chip size="small" color={colorDeEstado(estado)} label={descripcionDeEstado(estado) ?? estado}/> : null}
         </Stack>
         {detalle ? <Typography sx={{mt:0.5, mb:2, wordBreak:'break-word'}}>{detalle}</Typography> : null}
+        <Box sx={{mb:2}}>
+            <FotoDelBien ficha={String(bien.ficha)} numero={bien.foto} puedeSacar lado={120}/>
+        </Box>
         {seccionesDeEscaneo(bien).map(seccion => <Box key={seccion.titulo} sx={{mb:2}}>
             <Typography variant="subtitle2" color="primary" sx={{mb:0.5}}>{seccion.titulo}</Typography>
             <Divider sx={{mb:1}}/>

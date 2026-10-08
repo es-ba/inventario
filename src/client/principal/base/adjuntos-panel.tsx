@@ -18,7 +18,7 @@ import {Delete, Download, UploadFile} from '@mui/icons-material';
 import type {FixedFields} from 'frontend-plus';
 
 import {useConfirmar, useAvisos, useConexion, usePermisos} from './contexto-base';
-import {formatearValor} from './formato-valores';
+import {formatearValor, nombreDeAdjunto} from './formato-valores';
 import type {Fila} from './tipos-tabla';
 
 
@@ -31,12 +31,6 @@ export type AdjuntosPanelProps = {
     subir:(archivo:File) => Promise<{message:string}>,
     soloLectura?:boolean,
 };
-
-function nombreDeArchivo(ruta:unknown):string{
-    const texto = ruta == null ? '' : String(ruta);
-    const partes = texto.split('/');
-    return partes[partes.length - 1] || texto;
-}
 
 export function AdjuntosPanel({
     tabla,
@@ -98,7 +92,7 @@ export function AdjuntosPanel({
     }, [cargar, mostrarError, mostrarMensaje, subir]);
 
     const borrar = React.useCallback(async (fila:Fila) => {
-        if(!await confirmar({titulo:'Eliminar adjunto', mensaje:`¿Eliminar el adjunto ${nombreDeArchivo(fila.archivo)}?`, confirmar:'Eliminar', peligroso:true})){
+        if(!await confirmar({titulo:'Eliminar adjunto', mensaje:`¿Eliminar el adjunto ${nombreDeAdjunto(fila.archivo, fila[campoNumero])}?`, confirmar:'Eliminar', peligroso:true})){
             return;
         }
         try{
@@ -159,7 +153,19 @@ export function AdjuntosPanel({
                     <TableBody>
                         {filas.map(fila => <TableRow key={String(fila[campoNumero])}>
                             <TableCell>{String(fila[campoNumero] ?? '')}</TableCell>
-                            <TableCell>{nombreDeArchivo(fila.archivo)}</TableCell>
+                            <TableCell>
+                                <Stack direction="row" spacing={1} alignItems="center">
+                                    {fila.es_foto
+                                        ? <Box
+                                            component="img"
+                                            src={urlDescarga(fila)}
+                                            alt=""
+                                            sx={{width:40, height:40, objectFit:'cover', borderRadius:0.5}}
+                                        />
+                                        : null}
+                                    <span>{nombreDeAdjunto(fila.archivo, fila[campoNumero])}</span>
+                                </Stack>
+                            </TableCell>
                             <TableCell>{formatearValor(fila.detalle)}</TableCell>
                             <TableCell>{formatearValor(fila.usuario)}</TableCell>
                             <TableCell>{formatearValor(fila.timestamp)}</TableCell>
@@ -167,7 +173,7 @@ export function AdjuntosPanel({
                                 <Stack direction="row" spacing={0.5} justifyContent="flex-end">
                                     <Link
                                         href={urlDescarga(fila)}
-                                        download={nombreDeArchivo(fila.archivo)}
+                                        download={nombreDeAdjunto(fila.archivo, fila[campoNumero])}
                                         title="Descargar"
                                     >
                                         <IconButton size="small"><Download/></IconButton>

@@ -4,6 +4,7 @@ import {ChevronLeft, ChevronRight, Close, OpenInNew} from '@mui/icons-material';
 
 import {useDatosReferencial} from '../base/cache-tablas';
 import {seccionesDeVistaRapida, vecinos, SeccionDeVistaRapida, SIN_DATO} from './vista-rapida-datos';
+import {FotoDelBien} from './foto-del-bien';
 
 type Fila = Record<string, unknown>;
 
@@ -84,6 +85,9 @@ export function VistaRapidaBien({
             </Stack>
 
             <Box sx={{flex:1, overflowY:'auto'}}>
+                <Box sx={{mb:2}}>
+                    <FotoDelBien ficha={ficha!} numero={fila.foto} lado={160}/>
+                </Box>
                 <SeccionesDeBien secciones={secciones}/>
             </Box>
 

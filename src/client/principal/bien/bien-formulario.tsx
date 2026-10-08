@@ -412,6 +412,7 @@ export function BienFormulario({
             resumen={guardado ? resumen : null}
             onVolver={() => solicitarSalida(onVolver)}
             onImprimirEtiqueta={guardado ? () => void imprimirEtiqueta() : undefined}
+            puedeSacarFoto={guardado}
         />
 
         {editor.modificado ? <Alert severity="info" sx={{mb:2}}>Cambios sin guardar</Alert> : null}

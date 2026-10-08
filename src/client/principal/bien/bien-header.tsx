@@ -5,6 +5,7 @@ import {ArrowBack, Print} from '@mui/icons-material';
 import {formatearValor} from '../base/formato-valores';
 import type {Fila} from '../base/tipos-tabla';
 import {colorDeEstado} from './presentacion-bien';
+import {FotoDelBien} from './foto-del-bien';
 
 export type ResumenDelBien = {
     movimientos?:unknown,
@@ -90,11 +91,13 @@ export function BienHeader({
     resumen,
     onVolver,
     onImprimirEtiqueta,
+    puedeSacarFoto = false,
 }:{
     row:Fila,
     resumen?:ResumenDelBien|null,
     onVolver?:() => void,
     onImprimirEtiqueta?:() => void,
+    puedeSacarFoto?:boolean,
 }){
     const ficha = comoTexto(row.ficha);
     const descripcion = comoTexto(row.detalle)
@@ -128,6 +131,8 @@ export function BienHeader({
                     <ArrowBack/>
                 </IconButton>
                 : null}
+
+            <FotoDelBien ficha={ficha} numero={row.foto} puedeSacar={puedeSacarFoto} lado={72}/>
 
             <Box sx={{flex:1, minWidth:0}}>
                 <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">

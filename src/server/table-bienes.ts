@@ -103,7 +103,8 @@ LEFT JOIN modalidad_uso mu ON mu.modalidad_uso = ult.modalidad_uso
 export function sqlBienesConControl(dias:number):string{
     return `SELECT v.*, uc.fecha AS fecha_ultimo_control,
         ${sqlSituacionControl('v', 'uc.fecha', dias)} AS situacion_control,
-        um.fecha AS fecha_ultima_modificacion, um.usuario AS usuario_ultima_modificacion
+        um.fecha AS fecha_ultima_modificacion, um.usuario AS usuario_ultima_modificacion,
+        (SELECT max(ab.numero_adjunto) FROM adjuntos_bienes ab WHERE ab.ficha = v.ficha AND ab.es_foto) AS foto
     FROM (${sqlBienes}) v
     ${sqlUltimoControl('v')}
     LEFT JOIN LATERAL (
@@ -190,6 +191,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'usuario_ultimo_movimiento'   , typeName:'text'    , editable:false, inTable:false, title:'movido por'},
             {name:'fecha_ultima_modificacion'   , typeName:'timestamp', editable:false, inTable:false, title:'última modificación'},
             {name:'usuario_ultima_modificacion' , typeName:'text'    , editable:false, inTable:false, title:'modificado por'},
+            {name:'foto'                        , typeName:'bigint'  , editable:false, inTable:false, title:'foto'},
             //{name:'codigo_barra'                , typeName:'text'    , inTable:false, editable:false},
         ],  
         primaryKey:['ficha'],
@@ -230,6 +232,7 @@ export function bienes(context:TableContext):TableDefinition{
             'prd', 'imei', 'linea', 'annio',
             'sede', 'sede_nombre',
             'responsable_sector',
+            'foto',
         ],
         sql:{
             isTable: true,

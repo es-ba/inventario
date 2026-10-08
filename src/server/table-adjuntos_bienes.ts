@@ -25,6 +25,7 @@ export function adjuntos_bienes(context:TableContext):TableDefinition{
             {name:'subir'      , typeName:'text'     , editable:false, clientSide:'subirAdjunto'},
             {name:'archivo'    , typeName:'text'     , editable:false, title:'archivo'},
             {name:'bajar'      , typeName:'text'     , editable:false, clientSide:'bajarAdjunto'},
+            {name:'es_foto'    , typeName:'boolean'  , nullable:false, defaultDbValue:'false', editable:false, title:'foto'},
         ],
         primaryKey:['ficha','numero_adjunto'],
         foreignKeys:[

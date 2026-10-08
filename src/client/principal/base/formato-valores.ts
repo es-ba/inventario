@@ -132,3 +132,13 @@ export function capitalizar(texto:string):string{
 export function etiquetaDeCampo(field:{name:string, label?:string, title?:string}):string{
     return capitalizar(field.label || field.title || field.name);
 }
+
+export function nombreDeAdjunto(ruta:unknown, numero:unknown):string{
+    const texto = ruta == null ? '' : String(ruta);
+    const partes = texto.split('/');
+    const nombre = partes[partes.length - 1] || texto;
+    const prefijo = `${numero}-`;
+    return numero != null && numero !== '' && nombre.startsWith(prefijo) && nombre.length > prefijo.length
+        ? nombre.slice(prefijo.length)
+        : nombre;
+}

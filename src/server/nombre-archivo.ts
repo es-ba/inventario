@@ -45,3 +45,14 @@ export function contentDisposition(nombre:string):string{
     const seguro = nombre.replace(/"/g, '');
     return `attachment; filename="${seguro}"; filename*=UTF-8''${encodeURIComponent(nombre)}`;
 }
+
+export function rutaDeAdjunto(carpeta:string, numero:number|string, nombreOriginal:unknown):string{
+    const ultimo = String(nombreOriginal ?? '').replace(/[\x00-\x1f]/g, '').split(/[\\/]/).pop();
+    const limpio = parteDeNombre(ultimo);
+    const punto = limpio.lastIndexOf('.');
+    const extension = punto > 0 && limpio.length - punto <= 10 ? limpio.slice(punto) : '';
+    const base = limpio.slice(0, limpio.length - extension.length)
+        .slice(0, LARGO_MAXIMO - extension.length)
+        .trim();
+    return `${carpeta}/${numero}-${(base + extension) || 'archivo'}`;
+}

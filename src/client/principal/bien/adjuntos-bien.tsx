@@ -7,7 +7,7 @@ import type {Fila} from '../base/tipos-tabla';
 
 declare module 'frontend-plus' {
     interface BEAPI {
-        archivo_subir:(params:{ficha:string, files:File[]}) => Promise<{
+        archivo_subir:(params:{ficha:string, es_foto?:boolean, files:File[]}) => Promise<{
             message:string,
             nombre:string,
             row:Fila,

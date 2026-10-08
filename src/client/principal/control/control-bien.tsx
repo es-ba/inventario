@@ -24,6 +24,7 @@ import {leerTabla, textoDeReferencia} from '../base/referencias';
 import {armarGruposPorItem, itemAplica, VALORES_SI_NO} from '../../../common/controles';
 import {espacioDe, responsableDelSectorDe} from './controles-listado';
 import {SeccionesDeBien, useDescripcionDeEstado} from '../bien/vista-rapida-bien';
+import {FotoDelBien} from '../bien/foto-del-bien';
 import {seccionesDeVistaRapida} from '../bien/vista-rapida-datos';
 
 declare module 'frontend-plus' {
@@ -318,7 +319,12 @@ export function ControlBien({
                     <CardContent>
                         <Typography variant="subtitle1" sx={{fontWeight:600, mb:1}}>Estado actual</Typography>
                         {bienCompleto
-                            ? <SeccionesDeBien secciones={seccionesDeVistaRapida(bienCompleto, descripcionDeEstado)}/>
+                            ? <>
+                                <Box sx={{mb:2}}>
+                                    <FotoDelBien ficha={String(bienCompleto.ficha)} numero={bienCompleto.foto} puedeSacar lado={120}/>
+                                </Box>
+                                <SeccionesDeBien secciones={seccionesDeVistaRapida(bienCompleto, descripcionDeEstado)}/>
+                            </>
                             : null}
                         <Typography variant="subtitle2" color="primary" sx={{mb:0.5}}>Atributos</Typography>
                         <Divider sx={{mb:1}}/>
