@@ -75,7 +75,9 @@ install:
       - ../install/bienes_baja_estado_trg.sql
       - ../install/declaraciones_estado_trg.sql
       - ../install/solicitudes_documentos_trg.sql
+      - ../install/sector_texto_trg.sql
       - ../install/bienes_estado_inicial.sql
+      - ../install/sector_texto_inicial.sql
 logo:
   path: client/img
 inventario:

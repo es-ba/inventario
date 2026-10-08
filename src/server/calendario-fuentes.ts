@@ -1,6 +1,6 @@
 "use strict";
 
-import { codigoTextoSql, sqlBienes } from "./table-bienes";
+import { codigoTextoSql, sqlBienes, textoDeSectorGuardadoSql } from "./table-bienes";
 import { sqlUltimoControl } from "./controles-bien";
 import { DIAS_MAXIMOS_DEL_RANGO, TIPOS_DE_EVENTO, TipoDeEvento, diasEntre, esYmd } from "../common/calendario";
 
@@ -153,11 +153,10 @@ function joinsDelBien(alias:string):string{
 
 function lateralUbicacion(alias:string, filtro:string):string{
     return `LEFT JOIN LATERAL (
-      SELECT ${codigoTextoSql('m.sector', 'a.sigla')} AS sector,
+      SELECT ${textoDeSectorGuardadoSql('m.sector', 'm.sector_sigla', 'm.sector_nombre')} AS sector,
              ${codigoTextoSql('m.responsable', NOMBRE_DE_PERSONA('rp'))} AS responsable,
              ${codigoTextoSql('m.espacio', "concat_ws(' — ', nullif(btrim(e.numero), ''), nullif(btrim(e.denominacion), ''))")} AS espacio
         FROM movimientos_bien m
-        LEFT JOIN sectores a ON a.sector = m.sector
         LEFT JOIN responsables rp ON rp.responsable = m.responsable
         LEFT JOIN espacios e ON e.espacio = m.espacio
        WHERE ${filtro}

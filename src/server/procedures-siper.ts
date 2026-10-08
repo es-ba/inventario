@@ -1,7 +1,11 @@
 "use strict";
 
 import type {ProcedureContext, ProcedureDef} from './types-principal';
-import {validarPersonasSiper} from './siper-personas';
+import {DATOS_DE_SIPER, validarPersonasSiper} from './siper-personas';
+
+const columnasRecibidas = ['idper', 'apellido', 'nombres', 'sector', 'activo', ...DATOS_DE_SIPER.map(d => d.siper)].join(', ');
+const tiposRecibidos = ['idper text', 'apellido text', 'nombres text', 'sector text', 'activo boolean',
+    ...DATOS_DE_SIPER.map(d => `${d.siper} ${d.tipo}`)].join(', ');
 
 type Filas = {rows:Record<string, unknown>[]};
 export type ClienteSql = {
@@ -26,20 +30,20 @@ export async function registrarPersonasSiper(client:ClienteSql, recibidas:unknow
     const personas = validarPersonasSiper(recibidas);
     await client.query('DELETE FROM siper_personas').fetchAll();
     await client.query(`
-        INSERT INTO siper_personas(idper, apellido, nombres, sector, activo, fecha_egreso)
-        SELECT idper, apellido, nombres, sector, activo, fecha_egreso
-          FROM jsonb_to_recordset($1::jsonb)
-            AS p(idper text, apellido text, nombres text, sector text, activo boolean, fecha_egreso date)
+        INSERT INTO siper_personas(${columnasRecibidas})
+        SELECT ${columnasRecibidas}
+          FROM jsonb_to_recordset($1::jsonb) AS p(${tiposRecibidos})
     `, [JSON.stringify(personas)]).fetchAll();
     await client.query(
         'INSERT INTO siper_recepciones(usuario, personas) VALUES ($1, $2)', [usuario, personas.length],
     ).fetchAll();
     const actualizados = await client.query(`
         UPDATE responsables r
-           SET activo_siper = sp.activo, fecha_egreso = sp.fecha_egreso
+           SET activo_siper = sp.activo, ${DATOS_DE_SIPER.map(d => `${d.responsable} = sp.${d.siper}`).join(', ')}
           FROM siper_personas sp
          WHERE r.idper = sp.idper
-           AND (r.activo_siper IS DISTINCT FROM sp.activo OR r.fecha_egreso IS DISTINCT FROM sp.fecha_egreso)
+           AND (r.activo_siper IS DISTINCT FROM sp.activo
+             OR ${DATOS_DE_SIPER.map(d => `r.${d.responsable} IS DISTINCT FROM sp.${d.siper}`).join(' OR ')})
         RETURNING r.responsable
     `).fetchAll();
     return {
@@ -67,8 +71,10 @@ export async function darAltasDeSiper(client:ClienteSql, texto:unknown, rol:unkn
     exigirAdmin(rol, 'dar de alta personas');
     const idpers = listaDeCodigos(texto, 'personas');
     const altas = await client.query(`
-        INSERT INTO responsables(idper, apellido, nombre, sector, activo, activo_siper, fecha_egreso, externo)
-        SELECT sp.idper, sp.apellido, sp.nombres, s.sector, true, sp.activo, sp.fecha_egreso, false
+        INSERT INTO responsables(idper, apellido, nombre, sector, activo, activo_siper, externo,
+               ${DATOS_DE_SIPER.map(d => d.responsable).join(', ')})
+        SELECT sp.idper, sp.apellido, sp.nombres, s.sector, true, sp.activo, false,
+               ${DATOS_DE_SIPER.map(d => `sp.${d.siper}`).join(', ')}
           FROM siper_personas sp
           LEFT JOIN sectores s ON s.sector = sp.sector
          WHERE sp.idper = ANY($1::text[])

@@ -90,8 +90,10 @@ export function tituloDeCambio(evento:Fila, cambios:Fila[]):string{
 }
 
 export function detalleDeMovimiento(m:Fila):string[]{
+    const sector = [texto(m.sector), texto(m.sector_sigla) || texto(m.sector_nombre)]
+        .filter(parte => parte !== '').join(' — ');
     return [
-        texto(m.sector) ? `sector ${texto(m.sector)}` : '',
+        texto(m.sector) ? `sector ${sector}` : '',
         texto(m.responsable_nombre) ? `responsable ${texto(m.responsable_nombre)}` : '',
         texto(m.espacio) ? `espacio ${texto(m.espacio)}` : '',
         texto(m.enusode) ? `en uso de ${texto(m.enusode)}` : '',

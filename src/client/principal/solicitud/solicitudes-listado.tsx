@@ -110,10 +110,10 @@ export function SolicitudesListado({
             ),
         },
         {
-            field:'sectores__sigla',
+            field:'sector_sigla',
             headerName:'Sector',
             width:120,
-            valueGetter:(_v, fila) => textoDeReferencia(fila.sector, fila.sectores__sigla),
+            valueGetter:(_v, fila) => textoDeReferencia(fila.sector, fila.sector_sigla || fila.sector_nombre),
         },
         {
             field:'sedes__descripcion',

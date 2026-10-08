@@ -1,6 +1,7 @@
 "use strict";
 
 import {TableDefinition, TableContext} from "./types-principal";
+import {DATOS_DE_SIPER} from "./siper-personas";
 
 export function siper_personas(context:TableContext):TableDefinition{
     const admin = context.user.rol === 'admin';
@@ -15,7 +16,7 @@ export function siper_personas(context:TableContext):TableDefinition{
             {name:'nombres'        , typeName:'text'    , isName:true},
             {name:'sector'         , typeName:'text'    , title:'sector (siper)'},
             {name:'activo'         , typeName:'boolean' , nullable:false},
-            {name:'fecha_egreso'   , typeName:'date'},
+            ...DATOS_DE_SIPER.map(d => ({name:d.siper, typeName:d.tipo, title:d.titulo})),
             {name:'responsable'    , typeName:'text'    , inTable:false, title:'responsable en inventario'},
             {name:'activo_inventario', typeName:'boolean', inTable:false, title:'activo en inventario'},
         ],

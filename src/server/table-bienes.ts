@@ -20,6 +20,10 @@ export function codigoTextoSql(codigo:string, texto:string):string{
     END`;
 }
 
+export function textoDeSectorGuardadoSql(codigo:string, sigla:string, nombre:string):string{
+    return codigoTextoSql(codigo, `coalesce(nullif(btrim(${sigla}), ''), ${nombre})`);
+}
+
 export const sqlBienes = `
 SELECT 
     b.*,

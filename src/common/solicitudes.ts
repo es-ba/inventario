@@ -13,7 +13,7 @@ export type FiltrosDeSolicitudes = {
 export type FiltroDeSolicitud = 'estado'|'mias'|'busqueda';
 
 const CAMPOS_DE_BUSQUEDA = [
-    'acta', 'responsable', 'responsables__apellido', 'responsables__nombre', 'sector', 'sectores__sigla', 'fichas',
+    'acta', 'responsable', 'responsables__apellido', 'responsables__nombre', 'sector', 'sector_sigla', 'sector_nombre', 'fichas',
 ];
 
 function texto(valor:unknown):string{

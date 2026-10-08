@@ -49,6 +49,16 @@ La tabla `adjuntos_bienes` permite asociar N archivos por bien. PK compuesta `(f
 - El dump lo recalcula para todos con `install/bienes_estado_inicial.sql`, sin dejar historial. `bienes.tab` no trae la columna `estado`.
 - Sumar una condición nueva: se edita `bien_estado_calcular` y, si depende de otra tabla, se le agrega un trigger que llame a `bien_estado_recalcular`.
 
+## Texto del sector en movimientos
+
+`movimientos_bien` y `movimientos_solicitudes` guardan, además del código, la sigla y el nombre del sector (`sector_sigla`, `sector_nombre`), para que la historia no cambie cuando cambia el organigrama. Los sectores no se borran: se dan de baja con `activo = false`.
+
+- Lo escribe `sector_texto_trg` (`install/sector_texto_trg.sql`), no las pantallas: toma el texto del catálogo al insertar la fila y cuando se le elige otro sector. Si el sector no cambia, conserva lo guardado aunque el `UPDATE` traiga otra cosa. El movimiento que sale de una solicitud lo toma al procesarse, no lo copia de la solicitud.
+- Un cambio de código del sector conserva el texto: la cascada llega cuando el código anterior ya no existe en `sectores`, y así se lo reconoce. Por eso los códigos se cambian de a uno.
+- Lo histórico lee lo guardado (`textoDeSectorGuardadoSql` en `table-bienes.ts`; sin sigla, usa el nombre): consulta de movimientos, "de dónde a dónde" del calendario, historial de la ficha, grillas de las dos tablas y listado de solicitudes. Lo actual sigue con el catálogo: búsqueda de bienes, vista rápida, reportes, control, bajas y los selectores de carga.
+- Los registros anteriores al cambio tienen el nombre del día en que se aplicó, no el de su fecha. Los completa `install/sector_texto_inicial.sql`, que corre en cada dump y sólo llena lo vacío; deshabilita los triggers de usuario porque los de inmutabilidad rechazan cualquier `UPDATE` de un movimiento con solicitud o de una solicitud fuera de borrador.
+- Quedan con sólo el código: `movimientos_solicitud_bien` (origen y destino por bien), las declaraciones y la solapa Datos de la solicitud, que usa el selector.
+
 ## Control de bienes
 
 Registro de controles físicos de los dispositivos del parque tecnológico (mismo alcance que el reporte: en alta, rubro 3, clases 4 y 6; `condicionParqueTecnologico` en `controles-bien.ts`, reexportada por `reportes-bienes.ts`).
@@ -68,7 +78,7 @@ Registro de controles físicos de los dispositivos del parque tecnológico (mism
 siper es la fuente de las personas; inventario sólo recibe (nunca escribe en siper).
 
 - Clave del responsable: si tiene `idper`, la clave **es** el `idper` (check `responsables_clave_idper` + `unique(idper)`). Sin `idper`, dos letras del apellido + `I` + número (`AGI1`), que siper no puede generar. La pone `responsables_id_trg` sólo en INSERT; corregir el apellido no la cambia.
-- Recepción: agnóstica de la fuente y todavía sin definir. Quien reciba las personas de siper llama a `registrarPersonasSiper` (`procedures-siper.ts`) con la lista; valida (`validarPersonasSiper`), reemplaza `siper_personas` (sin CUIL ni documento), anota en `siper_recepciones` y concilia.
-- Al recibir se copian sólo `activo_siper` y `fecha_egreso` de los vinculados por `idper`. `activo` es de inventario y lo cambia el administrador (`responsables_inactivar`); las altas usan `responsables_alta_siper`.
+- Recepción: agnóstica de la fuente y todavía sin definir. Quien reciba las personas de siper llama a `registrarPersonasSiper` (`procedures-siper.ts`) con la lista; valida (`validarPersonasSiper`), reemplaza `siper_personas`, anota en `siper_recepciones` y concilia.
+- Al recibir se copian `activo_siper` y los datos de `DATOS_DE_SIPER` (`siper-personas.ts`: egreso, ingreso, situación de revista, CUIL, documento, ficha, domicilio y teléfono) de los vinculados por `idper`, tal cual llegan (vacío pisa); apellido, nombre y sector sólo se toman en el alta. Sumar un dato: una fila en `DATOS_DE_SIPER` y la columna en `siper_personas`. `activo` es de inventario y lo cambia el administrador (`responsables_inactivar`); las altas usan `responsables_alta_siper`.
 - Un responsable inactivo no se asigna: `install/responsables_activos_trg.sql` lo rechaza en solicitudes, movimientos (salvo los que vienen de una solicitud) y jefe de sector; en React, `sinInactivos` (`form-field-renderer.tsx`) lo saca de los selectores. Lo que les quedó a cargo se ve en `responsables_inactivos_a_cargo`.
 - Pantalla: wScreen `siper` (`ws-siper.tsx`, `principal/siper/`), en "gestion de datos" → "siper" → "personas", sólo `admin`. Solapa Personas: vista `siper_conciliacion` con la situación de cada persona (sincronizado, inactivo siper, alta, posible duplicado, ausente en siper, sólo en inventario, inactivo en inventario); para los responsables usa `activo_siper` ya conciliado. Solapa A cargo de inactivos: vista `responsables_inactivos_a_cargo`.
