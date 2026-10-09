@@ -19,6 +19,7 @@ export type {
 export type BienesGridMetadataField = {
     name:string;
     inTable?:boolean;
+    referencedName?:string;
 };
 
 export const BIENES_GRID_ASSIGNMENT_FIELDS:readonly string[] = Object.freeze([
@@ -57,4 +58,10 @@ export function selectBienesGridFields<T extends BienesGridMetadataField>(
         vistos.add(field.name);
         return true;
     });
+}
+
+export function selectBienesFilterFields<T extends BienesGridMetadataField>(
+    fields:readonly T[],
+):T[]{
+    return fields.filter(field => field.referencedName == null);
 }

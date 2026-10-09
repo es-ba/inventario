@@ -3,6 +3,7 @@ import {
     Autocomplete,
     Box,
     Button,
+    Checkbox,
     Chip,
     CircularProgress,
     IconButton,
@@ -12,6 +13,7 @@ import {
     TextField,
     Tooltip,
     Typography,
+    createFilterOptions,
 } from '@mui/material';
 import {Add, Clear, Delete, Search} from '@mui/icons-material';
 import type {
@@ -32,6 +34,13 @@ export type BienesBusquedaFilterDraft = BienesBusquedaFilter & {
     id: string;
     targetLabel?: string;
     targetTypeName?: string;
+    valueLabels?: string[];
+};
+
+export type OpcionDeValor = {
+    valor: string|null;
+    texto: string;
+    cantidad?: number;
 };
 
 type FiltrosCompuestosProps = {
@@ -39,6 +48,8 @@ type FiltrosCompuestosProps = {
     fieldTargets: BienesBusquedaTarget[];
     searchAttributeTargets: (search:string) => Promise<BienesBusquedaTarget[]>;
     searchAttributeValues: (attribute:string, search:string) => Promise<string[]>;
+    admiteLista: (target:BienesBusquedaTarget) => boolean;
+    searchFieldValues: (target:BienesBusquedaTarget) => Promise<OpcionDeValor[]>;
     logicOperator: BienesBusquedaLogicOperator;
     loading: boolean;
     showValidation: boolean;
@@ -81,6 +92,10 @@ const booleanOperators:OperatorOption[] = [
     {value:'not_empty', label:'No está vacío'},
 ];
 
+const listOperator:OperatorOption = {value:'in', label:'Es alguno de'};
+
+export const SIN_DATO = '(sin dato)';
+
 let filterSequence = 0;
 
 export function createEmptyFilter():BienesBusquedaFilterDraft{
@@ -119,6 +134,9 @@ export function isCompleteFilter(filter:BienesBusquedaFilterDraft):boolean{
     if(!operatorNeedsValue(filter.operator)){
         return true;
     }
+    if(filter.operator === 'in'){
+        return Array.isArray(filter.value) && filter.value.length > 0;
+    }
     if(filter.value == null || String(filter.value).trim() === ''){
         return false;
     }
@@ -126,10 +144,18 @@ export function isCompleteFilter(filter:BienesBusquedaFilterDraft):boolean{
         || (filter.valueTo != null && String(filter.valueTo).trim() !== '');
 }
 
+export function textosDeValores(filtro:BienesBusquedaFilterDraft):string[]{
+    const valores:unknown[] = Array.isArray(filtro.value) ? filtro.value : [];
+    return valores.map((valor, i) => filtro.valueLabels?.[i] ?? (valor == null ? SIN_DATO : String(valor)));
+}
+
 export function textoDeFiltro(filtro:BienesBusquedaFilterDraft):string{
-    const operador = [...textOperators, ...orderedOperators].find(o => o.value === filtro.operator)?.label ?? filtro.operator;
+    const operador = [listOperator, ...textOperators, ...orderedOperators].find(o => o.value === filtro.operator)?.label ?? filtro.operator;
     const partes = [filtro.targetLabel || filtro.target, operador.toLowerCase()];
-    if(operatorNeedsValue(filtro.operator)){
+    if(filtro.operator === 'in'){
+        const textos = textosDeValores(filtro);
+        partes.push(textos.slice(0, 3).join(', ') + (textos.length > 3 ? ` y ${textos.length - 3} más` : ''));
+    }else if(operatorNeedsValue(filtro.operator)){
         partes.push(String(filtro.value ?? ''));
     }
     if(filtro.operator === 'between'){
@@ -138,16 +164,19 @@ export function textoDeFiltro(filtro:BienesBusquedaFilterDraft):string{
     return partes.join(' ');
 }
 
-function operatorsFor(target:BienesBusquedaTarget | undefined):OperatorOption[]{
-    switch(normalizedType(target?.typeName ?? 'text')){
-    case 'number':
-    case 'date':
-        return orderedOperators;
-    case 'boolean':
-        return booleanOperators;
-    default:
-        return textOperators;
-    }
+function operatorsFor(target:BienesBusquedaTarget | undefined, conLista:boolean):OperatorOption[]{
+    const operadores = (() => {
+        switch(normalizedType(target?.typeName ?? 'text')){
+        case 'number':
+        case 'date':
+            return orderedOperators;
+        case 'boolean':
+            return booleanOperators;
+        default:
+            return textOperators;
+        }
+    })();
+    return conLista ? [listOperator, ...operadores] : operadores;
 }
 
 function targetFromFilter(
@@ -237,6 +266,7 @@ function TargetControl({
         loading={loading}
         disabled={disabled}
         filterOptions={currentOptions => currentOptions}
+        autoHighlight
         groupBy={option => option.source === 'field' ? 'Campos del bien' : 'Atributos'}
         getOptionLabel={option => option.label}
         isOptionEqualToValue={(option, value) =>
@@ -269,12 +299,113 @@ function TargetControl({
     />;
 }
 
+const filtrarOpciones = createFilterOptions<OpcionDeValor>({limit:200});
+
+function ListValueControl({
+    filter,
+    target,
+    disabled,
+    error,
+    searchFieldValues,
+    onChange,
+}:{
+    filter:BienesBusquedaFilterDraft;
+    target:BienesBusquedaTarget;
+    disabled:boolean;
+    error:boolean;
+    searchFieldValues:(target:BienesBusquedaTarget) => Promise<OpcionDeValor[]>;
+    onChange:(patch:Partial<BienesBusquedaFilterDraft>) => void;
+}){
+    const [options, setOptions] = React.useState<OpcionDeValor[]>([]);
+    const [loading, setLoading] = React.useState(true);
+    const [loadError, setLoadError] = React.useState<string|null>(null);
+    const {source, target:destino} = target;
+
+    React.useEffect(() => {
+        let cancelled = false;
+        setLoading(true);
+        setLoadError(null);
+        void searchFieldValues(target)
+            .then(opciones => {
+                if(!cancelled){
+                    setOptions(opciones);
+                    setLoading(false);
+                }
+            })
+            .catch(err => {
+                if(!cancelled){
+                    setOptions([]);
+                    setLoadError(err instanceof Error ? err.message : String(err));
+                    setLoading(false);
+                }
+            });
+        return () => {cancelled = true;};
+    }, [source, destino, searchFieldValues]);
+
+    const valores:(string|null)[] = Array.isArray(filter.value) ? filter.value : [];
+    const textos = textosDeValores(filter);
+    const elegidas = valores.map((valor, i) =>
+        options.find(option => option.valor === valor) ?? {valor, texto:textos[i]}
+    );
+    const fueraDeLista = elegidas.filter(elegida => options.indexOf(elegida) < 0);
+
+    return <Autocomplete
+        multiple
+        autoHighlight
+        disableCloseOnSelect
+        limitTags={2}
+        size="small"
+        options={[...fueraDeLista, ...options]}
+        value={elegidas}
+        loading={loading}
+        disabled={disabled}
+        filterOptions={filtrarOpciones}
+        getOptionLabel={option => option.texto}
+        isOptionEqualToValue={(option, value) => option.valor === value.valor}
+        onChange={(_event, seleccion) => onChange({
+            value:seleccion.map(option => option.valor),
+            valueLabels:seleccion.map(option => option.texto),
+        })}
+        noOptionsText={loadError || 'No se encontraron valores'}
+        sx={{minWidth:{md:210}, flex:1}}
+        renderOption={(props, option, {selected}) => {
+            const {key, ...resto} = props as React.HTMLAttributes<HTMLLIElement> & {key?:React.Key};
+            return <li {...resto} key={key ?? String(option.valor)}>
+                <Checkbox size="small" checked={selected} sx={{p:0, mr:1}}/>
+                <Box component="span" sx={{flex:1}}>{option.texto}</Box>
+                {option.cantidad != null &&
+                    <Typography variant="caption" color="text.secondary" sx={{ml:1}}>
+                        {option.cantidad}
+                    </Typography>
+                }
+            </li>;
+        }}
+        renderInput={params =>
+            <TextField
+                {...params}
+                size="small"
+                label="Valores"
+                error={error || Boolean(loadError)}
+                helperText={loadError || undefined}
+                InputProps={{
+                    ...params.InputProps,
+                    endAdornment:<>
+                        {loading ? <CircularProgress color="inherit" size={18}/> : null}
+                        {params.InputProps.endAdornment}
+                    </>,
+                }}
+            />
+        }
+    />;
+}
+
 function ValueControl({
     filter,
     target,
     disabled,
     error,
     searchAttributeValues,
+    searchFieldValues,
     onChange,
 }:{
     filter:BienesBusquedaFilterDraft;
@@ -282,10 +413,23 @@ function ValueControl({
     disabled:boolean;
     error:boolean;
     searchAttributeValues:(attribute:string, search:string) => Promise<string[]>;
+    searchFieldValues:(target:BienesBusquedaTarget) => Promise<OpcionDeValor[]>;
     onChange:(patch:Partial<BienesBusquedaFilterDraft>) => void;
 }){
     if(!operatorNeedsValue(filter.operator)){
         return null;
+    }
+    if(filter.operator === 'in'){
+        return target
+            ? <ListValueControl
+                filter={filter}
+                target={target}
+                disabled={disabled}
+                error={error}
+                searchFieldValues={searchFieldValues}
+                onChange={onChange}
+            />
+            : null;
     }
     const type = normalizedType(target?.typeName ?? 'text');
     const commonProps = {
@@ -428,6 +572,7 @@ function AttributeValueControl({
             }}
             options={visibleOptions}
             value={value || null}
+            autoHighlight
             disabled={disabled}
             filterOptions={currentOptions => currentOptions}
             onInputChange={(_event, inputValue, reason) => {
@@ -484,6 +629,8 @@ export function FiltrosCompuestos({
     fieldTargets,
     searchAttributeTargets,
     searchAttributeValues,
+    admiteLista,
+    searchFieldValues,
     logicOperator,
     loading,
     showValidation,
@@ -494,7 +641,15 @@ export function FiltrosCompuestos({
     const updateFilter = (id:string, patch:Partial<BienesBusquedaFilterDraft>) => {
         onFiltersChange(filters.map(filter => filter.id === id ? {...filter, ...patch} : filter));
     };
-    return <Paper variant="outlined" sx={{p:2, mb:2}}>
+    return <Paper
+        variant="outlined"
+        component="form"
+        sx={{p:2, mb:2}}
+        onSubmit={(event:React.FormEvent) => {
+            event.preventDefault();
+            onSearch();
+        }}
+    >
         <Stack spacing={1.5}>
             <Stack direction={{xs:'column', sm:'row'}} spacing={1.5} alignItems={{sm:'center'}}>
                 <Typography variant="h6" sx={{flex:1}}>Búsqueda avanzada</Typography>
@@ -537,15 +692,16 @@ export function FiltrosCompuestos({
                         searchAttributeTargets={searchAttributeTargets}
                         onChange={(option) => {
                             if(option){
-                                const firstOperator = operatorsFor(option)[0].value;
+                                const firstOperator = operatorsFor(option, admiteLista(option))[0].value;
                                 updateFilter(filter.id, {
                                     source:option.source,
                                     target:option.target,
                                     targetLabel:option.label,
                                     targetTypeName:option.typeName,
                                     operator:firstOperator,
-                                    value:'',
+                                    value:firstOperator === 'in' ? [] : '',
                                     valueTo:'',
+                                    valueLabels:undefined,
                                 });
                             }else{
                                 updateFilter(filter.id, {
@@ -556,6 +712,7 @@ export function FiltrosCompuestos({
                                     operator:'contains',
                                     value:'',
                                     valueTo:'',
+                                    valueLabels:undefined,
                                 });
                             }
                         }}
@@ -567,13 +724,19 @@ export function FiltrosCompuestos({
                         label="Operador"
                         value={filter.operator}
                         disabled={loading || !filter.target}
-                        onChange={(event) => updateFilter(filter.id, {
-                            operator:event.target.value as BienesBusquedaOperator,
-                            valueTo:'',
-                        })}
+                        onChange={(event) => {
+                            const operator = event.target.value as BienesBusquedaOperator;
+                            updateFilter(filter.id, {
+                                operator,
+                                valueTo:'',
+                                ...((operator === 'in') !== (filter.operator === 'in')
+                                    ? {value:operator === 'in' ? [] : '', valueLabels:undefined}
+                                    : {}),
+                            });
+                        }}
                         sx={{minWidth:{md:190}}}
                     >
-                        {operatorsFor(selectedTarget).map(operator =>
+                        {operatorsFor(selectedTarget, Boolean(selectedTarget && admiteLista(selectedTarget))).map(operator =>
                             <MenuItem key={operator.value} value={operator.value}>
                                 {operator.label}
                             </MenuItem>
@@ -586,6 +749,7 @@ export function FiltrosCompuestos({
                         disabled={loading || !filter.target}
                         error={incomplete && Boolean(filter.target)}
                         searchAttributeValues={searchAttributeValues}
+                        searchFieldValues={searchFieldValues}
                         onChange={(patch) => updateFilter(filter.id, patch)}
                     />
 
@@ -625,7 +789,7 @@ export function FiltrosCompuestos({
                     variant="contained"
                     startIcon={<Search/>}
                     disabled={loading}
-                    onClick={onSearch}
+                    type="submit"
                     sx={{ml:1}}
                 >
                     Buscar

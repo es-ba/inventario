@@ -68,15 +68,15 @@ export function useRowEditor({
     }, [filaInicial, filaCargada]);
 
     const esAlta = React.useMemo(() => {
-        if(row[MARCA_NUEVA]){
+        if(original[MARCA_NUEVA]){
             return true;
         }
         if(primaryKey.length === 0){
             return filaInicial === undefined;
         }
-        return primaryKey.some(pk => estaVacio(row[pk]));
+        return primaryKey.some(pk => estaVacio(original[pk]));
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [row, filaInicial, primaryKey.join(',')]);
+    }, [original, filaInicial, primaryKey.join(',')]);
 
     const errores = React.useMemo(() => {
         const resultado:Record<string, string|null> = {};

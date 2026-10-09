@@ -5,6 +5,7 @@ import {
     Button,
     Chip,
     CircularProgress,
+    Pagination,
     Stack,
     Tab,
     Tabs,
@@ -12,6 +13,7 @@ import {
     ToggleButtonGroup,
     Typography,
 } from '@mui/material';
+import type {TablePaginationProps} from '@mui/material';
 import {
     Add,
     Download,
@@ -31,6 +33,7 @@ import {
     GridFilterItem,
     GridFilterModel,
     GridFilterOperator,
+    GridPagination,
     GridPaginationModel,
     GridRenderCellParams,
     GridRowSelectionModel,
@@ -43,6 +46,9 @@ import {
     getGridDateOperators,
     getGridNumericOperators,
     getGridStringOperators,
+    gridPageCountSelector,
+    useGridApiContext,
+    useGridSelector,
 } from '@mui/x-data-grid';
 import type {
     Connector,
@@ -63,9 +69,10 @@ import type {
     BienesBusquedaResponse,
     BienesBusquedaRow,
 } from '../../common/contracts';
-import {selectBienesGridFields} from '../../common/bienes-busqueda';
+import {selectBienesFilterFields, selectBienesGridFields} from '../../common/bienes-busqueda';
 import type {GrupoFiltro} from '../../common/bienes-agrupar';
 import {ResumenBienes} from './resumen-bienes';
+import {claveDeAtributo} from '../../common/bienes-agrupar';
 import {
     filasSeleccionadasEnOrden,
     prepararEtiquetasCodigosBarra,
@@ -76,6 +83,7 @@ import {
     BienesBusquedaTarget,
     FiltrosAplicados,
     FiltrosCompuestos,
+    SIN_DATO,
     isCompleteFilter,
 } from './filtros-compuestos';
 import {bienesGridLocaleText} from './localizacion-grid';
@@ -190,6 +198,10 @@ function alContrato({source, target, operator, value, valueTo}:BienesBusquedaFil
     return {source, target, operator, value, valueTo};
 }
 
+function claveDeLista({source, target}:BienesBusquedaTarget):string{
+    return source === 'attribute' ? claveDeAtributo(target) : target;
+}
+
 function estadoFromTab(tab:number):BienesBusquedaRequest['estado']{
     return tab === 0 ? 'activo' : tab === 1 ? 'baja' : 'todos';
 }
@@ -271,6 +283,22 @@ function AtributosDetalle({row}:{row:BienesBusquedaRow}){
             </Typography>
         }
     </Box>;
+}
+
+function AccionesDePagina({page, onPageChange, className}:Pick<TablePaginationProps, 'page'|'onPageChange'|'className'>){
+    const apiRef = useGridApiContext();
+    const paginas = useGridSelector(apiRef, gridPageCountSelector);
+    return <Pagination
+        className={className}
+        size="small"
+        count={paginas}
+        page={page + 1}
+        onChange={(_event, valor) => onPageChange(null, valor - 1)}
+    />;
+}
+
+function PieDePagina(props:Partial<TablePaginationProps>){
+    return <GridPagination ActionsComponent={AccionesDePagina} {...props as object}/>;
 }
 
 export function BusquedaBienes({
@@ -394,7 +422,7 @@ export function BusquedaBienes({
     }, [conn]);
 
     const fieldTargets = React.useMemo<BienesBusquedaTarget[]>(() => {
-        return (tableDefinition?.fields ?? []).map(field => ({
+        return selectBienesFilterFields(tableDefinition?.fields ?? []).map(field => ({
             source:'field' as const,
             target:field.name,
             label:etiquetaDeCampo(field),
@@ -413,6 +441,45 @@ export function BusquedaBienes({
             typeName:normalizeAttributeType(attribute.tipo_valor),
         }));
     }, [conn]);
+
+    const [dimensiones, setDimensiones] = React.useState<ReadonlySet<string>>(new Set());
+
+    React.useEffect(() => {
+        let cancelled = false;
+        void conn.ajax.bienes_dimensiones_agrupar({})
+            .then(respuesta => {
+                if(!cancelled){
+                    setDimensiones(new Set(respuesta.dimensiones.map(dimension => dimension.clave)));
+                }
+            })
+            .catch(() => undefined);
+        return () => {cancelled = true;};
+    }, [conn]);
+
+    const admiteLista = React.useCallback(
+        (target:BienesBusquedaTarget) => dimensiones.has(claveDeLista(target)),
+        [dimensiones],
+    );
+
+    const searchFieldValues = React.useCallback(async (target:BienesBusquedaTarget) => {
+        const consulta:BienesBusquedaRequest = {
+            estado:estadoFromTab(tab),
+            logicOperator:'and',
+            filters:[],
+            quickSearch:'',
+            gridFilters:[],
+            page:0,
+            pageSize:25,
+            sortModel:[],
+            agruparPor:[claveDeLista(target)],
+        };
+        const respuesta = await conn.ajax.bienes_buscar_agrupado({consulta:JSON.stringify(consulta)});
+        return respuesta.rows.map(fila => ({
+            valor:fila.valores[0] ?? null,
+            texto:fila.textos[0] ?? fila.valores[0] ?? SIN_DATO,
+            cantidad:fila.cantidad,
+        }));
+    }, [conn, tab]);
 
     const searchAttributeValues = React.useCallback(async (
         attribute:string,
@@ -843,6 +910,8 @@ export function BusquedaBienes({
             fieldTargets={fieldTargets}
             searchAttributeTargets={searchAttributeTargets}
             searchAttributeValues={searchAttributeValues}
+            admiteLista={admiteLista}
+            searchFieldValues={searchFieldValues}
             logicOperator={logicOperator}
             loading={loading}
             showValidation={showValidation}
@@ -988,7 +1057,7 @@ export function BusquedaBienes({
                     rowSelectionModel={rowSelectionModel}
                     onRowSelectionModelChange={handleRowSelectionModelChange}
                     keepNonExistentRowsSelected
-                    slots={{toolbar:Toolbar}}
+                    slots={{toolbar:Toolbar, pagination:PieDePagina}}
                     slotProps={{columnsManagement:{getTogglableColumns}}}
                     columnVisibilityModel={columnVisibilityModel}
                     onColumnVisibilityModelChange={elegirColumnas}

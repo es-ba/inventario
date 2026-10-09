@@ -35,7 +35,8 @@ export type BienesBusquedaOperator =
     | 'greater_or_equal'
     | 'less_than'
     | 'less_or_equal'
-    | 'between';
+    | 'between'
+    | 'in';
 
 export type BienesBusquedaFilter = {
     source: BienesBusquedaSource;

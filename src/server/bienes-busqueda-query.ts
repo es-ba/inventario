@@ -8,6 +8,7 @@ import {
     DimensionAgrupar,
     GrupoFiltro,
     MAXIMO_DIMENSIONES,
+    claveDeAtributo,
 } from '../common/bienes-agrupar';
 
 export type BienesBusquedaFieldInfo = {
@@ -47,7 +48,10 @@ const OPERATORS = new Set<BienesBusquedaOperator>([
     'less_than',
     'less_or_equal',
     'between',
+    'in',
 ]);
+
+const MAXIMO_VALORES = 500;
 
 const PAGE_SIZES = new Set([10, 25, 50, 100]);
 
@@ -104,6 +108,18 @@ function parseGrupoFiltro(value: unknown): GrupoFiltro[] | undefined {
     });
 }
 
+function parseValores(value: unknown): (string | null)[] {
+    if (!Array.isArray(value) || value.length === 0 || value.length > MAXIMO_VALORES) {
+        throw new Error(`«Es alguno de» requiere una lista de 1 a ${MAXIMO_VALORES} valores`);
+    }
+    return value.map((valor) => {
+        if (valor != null && (typeof valor !== 'string' || valor.length > 200)) {
+            throw new Error('Cada valor de la lista debe ser texto o nulo');
+        }
+        return valor ?? null;
+    });
+}
+
 function parseFilter(value: unknown): BienesBusquedaFilter {
     if (value == null || typeof value !== 'object') {
         throw new Error('Cada filtro debe ser un objeto');
@@ -120,6 +136,9 @@ function parseFilter(value: unknown): BienesBusquedaFilter {
     }
     if (!OPERATORS.has(operator)) {
         throw new Error(`Operador no permitido: ${operator}`);
+    }
+    if (operator === 'in') {
+        return {source, target, operator, value: parseValores(filter.value)};
     }
     const valueIsEmpty = filter.value == null
         || (typeof filter.value === 'string' && filter.value.trim() === '');
@@ -342,6 +361,24 @@ function attributeExpression(typeName: string): string {
     }
 }
 
+function variosValoresSql(
+    filter: BienesBusquedaFilter,
+    options: BienesBusquedaQueryOptions,
+    addValue: (value: unknown) => string,
+): string {
+    const clave = filter.source === 'attribute' ? claveDeAtributo(filter.target) : filter.target;
+    if (!options.dimensiones || !Object.prototype.hasOwnProperty.call(options.dimensiones, clave)) {
+        throw new Error(`${filter.target} no admite una lista de valores`);
+    }
+    const expresion = sqlDeDimension(clave, options, addValue).valor;
+    const valores = filter.value as (string | null)[];
+    const textos = valores.filter((valor): valor is string => valor != null);
+    return `(${[
+        textos.length ? `(${expresion}) = ANY(${addValue(textos)}::text[])` : '',
+        textos.length < valores.length ? `(${expresion}) IS NULL` : '',
+    ].filter(Boolean).join(' OR ')})`;
+}
+
 function buildCondition(
     filter: BienesBusquedaFilter,
     options: BienesBusquedaQueryOptions,
@@ -352,6 +389,9 @@ function buildCondition(
         if (!field) {
             throw new Error(`Campo no permitido: ${filter.target}`);
         }
+        if (filter.operator === 'in') {
+            return variosValoresSql(filter, options, addValue);
+        }
         const internalName = sqlFieldName(filter.target, options);
         const columna = `b.${quoteIdentifier(internalName)}`;
         return compareSql(field.typeName === 'timestamp' ? `${columna}::date` : columna, field.typeName, filter, addValue);
@@ -359,6 +399,9 @@ function buildCondition(
     const attribute = options.allowedAttributes?.[filter.target];
     if (options.allowedAttributes && !attribute) {
         throw new Error(`Atributo no permitido: ${filter.target}`);
+    }
+    if (filter.operator === 'in') {
+        return variosValoresSql(filter, options, addValue);
     }
     const typeName = attribute?.typeName ?? 'text';
     const attributeParameter = addValue(filter.target);
