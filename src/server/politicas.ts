@@ -68,7 +68,7 @@ export function politicasPorElBien(columnaFicha:string = 'ficha'):PoliticasDeTab
 export function politicasResponsables():PoliticasDeTabla{
     const visibilidad = visibilidadDe({
         propio:`responsable = ${MI_RESPONSABLE}`,
-        dependiente:`sector_pertenece(sector, ${MI_SECTOR})`,
+        dependiente:`sector IN (SELECT s.sector FROM sectores s WHERE sector_pertenece(s.sector, ${MI_SECTOR}))`,
     });
     return conVisibilidad(`(get_app_user('mode') = 'login' OR ${visibilidad})`);
 }

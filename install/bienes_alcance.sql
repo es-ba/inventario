@@ -25,13 +25,13 @@ $BODY$
       WHERE r.sector IN (SELECT sector FROM mis_sectores)
   ),
   ultimo AS (
-    SELECT DISTINCT ON (mb.ficha)
+    SELECT DISTINCT ON (mb.ficha COLLATE "C")
            mb.ficha,
            nullif(btrim(mb.sector), '')              AS sector,
            nullif(btrim(mb.responsable), '')         AS responsable,
            nullif(btrim(mb.enusode_responsable), '') AS enusode_responsable
       FROM movimientos_bien mb
-      ORDER BY mb.ficha, mb.orden DESC
+      ORDER BY mb.ficha COLLATE "C", mb.orden DESC
   )
   SELECT u.ficha
     FROM ultimo u
