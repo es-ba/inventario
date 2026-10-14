@@ -163,6 +163,8 @@ async function opcionesBusquedaBienes(context:ProcedureContext, withoutPaginatio
         allowedAttributes,
         withoutPagination,
         dimensiones:catalogo.sql,
+        reemplazos:Object.fromEntries(Object.entries(catalogo.reemplazos)
+            .map(([clave, campos]) => [clave, campos.filter(campo => allowedFields[campo])])),
     };
     return {tableDef, options, catalogo};
 }

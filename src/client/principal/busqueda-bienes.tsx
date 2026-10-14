@@ -69,9 +69,10 @@ import type {
     BienesBusquedaResponse,
     BienesBusquedaRow,
 } from '../../common/contracts';
-import {selectBienesFilterFields, selectBienesGridFields} from '../../common/bienes-busqueda';
-import type {GrupoFiltro} from '../../common/bienes-agrupar';
+import {camposDeCondicion, selectBienesGridFields} from '../../common/bienes-busqueda';
+import type {DimensionDisponible, GrupoFiltro} from '../../common/bienes-agrupar';
 import {ResumenBienes} from './resumen-bienes';
+import {DesgloseBusqueda} from './desglose-busqueda';
 import {claveDeAtributo} from '../../common/bienes-agrupar';
 import {
     filasSeleccionadasEnOrden,
@@ -421,14 +422,16 @@ export function BusquedaBienes({
         return () => {cancelled = true;};
     }, [conn]);
 
+    const [dimensiones, setDimensiones] = React.useState<DimensionDisponible[]>([]);
+
     const fieldTargets = React.useMemo<BienesBusquedaTarget[]>(() => {
-        return selectBienesFilterFields(tableDefinition?.fields ?? []).map(field => ({
+        return camposDeCondicion(tableDefinition?.fields ?? [], dimensiones).map(field => ({
             source:'field' as const,
             target:field.name,
             label:etiquetaDeCampo(field),
             typeName:field.typeName,
         }));
-    }, [tableDefinition]);
+    }, [tableDefinition, dimensiones]);
 
     const searchAttributeTargets = React.useCallback(async (search:string) => {
         const response = await conn.ajax.bienes_atributos_buscar({busqueda:search});
@@ -442,14 +445,12 @@ export function BusquedaBienes({
         }));
     }, [conn]);
 
-    const [dimensiones, setDimensiones] = React.useState<ReadonlySet<string>>(new Set());
-
     React.useEffect(() => {
         let cancelled = false;
         void conn.ajax.bienes_dimensiones_agrupar({})
             .then(respuesta => {
                 if(!cancelled){
-                    setDimensiones(new Set(respuesta.dimensiones.map(dimension => dimension.clave)));
+                    setDimensiones(respuesta.dimensiones);
                 }
             })
             .catch(() => undefined);
@@ -457,7 +458,7 @@ export function BusquedaBienes({
     }, [conn]);
 
     const admiteLista = React.useCallback(
-        (target:BienesBusquedaTarget) => dimensiones.has(claveDeLista(target)),
+        (target:BienesBusquedaTarget) => dimensiones.some(dimension => dimension.clave === claveDeLista(target)),
         [dimensiones],
     );
 
@@ -1008,6 +1009,21 @@ export function BusquedaBienes({
                         }}
                     />
                 </Box>
+                : null}
+            {vista === 'listado'
+                ? <DesgloseBusqueda
+                    conn={conn}
+                    consulta={consultaResumen}
+                    version={searchVersion + (actualizacion?.version ?? 0)}
+                    visible={visible}
+                    usuario={usuario}
+                    grupoFiltro={grupoFiltro?.partes ?? null}
+                    onElegir={grupo => {
+                        clearSelection();
+                        setGrupoFiltro(grupo);
+                        setPaginationModel(current => ({...current, page:0}));
+                    }}
+                />
                 : null}
             {vista === 'listado'
             ? <Box sx={{

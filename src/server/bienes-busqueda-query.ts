@@ -25,6 +25,7 @@ export type BienesBusquedaQueryOptions = {
     allowedAttributes?: Record<string, BienesBusquedaFieldInfo>;
     withoutPagination?: boolean;
     dimensiones?: Readonly<Record<string, DimensionSql>>;
+    reemplazos?: Readonly<Record<string, readonly string[]>>;
 };
 
 export type BienesBusquedaQueries = {
@@ -394,6 +395,11 @@ function buildCondition(
         }
         const internalName = sqlFieldName(filter.target, options);
         const columna = `b.${quoteIdentifier(internalName)}`;
+        const reemplazados = filter.operator === 'contains' ? options.reemplazos?.[filter.target] ?? [] : [];
+        if (reemplazados.length) {
+            const columnas = [columna, ...reemplazados.map((campo) => `b.${quoteIdentifier(sqlFieldName(campo, options))}`)];
+            return compareSql(`concat_ws(' ', ${columnas.join(', ')})`, field.typeName, filter, addValue);
+        }
         return compareSql(field.typeName === 'timestamp' ? `${columna}::date` : columna, field.typeName, filter, addValue);
     }
     const attribute = options.allowedAttributes?.[filter.target];

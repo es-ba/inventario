@@ -6,6 +6,7 @@ export type DimensionDisponible = {
     clave:DimensionAgrupar;
     etiqueta:string;
     familia:FamiliaDimension;
+    reemplaza?:string[];
 };
 
 export type GrupoFiltro = {

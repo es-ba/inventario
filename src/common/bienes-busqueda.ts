@@ -1,3 +1,5 @@
+import type {DimensionDisponible} from './bienes-agrupar';
+
 export type {
     BienAtributoResumen,
     BienesAtributoOpcion,
@@ -64,4 +66,15 @@ export function selectBienesFilterFields<T extends BienesGridMetadataField>(
     fields:readonly T[],
 ):T[]{
     return fields.filter(field => field.referencedName == null);
+}
+
+export function camposDeCondicion<T extends BienesGridMetadataField & {label?:string}>(
+    fields:readonly T[],
+    dimensiones:readonly DimensionDisponible[],
+):T[]{
+    const reemplazados = new Set(([] as string[]).concat(...dimensiones.map(dimension => dimension.reemplaza ?? [])));
+    const etiquetas = new Map(dimensiones.map(dimension => [dimension.clave, dimension.etiqueta]));
+    return selectBienesFilterFields(fields)
+        .filter(field => !reemplazados.has(field.name))
+        .map(field => etiquetas.has(field.name) ? {...field, label:etiquetas.get(field.name)} : field);
 }

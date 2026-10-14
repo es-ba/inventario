@@ -17,7 +17,10 @@ export type AtributoDisponible = {atributo:string, nombre?:string|null};
 export type CatalogoDeDimensiones = {
     disponibles:DimensionDisponible[],
     sql:Record<string, DimensionSql>,
+    reemplazos:Record<string, string[]>,
 };
+
+type Dimension = {clave:string, etiqueta:string, familia:FamiliaDimension, sql:DimensionSql, reemplaza?:string[]};
 
 function identificador(nombre:string):string{
     return `"${nombre.replace(/"/g, '""')}"`;
@@ -45,21 +48,36 @@ const NOMBRE_DEL_RESPONSABLE_DEL_SECTOR = `(SELECT concat_ws(', ', ${textoONulo(
     FROM sectores s JOIN responsables r ON r.responsable = s.responsable
     WHERE s.sector = b.sector)`;
 
-const ESPECIALES:{clave:string, etiqueta:string, familia:FamiliaDimension, sql:DimensionSql}[] = [
+const ESPECIALES:Dimension[] = [
     {clave:'sector', etiqueta:'sector', familia:'asignación',
-        sql:fija(textoONulo('b.sector'), 'b.sector_texto')},
+        sql:fija(textoONulo('b.sector'), 'b.sector_texto'),
+        reemplaza:['sector_sigla', 'nombre_sector']},
     {clave:'responsable_sector', etiqueta:'responsable del sector', familia:'asignación',
-        sql:fija(textoONulo(RESPONSABLE_DEL_SECTOR), codigoYTexto(RESPONSABLE_DEL_SECTOR, NOMBRE_DEL_RESPONSABLE_DEL_SECTOR))},
+        sql:fija(textoONulo(RESPONSABLE_DEL_SECTOR), codigoYTexto(RESPONSABLE_DEL_SECTOR, NOMBRE_DEL_RESPONSABLE_DEL_SECTOR)),
+        reemplaza:['responsable_sector_nombre']},
+    {clave:'responsable', etiqueta:'responsable directo', familia:'asignación',
+        sql:fija(textoONulo('b.responsable'), 'b.responsable_texto'),
+        reemplaza:['responsable_nombre']},
     {clave:'enusode_responsable', etiqueta:'asignado a', familia:'asignación',
-        sql:fija(textoONulo('b.enusode_responsable'), codigoYTexto('b.enusode_responsable', 'b.enusode_responsable_nombre'))},
+        sql:fija(textoONulo('b.enusode_responsable'), codigoYTexto('b.enusode_responsable', 'b.enusode_responsable_nombre')),
+        reemplaza:['enusode_responsable_nombre']},
     {clave:'sede', etiqueta:'sede', familia:'asignación',
-        sql:fija(textoONulo('b.sede'), 'b.sede_texto')},
+        sql:fija(textoONulo('b.sede'), 'b.sede_texto'),
+        reemplaza:['sede_nombre']},
     {clave:'espacio', etiqueta:'espacio', familia:'asignación',
-        sql:fija(textoONulo('b.espacio'), 'b.espacio_texto')},
+        sql:fija(textoONulo('b.espacio'), 'b.espacio_texto'),
+        reemplaza:['espacio_numero']},
+    {clave:'tipo_asignacion', etiqueta:'tipo de asignación', familia:'asignación',
+        sql:fija(textoONulo('b.tipo_asignacion'), 'b.tipo_asignacion_texto')},
     {clave:'clase', etiqueta:'clase', familia:'clasificación',
         sql:fija(
             `CASE WHEN ${textoONulo('b.clase')} IS NULL THEN NULL ELSE concat_ws('/', btrim(b.rubro), btrim(b.clase)) END`,
             'b.clase_texto',
+        )},
+    {clave:'cuenta', etiqueta:'cuenta', familia:'clasificación',
+        sql:fija(
+            `CASE WHEN ${textoONulo('b.cuenta')} IS NULL THEN NULL ELSE concat_ws('/', btrim(b.rubro), btrim(b.clase), btrim(b.cuenta)) END`,
+            'b.cuenta_texto',
         )},
 ];
 
@@ -78,7 +96,7 @@ export function dimensionesPorReferencias(
     tabla:DefinicionDeTabla,
     definicionDe:(nombre:string) => DefinicionDeTabla|undefined,
     excluidas:ReadonlySet<string>,
-):{clave:string, etiqueta:string, familia:FamiliaDimension, sql:DimensionSql}[]{
+):Dimension[]{
     return (tabla.foreignKeys ?? []).flatMap(referencia => {
         if(referencia.fields.length !== 1){
             return [];
@@ -108,7 +126,7 @@ export function dimensionesPorReferencias(
 
 export function dimensionesPorAtributos(
     atributos:AtributoDisponible[],
-):{clave:string, etiqueta:string, familia:FamiliaDimension, sql:DimensionSql}[]{
+):Dimension[]{
     return atributos.map(({atributo, nombre}) => ({
         clave:claveDeAtributo(atributo),
         etiqueta:nombre && nombre !== atributo ? `${nombre} (${atributo})` : atributo,
@@ -128,7 +146,7 @@ export function armarCatalogoDeDimensiones(
 ):CatalogoDeDimensiones{
     const especiales = new Set(ESPECIALES.map(d => d.clave));
     const porClave = (a:{etiqueta:string}, b:{etiqueta:string}) => a.etiqueta.localeCompare(b.etiqueta);
-    const todas = [
+    const todas:Dimension[] = [
         ...ESPECIALES.filter(d => d.familia === 'asignación'),
         ...[
             ...ESPECIALES.filter(d => d.familia === 'clasificación'),
@@ -137,7 +155,9 @@ export function armarCatalogoDeDimensiones(
         ...dimensionesPorAtributos(atributos).sort(porClave),
     ];
     return {
-        disponibles:todas.map(({clave, etiqueta, familia}) => ({clave, etiqueta, familia})),
+        disponibles:todas.map(({clave, etiqueta, familia, reemplaza}) =>
+            reemplaza?.length ? {clave, etiqueta, familia, reemplaza} : {clave, etiqueta, familia}),
         sql:Object.fromEntries(todas.map(d => [d.clave, d.sql])),
+        reemplazos:Object.fromEntries(todas.filter(d => d.reemplaza?.length).map(d => [d.clave, d.reemplaza!])),
     };
 }

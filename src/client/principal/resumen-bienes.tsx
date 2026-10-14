@@ -33,7 +33,7 @@ declare module 'frontend-plus' {
     }
 }
 
-const SIN_DATO = '(sin dato)';
+export const SIN_DATO = '(sin dato)';
 type FilaResumen = BienesAgrupadoFila & {id:string};
 
 function idDeValores(valores:(string|null)[]):string{
@@ -44,7 +44,7 @@ export function grupoDeFila(dimensiones:DimensionAgrupar[], fila:BienesAgrupadoF
     return dimensiones.map((dimension, i) => ({dimension, valor:fila.valores[i] ?? null}));
 }
 
-function SelectorDimension({
+export function SelectorDimension({
     etiqueta,
     opciones,
     valor,
