@@ -1,0 +1,102 @@
+subcategoria|nombre|categoria
+CMP-01|Notebook|CMP
+CMP-02|PC de escritorio|CMP
+CMP-03|All-in-one|CMP
+CMP-04|Mini PC / thin client|CMP
+CMP-05|Estación de trabajo (workstation)|CMP
+MOV-01|Teléfono celular|MOV
+MOV-02|Tablet|MOV
+MOV-03|Módem 4G/5G portátil|MOV
+MOV-04|Colector de datos / PDA|MOV
+MOV-05|GPS|MOV
+PER-01|Monitor|PER
+PER-02|Docking station|PER
+PER-03|Disco externo|PER
+PER-04|Cámara web|PER
+PER-05|Parlantes|PER
+PER-06|Lector de códigos de barras / tarjetas|PER
+IMP-01|Impresora|IMP
+IMP-02|Multifunción|IMP
+IMP-03|Escáner|IMP
+IMP-04|Plotter|IMP
+SRV-01|Servidor|SRV
+SRV-02|Storage (NAS/SAN)|SRV
+SRV-03|Rack|SRV
+SRV-04|Unidad de backup|SRV
+RED-01|Switch|RED
+RED-02|Router|RED
+RED-03|Firewall|RED
+RED-04|Access point Wi-Fi|RED
+RED-05|Transceptor SFP|RED
+RED-06|Patchera|RED
+TEL-01|Teléfono fijo / IP|TEL
+TEL-02|Central telefónica|TEL
+TEL-03|Handy / radio|TEL
+ENE-01|UPS|ENE
+ENE-02|Estabilizador|ENE
+ENE-03|Grupo electrógeno|ENE
+AUD-01|Proyector|AUD
+AUD-02|Televisor / pantalla|AUD
+AUD-03|Cámara de foto / video|AUD
+AUD-04|Equipo de sonido / micrófono|AUD
+AUD-05|Equipo de videoconferencia|AUD
+AUD-06|Drone|AUD
+MOB-01|Escritorio|MOB
+MOB-02|Silla|MOB
+MOB-03|Mesa|MOB
+MOB-04|Armario / archivero|MOB
+MOB-05|Biblioteca / estantería|MOB
+MOB-06|Cajonera|MOB
+MOB-07|Sillón / sofá|MOB
+MOB-08|Accesorio de mobiliario (perchero, paragüero, atril, lámpara)|MOB
+CLI-01|Aire acondicionado|CLI
+CLI-02|Calefactor / estufa|CLI
+CLI-03|Ventilador|CLI
+CLI-04|Purificador / ozonizador|CLI
+OFI-01|Fotocopiadora|OFI
+OFI-02|Destructora de papel|OFI
+OFI-03|Caja fuerte|OFI
+OFI-04|Pizarra|OFI
+OFI-05|Guillotina|OFI
+OFI-06|Encuadernadora / espiraladora|OFI
+OFI-07|Calculadora|OFI
+OFI-08|Reloj|OFI
+OFI-99|Otro equipamiento de oficina|OFI
+COC-01|Heladera|COC
+COC-02|Microondas|COC
+COC-03|Dispenser de agua|COC
+COC-04|Cafetera|COC
+COC-99|Otro electrodoméstico de cocina|COC
+SEG-01|Cámara de seguridad|SEG
+SEG-02|Grabador DVR/NVR|SEG
+SEG-03|Reloj de fichaje / control de acceso|SEG
+SEG-04|Matafuego|SEG
+SEG-05|Alarma|SEG
+SEG-06|Equipo de primeros auxilios|SEG
+VEH-01|Automóvil|VEH
+VEH-02|Utilitario / camioneta|VEH
+VEH-03|Motocicleta|VEH
+BIB-01|Libro|BIB
+SOF-01|Licencia de software perpetua|SOF
+ACC-01|Mouse|ACC
+ACC-02|Teclado|ACC
+ACC-03|Memoria RAM|ACC
+ACC-04|Disco rígido interno|ACC
+ACC-05|Pendrive|ACC
+ACC-06|Cargador / fuente / power bank|ACC
+ACC-07|Chip SIM|ACC
+ACC-08|Auricular|ACC
+ACC-09|Repuesto de impresora|ACC
+ACC-10|Componente interno de PC|ACC
+ACC-99|Otro accesorio|ACC
+CER-01|Bandera|CER
+CER-02|Mástil / asta|CER
+CER-99|Otro elemento ceremonial|CER
+INS-01|Tabique / división|INS
+INS-02|Cortina / toldo|INS
+INS-99|Otra instalación|INS
+HER-01|Herramienta manual|HER
+HER-02|Herramienta eléctrica|HER
+HER-03|Escalera|HER
+HER-99|Otro útil de trabajo|HER
+VAR-99|Otro bien (sin clasificar)|VAR

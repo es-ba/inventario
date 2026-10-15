@@ -34,6 +34,15 @@ module.exports = {
                 test:/\.png$/i,
                 type:'asset/inline',
             },
+            {
+                test:/\.md$/i,
+                type:'asset/source',
+            },
+            {
+                test:/\.jpg$/i,
+                type:'asset/resource',
+                generator:{filename:'ayuda/[name].[contenthash:8][ext]'},
+            },
         ],
     },
     resolve: {

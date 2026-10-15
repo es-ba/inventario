@@ -13,6 +13,8 @@ import { roles } from "./table-roles";
 import { bienes } from './table-bienes';
 import { usuarios   } from './table-usuarios';
 import { grupos } from './table-grupos';
+import { categorias } from './table-categorias';
+import { subcategorias } from './table-subcategorias';
 import { tipo_espacio } from "./table-tipo_espacio";
 import { espacios } from "./table-espacios";
 import { ordenes_compra } from "./table-ordenes_compra";
@@ -328,6 +330,7 @@ export class AppInventario extends AppBackend{
 
         menuContent.push(
             {menuType: 'menu', name: 'reportes', label: 'reportes', menuContent: [
+                {menuType: 'bienes_por_categoria', name: 'bienes_por_categoria', label: 'bienes por categoría'},
                 {menuType: 'table', name: 'reporte_bienes_por_sector', label: 'bienes por sector'},
                 {menuType: 'table', name: 'reporte_bienes_por_responsable', label: 'bienes por responsable'},
                 {menuType: 'table', name: 'reporte_bienes_por_espacio', label: 'bienes por espacio'},
@@ -347,6 +350,8 @@ export class AppInventario extends AppBackend{
                     {menuType: 'table', name: 'proveedores', label: 'proveedores'},
                     {menuType: 'table', name: 'marcas', label: 'marcas'},
                     {menuType: 'table', name: 'grupos', label: 'grupos'},
+                    {menuType: 'table', name: 'categorias', label: 'categorías'},
+                    {menuType: 'table', name: 'subcategorias', label: 'subcategorías'},
                     {menuType: 'table', name: 'sedes', label: 'sedes'},
                     {menuType: 'menu', name: 'atributos', label: 'atributos', menuContent: [
                         {menuType: 'table', name: 'bienes_atributos', label: 'atributos de bienes'},
@@ -412,6 +417,7 @@ export class AppInventario extends AppBackend{
                 ]}
             );
         }
+        menuContent.push({menuType:'ayuda', name:'ayuda', label:'ayuda'});
         return {menu:menuContent};
     }
     override clientIncludes(req:Request|null, opts:OptsClientPage):ClientModuleDefinition[]{
@@ -474,6 +480,8 @@ export class AppInventario extends AppBackend{
             roles       ,    
             tipo_sector ,
             sectores       ,
+            categorias  ,
+            subcategorias,
             grupos      ,
             tipo_espacio,
             espacios    ,

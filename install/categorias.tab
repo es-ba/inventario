@@ -1,0 +1,23 @@
+categoria|nombre|incluye|orden|aparte
+CMP|Computadoras|Equipos de cómputo personal|1|false
+MOV|Dispositivos móviles|Celulares, tablets, módems portátiles, colectores de datos|2|false
+PER|Monitores y periféricos|Monitores, docking stations, discos externos|3|false
+IMP|Impresión y digitalización|Impresoras, multifunción, escáneres, plotters|4|false
+SRV|Servidores y almacenamiento|Servidores, storage, racks, backup|5|false
+RED|Redes|Switches, routers, firewalls, access points|6|false
+TEL|Telefonía y radio|Teléfonos fijos/IP, centrales, handies|7|false
+ENE|Energía|UPS, estabilizadores, grupos electrógenos|8|false
+AUD|Audiovisual|Proyectores, pantallas, cámaras, sonido, videoconferencia|9|false
+MOB|Mobiliario|Escritorios, sillas, mesas, armarios|10|false
+CLI|Climatización|Aires acondicionados, calefactores, ventiladores|11|false
+OFI|Equipamiento de oficina|Fotocopiadoras, destructoras, cajas fuertes, pizarras|12|false
+COC|Equipamiento de cocina/office|Heladeras, microondas, dispensers|13|false
+SEG|Seguridad y control de acceso|Cámaras, grabadores, relojes de fichaje|14|false
+VEH|Vehículos|Automóviles, utilitarios, motos|15|false
+BIB|Biblioteca|Libros y colecciones|16|false
+SOF|Software y licencias|Licencias perpetuas inventariables|17|false
+ACC|Accesorios y componentes|Mouse, teclados, memorias, discos internos, pendrives, cargadores, SIM, repuestos|18|true
+CER|Ceremonial|Banderas, mástiles, astas|19|false
+INS|Instalaciones y divisiones|Tabiques, cortinas, toldos|20|false
+HER|Herramientas|Herramientas manuales y eléctricas, escaleras|21|false
+VAR|Varios|Bienes que no encajan en otro grupo (revisar periódicamente)|22|false

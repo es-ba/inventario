@@ -6,7 +6,7 @@ import {PersonasSiper} from './principal/siper/personas-siper';
 import {PantallaInventario} from './principal/base/pantalla-inventario';
 
 function PantallaSiper(){
-    return <PantallaInventario titulo="Siper - Personas">
+    return <PantallaInventario ayuda="siper" titulo="Siper - Personas">
         <PersonasSiper/>
     </PantallaInventario>;
 }

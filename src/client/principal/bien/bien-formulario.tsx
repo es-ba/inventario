@@ -43,8 +43,13 @@ const SECCIONES:{titulo:string, campos:string[], abiertaPorDefecto?:boolean}[] =
         abiertaPorDefecto:true,
     },
     {
+        titulo:'Clasificación',
+        campos:['grupo', 'subcategoria', 'categoria'],
+        abiertaPorDefecto:true,
+    },
+    {
         titulo:'Clasificación contable',
-        campos:['rubro', 'clase', 'cuenta', 'grupo'],
+        campos:['rubro', 'clase', 'cuenta'],
     },
     {
         titulo:'Identificación',

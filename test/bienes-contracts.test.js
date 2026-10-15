@@ -31,13 +31,15 @@ test('defines bienes procedures with one shared public row contract', () => {
     const response = {
         rows:[{
             ficha:'1',
+            categoria:'CMP — Computadoras',
+            subcategoria:'CMP-01 — Notebook',
             grupo:'1010 — Informática',
             marca:'DELL — Dell',
             rubro:null,
             clase:null,
             cuenta:null,
             responsable:'27 — Pérez, Ana',
-            area:null,
+            sector:null,
             sede:null,
             espacio:null,
             tipo_asignacion:null,

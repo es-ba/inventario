@@ -25,6 +25,8 @@ export type BienesGridMetadataField = {
 };
 
 export const BIENES_GRID_ASSIGNMENT_FIELDS:readonly string[] = Object.freeze([
+    'categoria',
+    'subcategoria',
     'responsable_sector_nombre',
     'responsable_nombre',
     'sector_sigla',

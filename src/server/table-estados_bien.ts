@@ -11,6 +11,8 @@ export function estados_bien(_context:TableContext):TableDefinition{
         fields:[
             {name:'estado_bien'      , typeName:'text'},
             {name:'descripcion'      , typeName:'text', isName:true},
+            {name:'etiqueta'         , typeName:'text', nullable:true},
+            {name:'orden'            , typeName:'integer', nullable:true},
         ],
         primaryKey:['estado_bien']
     };

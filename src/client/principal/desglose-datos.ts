@@ -1,7 +1,7 @@
 import type {DimensionAgrupar, DimensionDisponible, GrupoFiltro} from '../../common/bienes-agrupar';
 import type {BienesBusquedaRequest} from '../../common/contracts';
 
-export const DESGLOSE_INICIAL:DimensionAgrupar = 'grupo';
+export const DESGLOSE_INICIAL:DimensionAgrupar = 'categoria';
 
 export function dimensionDelDesglose(
     disponibles:DimensionDisponible[],

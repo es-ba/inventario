@@ -69,6 +69,10 @@ const ESPECIALES:Dimension[] = [
         reemplaza:['espacio_numero']},
     {clave:'tipo_asignacion', etiqueta:'tipo de asignación', familia:'asignación',
         sql:fija(textoONulo('b.tipo_asignacion'), 'b.tipo_asignacion_texto')},
+    {clave:'categoria', etiqueta:'categoría', familia:'clasificación',
+        sql:fija(textoONulo('b.categoria'), 'b.categoria_texto')},
+    {clave:'subcategoria', etiqueta:'subcategoría', familia:'clasificación',
+        sql:fija(textoONulo('b.subcategoria'), 'b.subcategoria_texto')},
     {clave:'clase', etiqueta:'clase', familia:'clasificación',
         sql:fija(
             `CASE WHEN ${textoONulo('b.clase')} IS NULL THEN NULL ELSE concat_ws('/', btrim(b.rubro), btrim(b.clase)) END`,

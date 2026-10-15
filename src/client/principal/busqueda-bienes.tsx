@@ -70,7 +70,7 @@ import type {
     BienesBusquedaRow,
 } from '../../common/contracts';
 import {camposDeCondicion, selectBienesGridFields} from '../../common/bienes-busqueda';
-import type {DimensionDisponible, GrupoFiltro} from '../../common/bienes-agrupar';
+import type {DimensionDisponible, GrupoFiltroElegido} from '../../common/bienes-agrupar';
 import {ResumenBienes} from './resumen-bienes';
 import {DesgloseBusqueda} from './desglose-busqueda';
 import {claveDeAtributo} from '../../common/bienes-agrupar';
@@ -142,6 +142,7 @@ type BusquedaBienesProps = {
     onNuevoBien?:() => void;
     accionSeleccion?:AccionSeleccionBienes;
     fichasExcluidas?:ReadonlySet<string>;
+    grupoFiltroInicial?:GrupoFiltroElegido|null;
 };
 
 const operatorMap:Record<string, BienesBusquedaOperator> = {
@@ -311,6 +312,7 @@ export function BusquedaBienes({
     onNuevoBien,
     accionSeleccion,
     fichasExcluidas,
+    grupoFiltroInicial = null,
 }:BusquedaBienesProps){
     const permisos = usePermisos();
     const veInactivos = permisos.guardar || permisos.aprobarBaja || permisos.restaurarBaja;
@@ -363,8 +365,7 @@ export function BusquedaBienes({
     const [resultadoMovimiento, setResultadoMovimiento] = React.useState<ResultadoMovimiento|null>(null);
     const [vista, setVista] = React.useState<'listado'|'resumen'>('listado');
     const [resumenAbierto, setResumenAbierto] = React.useState(false);
-    const [grupoFiltro, setGrupoFiltro] =
-        React.useState<{partes:GrupoFiltro[], textos:string[], etiquetas:string[]}|null>(null);
+    const [grupoFiltro, setGrupoFiltro] = React.useState<GrupoFiltroElegido|null>(grupoFiltroInicial);
     const requestSequence = React.useRef(0);
     const versionActualizada = React.useRef(0);
 

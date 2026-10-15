@@ -22,7 +22,7 @@ function PantallaControles(){
         return posicion >= 0 && posicion < abierto.lista.length - 1 ? abierto.lista[posicion + 1] : null;
     }, [abierto]);
 
-    return <PantallaInventario titulo={abierto ? `Control - Bien ${abierto.bien.ficha}` : 'Control de bienes'}>
+    return <PantallaInventario ayuda="controles" titulo={abierto ? `Control - Bien ${abierto.bien.ficha}` : 'Control de bienes'}>
         <Box sx={{display:abierto ? 'none' : 'block'}}>
             <ControlesListado
                 recargar={guardados}

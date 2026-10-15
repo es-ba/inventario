@@ -28,6 +28,10 @@ export const sqlBienes = `
 SELECT 
     b.*,
     ${codigoTextoSql('b.grupo', 'g.descripcion')} AS grupo_texto,
+    g.subcategoria,
+    ${codigoTextoSql('g.subcategoria', 'sc.nombre')} AS subcategoria_texto,
+    sc.categoria,
+    ${codigoTextoSql('sc.categoria', 'cat.nombre')} AS categoria_texto,
     ${codigoTextoSql('b.marca', 'ma.descripcion')} AS marca_texto,
     ${codigoTextoSql('b.rubro', 'ru.nombre')} AS rubro_texto,
     ${codigoTextoSql('b.clase', 'cla.nombre')} AS clase_texto,
@@ -74,6 +78,8 @@ SELECT
     coalesce(ult.usuario_modificacion, ult.usuario_creacion) AS usuario_ultimo_movimiento
     FROM bienes b
 LEFT JOIN grupos g ON g.grupo = b.grupo
+LEFT JOIN subcategorias sc ON sc.subcategoria = g.subcategoria
+LEFT JOIN categorias cat ON cat.categoria = sc.categoria
 LEFT JOIN marcas ma ON ma.marca = b.marca
 LEFT JOIN rubros ru ON ru.rubro = b.rubro
 LEFT JOIN clases cla
@@ -146,6 +152,8 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'rubro'                       , typeName:'text'    , nullable:true},
             {name:'clase'                       , typeName:'text'    , nullable:true},
             {name:'cuenta'                      , typeName:'text'    , nullable:true},
+            {name:'categoria'                   , typeName:'text'    , editable:false, inTable:false, title:'categoría'},
+            {name:'subcategoria'                , typeName:'text'    , editable:false, inTable:false, title:'subcategoría'},
             {name:'grupo'                       , typeName:'text'    , nullable:true},
             {name:'marca'                       , typeName:'text'    , nullable:true},
             {name:'serie'                       , typeName:'text'    , nullable:true},
@@ -206,6 +214,10 @@ export function bienes(context:TableContext):TableDefinition{
             {references:'estados_baja', fields:['estado_baja']},
             {references:'marcas', fields:['marca']},
             {references:'ordenes_compra', fields:['orden_compra']},
+        ],
+        softForeignKeys:[
+            {references:'subcategorias', fields:['subcategoria']},
+            {references:'categorias', fields:['categoria']},
         ],
         constraints:[
             {constraintType:'unique', fields:['ficha']}

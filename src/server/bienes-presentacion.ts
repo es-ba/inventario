@@ -5,6 +5,8 @@ import {
 } from '../common/contracts';
 
 const BIENES_PRESENTATION_FIELDS = Object.freeze([
+    'categoria',
+    'subcategoria',
     'grupo',
     'marca',
     'rubro',

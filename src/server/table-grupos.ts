@@ -15,9 +15,13 @@ export function grupos(context:TableContext):TableDefinition{
         fields:[
             {name:'grupo'             , typeName:'text'    }, 
             {name:'pertenece_a'       , typeName:'text'    },  
-            {name:'descripcion'       , typeName:'text'    , isName:true}, 
+            {name:'descripcion'       , typeName:'text'    , isName:true},
+            {name:'subcategoria'      , typeName:'text'    , nullable:true, title:'subcategoría'},
         ],
         primaryKey:['grupo'],
+        foreignKeys:[
+            {references:'subcategorias', fields:['subcategoria']},
+        ],
         constraints:[
             {constraintType:'unique', fields:['grupo']}
         ],

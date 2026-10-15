@@ -15,7 +15,7 @@ function PantallaSolicitudes({acta}:{acta?:string}){
     const [vista, setVista] = React.useState<Vista>(acta ? {nombre:'solicitud', acta} : {nombre:'listado'});
     const [version, setVersion] = React.useState(0);
 
-    return <PantallaInventario titulo={vista.nombre === 'solicitud'
+    return <PantallaInventario ayuda="solicitudes" titulo={vista.nombre === 'solicitud'
         ? `Solicitud ${vista.acta ?? 'nueva'}`
         : 'Solicitudes de movimiento'}>
         <Box sx={{display:vista.nombre === 'listado' ? 'block' : 'none'}}>

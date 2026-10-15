@@ -269,3 +269,29 @@ test('exports CSV with quoted values and the full attribute summary', () => {
         '\uFEFFficha;detalle;atributos\r\nA-1;"Monitor, 24""";"Color: Negro | puertos: HDMI"\r\n',
     );
 });
+
+test('la búsqueda rápida mira la categoría y ordena la subcategoría entre la identificación', () => {
+    const {buildBienesBusquedaQueries} = loadQueryModule();
+    const result = buildBienesBusquedaQueries(request({quickSearch: 'notebook', sortModel: []}), options({
+        allowedFields: {...allowedFields, subcategoria: {typeName: 'text'}, categoria: {typeName: 'text'}},
+        resolveSqlFieldName: (campo) => ['subcategoria', 'categoria'].includes(campo) ? `${campo}_texto` : campo,
+    }));
+
+    assert.match(result.dataSql, /b\."categoria_texto"::text, ''\) ILIKE/);
+    assert.match(result.dataSql, /WHEN \(coalesce\(bf\."ficha"[^)]*\)[^T]*bf\."subcategoria_texto"[^T]*THEN 1/);
+});
+
+test('filtrar por categoría no usa el conteo de la tabla física', () => {
+    const {buildBienesBusquedaQueries} = loadQueryModule();
+    const conCategoria = {...allowedFields, categoria: {typeName: 'text'}};
+    const simple = options({allowedFields: conCategoria, baseSqlSimple: 'SELECT * FROM bienes_fisica', camposSimples: new Set(['ficha', 'detalle'])});
+    const porDetalle = buildBienesBusquedaQueries(request({
+        filters: [{source: 'field', target: 'detalle', operator: 'contains', value: 'x'}],
+    }), simple);
+    const porCategoria = buildBienesBusquedaQueries(request({
+        filters: [{source: 'field', target: 'categoria', operator: 'equals', value: 'CMP'}],
+    }), simple);
+
+    assert.match(porDetalle.countSql, /bienes_fisica/);
+    assert.doesNotMatch(porCategoria.countSql, /bienes_fisica/);
+});

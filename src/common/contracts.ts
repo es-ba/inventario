@@ -72,6 +72,8 @@ const bienAtributoResumenDescription = {
 
 const bienesBusquedaRowDescription = {
     ficha:is.string,
+    categoria:is.nullable.string,
+    subcategoria:is.nullable.string,
     grupo:is.nullable.string,
     marca:is.nullable.string,
     rubro:is.nullable.string,

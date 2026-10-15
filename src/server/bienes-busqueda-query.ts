@@ -421,7 +421,7 @@ function buildCondition(
     )`;
 }
 
-const CAMPOS_DE_IDENTIFICACION = ['ficha', 'numero_integrado', 'serie', 'detalle', 'grupo', 'marca', 'modelo'];
+const CAMPOS_DE_IDENTIFICACION = ['ficha', 'numero_integrado', 'serie', 'detalle', 'subcategoria', 'grupo', 'marca', 'modelo'];
 
 type BusquedaRapida = {condicion: string, terminos: string[], candidatos: string[]};
 
@@ -465,6 +465,8 @@ function quickSearchSql(
         'observacion',
         'serie',
         'modelo',
+        'subcategoria',
+        'categoria',
         'grupo',
         'marca',
         'rubro',

@@ -25,6 +25,8 @@ export function seccionesDeVistaRapida(row:Fila, descripcionDeEstado:(estado:str
             dato('ficha', row.ficha),
             dato('descripción', row.detalle),
             {etiqueta:'estado', valor:conDescripcion(row.estado, descripcionDeEstado(String(row.estado ?? '')))},
+            dato('categoría', row.categoria),
+            dato('subcategoría', row.subcategoria),
             dato('rubro', row.rubro),
             dato('clase', row.clase),
             dato('grupo', row.grupo),

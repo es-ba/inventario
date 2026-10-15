@@ -15,6 +15,6 @@ myOwn.wScreens.movimientos = function movimientos(addrParams:any){
         myOwn as never as Connector,
         {...addrParams},
         layout,
-        () => <PantallaInventario titulo="Consulta de movimientos"><ConsultaMovimientos/></PantallaInventario>
+        () => <PantallaInventario ayuda="movimientos" titulo="Consulta de movimientos"><ConsultaMovimientos/></PantallaInventario>
     );
 };

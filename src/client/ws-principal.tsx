@@ -5,13 +5,16 @@ import {BusquedaBienes} from './principal/busqueda-bienes';
 import {BienFormulario} from './principal/bien/bien-formulario';
 import {PantallaInventario} from './principal/base/pantalla-inventario';
 import type {Fila} from './principal/base/tipos-tabla';
+import {grupoFiltroDesdeTexto, type GrupoFiltroElegido} from '../common/bienes-agrupar';
 import './ws-solicitudes';
 import './ws-bajas';
 import './ws-controles';
 import './ws-siper';
 import './ws-calendario';
 import './ws-movimientos';
+import './ws-categorias';
 import './ws-escanear';
+import './ws-ayuda';
 import {renderConnectedAppInventario} from './principal/render-connected-app-inventario';
 
 type Vista =
@@ -22,15 +25,17 @@ function PantallaPrincipal({
     conn,
     fixedFields,
     ficha,
+    grupoFiltroInicial,
 }:{
     conn:Connector;
     fixedFields:FixedFields;
     ficha?:string;
+    grupoFiltroInicial:GrupoFiltroElegido|null;
 }){
     const [vista, setVista] = React.useState<Vista>(ficha ? {nombre:'bien', ficha} : {nombre:'busqueda'});
     const [actualizacion, setActualizacion] = React.useState<{ficha:string, version:number}>();
 
-    return <PantallaInventario titulo={vista.nombre === 'bien'
+    return <PantallaInventario ayuda={vista.nombre === 'bien' ? 'ficha' : 'busqueda'} titulo={vista.nombre === 'bien'
         ? `Inventario - Bien ${vista.ficha ?? (vista.clon ? `nuevo (copia de ${vista.clon.de})` : 'nuevo')}`
         : 'Inventario - Principal'}>
         {vista.nombre === 'bien'
@@ -51,6 +56,7 @@ function PantallaPrincipal({
                 actualizacion={actualizacion}
                 onAbrirBien={ficha => setVista({nombre:'bien', ficha})}
                 onNuevoBien={() => setVista({nombre:'bien', ficha:undefined})}
+                grupoFiltroInicial={grupoFiltroInicial}
             />
         </Box>
     </PantallaInventario>;
@@ -68,6 +74,7 @@ myOwn.wScreens.principal = function principal(addrParams:any){
         layout,
         ({conn, fixedFields}) =>
             <PantallaPrincipal conn={conn} fixedFields={fixedFields}
-                ficha={addrParams.ficha ? String(addrParams.ficha) : undefined}/>
+                ficha={addrParams.ficha ? String(addrParams.ficha) : undefined}
+                grupoFiltroInicial={grupoFiltroDesdeTexto(addrParams.filtro)}/>
     );
 };

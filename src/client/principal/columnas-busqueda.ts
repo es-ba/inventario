@@ -1,6 +1,8 @@
 export const COLUMNAS_INICIALES:readonly string[] = Object.freeze([
     'ficha',
     'detalle',
+    'categoria',
+    'subcategoria',
     'grupo',
     'marca',
     'modelo',

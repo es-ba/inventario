@@ -33,7 +33,7 @@ function PantallaCalendario(){
         return nuevos;
     });
 
-    return <PantallaInventario titulo="Calendario">
+    return <PantallaInventario ayuda="calendario" titulo="Calendario">
         <Box sx={{p:{xs:1, md:2}}}>
             <Box sx={{mb:2}}>
                 <Leyenda tipos={tipos} ocultos={ocultos} onAlternar={alternar}/>
