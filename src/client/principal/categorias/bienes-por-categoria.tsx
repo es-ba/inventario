@@ -167,7 +167,7 @@ function TablaDelReporte({reporte, previos, angosta}:{reporte:Reporte, previos:F
                     {columnas.map(columna =>
                         <TableCell key={columna.clave} align="right" title={columna.descripcion ?? undefined}>{columna.etiqueta}</TableCell>)}
                     {columnas.length
-                        ? <TableCell align="right" sx={{...SEPARADOR, whiteSpace:'nowrap'}} title="Bienes que alguien tiene en uso (dato «en uso de» cargado); se cuenta aparte del estado">
+                        ? <TableCell align="right" sx={{...SEPARADOR, whiteSpace:'nowrap'}} title="Bienes cuyo último movimiento tiene cargado un responsable de uso; se cuenta aparte del estado">
                             {EN_USO.titulo}
                         </TableCell>
                         : null}
@@ -194,25 +194,6 @@ function TablaDelReporte({reporte, previos, angosta}:{reporte:Reporte, previos:F
             </TableBody>
         </Table>
     </TableContainer>;
-}
-
-function ReferenciaDeColumnas({columnas}:{columnas:ColumnaDeEstado[]}){
-    const items = [
-        ...columnas,
-        {clave:EN_USO.dimension, etiqueta:EN_USO.titulo, descripcion:'Alguien tiene el bien en uso: está cargado el dato «en uso de» de la ficha. Se cuenta aparte del estado, por eso no suma con las columnas anteriores.'},
-    ];
-    return <Box sx={{mt:3}}>
-        <Typography variant="subtitle2" gutterBottom>Qué significa cada columna</Typography>
-        <Box component="dl" sx={{m:0, display:'grid', gridTemplateColumns:{xs:'1fr', sm:'max-content 1fr'}, columnGap:2, rowGap:0.5}}>
-            {items.map(({clave, etiqueta, descripcion}) => <React.Fragment key={clave}>
-                <Typography component="dt" variant="body2" sx={{fontWeight:600}}>{etiqueta}</Typography>
-                <Typography component="dd" variant="body2" color="text.secondary" sx={{m:0, mb:{xs:1, sm:0}}}>{descripcion ?? ''}</Typography>
-            </React.Fragment>)}
-        </Box>
-        <Typography variant="body2" color="text.secondary" sx={{mt:1}}>
-            Cada bien está en un solo estado: el sistema lo calcula y la suma de los estados es el total.
-        </Typography>
-    </Box>;
 }
 
 function SelectorDeFiltro({titulo, opciones, valor, cargando, onCambio}:{
@@ -324,6 +305,5 @@ export function BienesPorCategoria(){
         {error ? <Alert severity="error">{error}</Alert> : null}
         {!reporte && !error ? <Typography color="text.secondary">Cargando…</Typography> : null}
         {reporte ? <TablaDelReporte reporte={reporte} previos={previos} angosta={angosta}/> : null}
-        {reporte ? <ReferenciaDeColumnas columnas={reporte.columnas}/> : null}
     </Box>;
 }

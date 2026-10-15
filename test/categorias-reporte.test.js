@@ -55,9 +55,9 @@ const FILAS = [
 
 test('ordena por el catálogo, separa las categorías aparte y deja sin categoría al final', () => {
     const reporte = armarReporte(FILAS, CATEGORIAS, ESTADOS);
-    assert.deepEqual(reporte.principal.map(f => f.nombre), ['CMP — Computadoras', 'MOV — Dispositivos móviles', 'Sin categoría']);
-    assert.deepEqual(reporte.aparte.map(f => f.nombre), ['ACC — Accesorios y componentes']);
-    assert.deepEqual(reporte.principal[0].subcategorias.map(s => s.nombre), ['CMP-01 — Notebook', 'CMP-02 — PC de escritorio']);
+    assert.deepEqual(reporte.principal.map(f => f.nombre), ['Computadoras', 'Dispositivos móviles', 'Sin categoría']);
+    assert.deepEqual(reporte.aparte.map(f => f.nombre), ['Accesorios y componentes']);
+    assert.deepEqual(reporte.principal[0].subcategorias.map(s => s.nombre), ['Notebook', 'PC de escritorio']);
 });
 
 test('los totales cierran', () => {
@@ -168,11 +168,11 @@ test('el CSV abre en Excel con acentos y tiene los mismos números', () => {
     assert.equal(csv.charCodeAt(0), 0xFEFF);
     const lineas = csv.slice(1).trimEnd().split('\r\n');
     assert.equal(lineas[0], 'Categoría;Subcategoría;Total;Asignado;Sin asignar;En uso');
-    assert.ok(lineas.includes('CMP — Computadoras;CMP-01 — Notebook;13;10;3;6'));
-    assert.ok(lineas.includes('MOV — Dispositivos móviles;MOV-02 — Tablet;50;50;0;50'));
+    assert.ok(lineas.includes('Computadoras;Notebook;13;10;3;6'));
+    assert.ok(lineas.includes('Dispositivos móviles;Tablet;50;50;0;50'));
     assert.ok(lineas.includes('Sin categoría;(sin dato);4;0;4;0'));
     assert.ok(lineas.includes('Total principal;;74;67;7;56'));
-    assert.ok(lineas.includes('ACC — Accesorios y componentes;ACC-01 — Mouse;20;20;0;0'));
+    assert.ok(lineas.includes('Accesorios y componentes;Mouse;20;20;0;0'));
     assert.equal(lineas.at(-1), 'Total general;;94;87;7;56');
     assert.equal(nombreDelCsv([{dimension: 'sector', valor: '2 4', texto: '', etiqueta: ''}], new Date(2026, 9, 5)), 'bienes-por-categoria-2_4-2026-10-05.csv');
     assert.equal(nombreDelCsv([], new Date(2026, 9, 5)), 'bienes-por-categoria-2026-10-05.csv');

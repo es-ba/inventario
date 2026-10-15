@@ -17,9 +17,9 @@ La categoría y la subcategoría también se ven en la [ficha](#ayuda/ficha) y c
 
 ## Cómo se lee
 
-- Una fila por categoría, con su código (*CMP — Computadoras*), el **Total**, una barra y el porcentaje que esa categoría representa sobre el **Total general**. Las subcategorías también llevan su código (*CMP-01 — Notebook*).
+- Una fila por categoría, con el **Total**, una barra y el porcentaje que esa categoría representa sobre el **Total general**.
 - Las columnas siguientes reparten el total por estado del bien: **Asignado**, **Sin asignar**, **En movimiento** y **Baja en trámite**.
-- La última, **En uso**, separada por una línea, cuenta los bienes que alguien tiene en uso (el dato *en uso de* de la ficha está cargado).
+- La última, **En uso**, separada por una línea, cuenta los bienes cuyo último movimiento tiene cargado un **responsable de uso** (la persona elegida en *en uso de*).
 - La flecha de la izquierda abre la categoría en sus subcategorías.
 - **Sin categoría** reúne los bienes cuyo grupo todavía no tiene subcategoría.
 - *Accesorios y componentes* (mouse, teclados, memorias…) es una categoría más, con las demás.
@@ -37,13 +37,13 @@ El estado del bien no se carga a mano: lo calcula el sistema, y cada bien está 
 
 Los bienes dados de baja no aparecen en este reporte, que cuenta sólo los activos.
 
-**En uso** no es un estado: cuenta los bienes que alguien tiene en uso (el dato *en uso de* de la ficha está cargado), sin importar su estado. Por eso esa columna no suma con las demás.
+**En uso** no es un estado: cuenta los bienes cuyo último movimiento tiene un **responsable de uso** cargado, sin importar su estado. Si en *en uso de* sólo se escribió un texto (un lugar o una aclaración) y no se eligió una persona, el bien no se cuenta. Por eso esa columna no suma con las demás.
 
-Debajo de la tabla, **Qué significa cada columna** resume estas definiciones.
+Pasando el mouse por el título de cada columna se ve un resumen de su definición.
 
 ## Ver los bienes de un número
 
-Tocá cualquier número para abrir la búsqueda con esos bienes: por ejemplo, el de *Notebook* en la columna *Sin asignar* abre la búsqueda filtrada por *subcategoría: CMP-01 — Notebook · estado: Sin asignar*, y el total del listado es el mismo número. El filtro se quita desde **Filtros aplicados**.
+Tocá cualquier número para abrir la búsqueda con esos bienes: por ejemplo, el de *Notebook* en la columna *Sin asignar* abre la búsqueda filtrada por *subcategoría: Notebook · estado: Sin asignar*, y el total del listado es el mismo número. El filtro se quita desde **Filtros aplicados**.
 
 ## Sector, en uso de y descarga
 

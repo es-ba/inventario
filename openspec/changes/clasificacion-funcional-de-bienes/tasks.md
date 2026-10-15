@@ -56,7 +56,7 @@
 
 - [x] 4b.3 Columna «En uso» al final y separada de los estados (dimensión `en_uso` en `ESPECIALES`) y selector de sectores sólo con activos y con su responsable (`opcionesDeSectores`), con tests. Probado en el navegador contra la base de prueba.
 
-- [x] 4b.4 Barra y porcentaje sobre el total general; referencia de columnas bajo la tabla; descripciones de `estados_bien` aclaradas (también en `cambios_2026-10-15.sql`) y etiqueta corta en el listado de control; códigos en categorías y subcategorías del reporte.
+- [x] 4b.4 Barra y porcentaje sobre el total general; explicación de los estados en la ayuda (una referencia bajo la tabla se probó y se sacó a pedido del usuario); descripciones de `estados_bien` aclaradas (también en `cambios_2026-10-15.sql`) y etiqueta corta en el listado de control; los códigos de categoría y subcategoría se probaron en el reporte y se sacaron a pedido del usuario.
 
 ## 5. Cierre
 

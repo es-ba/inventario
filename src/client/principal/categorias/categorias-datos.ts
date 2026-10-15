@@ -105,7 +105,7 @@ export function armarReporte(
         if(!sub){
             sub = {
                 subcategoria,
-                nombre:subcategoria == null ? SIN_DATO : textos[1] ?? subcategoria,
+                nombre:subcategoria == null ? SIN_DATO : textoSinCodigo(textos[1] ?? subcategoria, subcategoria),
                 cuenta:cuentaVacia(),
             };
             grupo.subcategorias.set(subcategoria, sub);
@@ -116,7 +116,7 @@ export function armarReporte(
         const delCatalogo = categoria == null ? undefined : catalogo.get(categoria);
         return {
             categoria,
-            nombre:categoria == null ? 'Sin categoría' : delCatalogo ? `${categoria} — ${delCatalogo.nombre}` : categoria,
+            nombre:categoria == null ? 'Sin categoría' : delCatalogo?.nombre ?? categoria,
             cuenta,
             subcategorias:[...subcategorias.values()].sort((a, b) =>
                 a.subcategoria == null ? 1 : b.subcategoria == null ? -1 : a.subcategoria.localeCompare(b.subcategoria)),
