@@ -10,12 +10,15 @@ import {leerTabla} from '../base/referencias';
 import type {Fila} from '../base/tipos-tabla';
 import {irA} from '../render-connected-app-inventario';
 import {
-    armarReporte, consultaDelReporte, csvDelReporte, filtroDeCelda, hashDeBusqueda, nombreDelCsv,
+    FILTROS_DEL_REPORTE, armarReporte, consultaDelReporte, csvDelReporte, filtroDeCelda, hashDeBusqueda, nombreDelCsv,
+    EN_USO, opcionesDeAgrupado, opcionesDeSectores,
     type CategoriaDeCatalogo, type Celda, type ColumnaDeEstado, type Cuenta, type EstadoDeCatalogo,
-    type FilaDeCategoria, type Reporte, type SectorElegido,
+    type FilaDeCategoria, type FiltroPrevio, type OpcionDeFiltro, type Reporte,
 } from './categorias-datos';
 
-type Catalogos = {categorias:CategoriaDeCatalogo[], estados:EstadoDeCatalogo[], sectores:(SectorElegido & {etiqueta:string})[]};
+type Catalogos = {categorias:CategoriaDeCatalogo[], estados:EstadoDeCatalogo[], sectores:OpcionDeFiltro[]};
+
+type DimensionDeFiltro = typeof FILTROS_DEL_REPORTE[number]['dimension'];
 
 const texto = (valor:unknown) => valor == null ? '' : String(valor).trim();
 const numeroONulo = (valor:unknown) => valor == null || valor === '' ? null : Number(valor);
@@ -34,17 +37,7 @@ function catalogosDesde(categorias:Fila[], estados:Fila[], sectores:Fila[]):Cata
             descripcion:texto(fila.descripcion) || null,
             orden:numeroONulo(fila.orden),
         })),
-        sectores:sectores
-            .map(fila => {
-                const sigla = texto(fila.sigla);
-                const nombre = texto(fila.nombre_sector);
-                return {
-                    sector:texto(fila.sector),
-                    texto:sigla || nombre || texto(fila.sector),
-                    etiqueta:[sigla, nombre].filter(Boolean).join(' — ') || texto(fila.sector),
-                };
-            })
-            .sort((a, b) => a.etiqueta.localeCompare(b.etiqueta)),
+        sectores:opcionesDeSectores(sectores),
     };
 }
 
@@ -71,16 +64,21 @@ function destinoDe(celda:Celda, siempre = false):string|null{
 }
 
 function CeldasDeEstado({cuenta, columnas, celda}:{cuenta:Cuenta, columnas:ColumnaDeEstado[], celda:Celda|null}){
-    return <>{columnas.map(columna =>
+    return <>{columnas.length
+        ? <TableCell align="right">
+            <Cantidad valor={cuenta.enUso} destino={celda ? destinoDe({...celda, enUso:true}) : null}/>
+        </TableCell>
+        : null}
+    {columnas.map(columna =>
         <TableCell key={columna.clave} align="right">
             <Cantidad valor={cuenta.porEstado[columna.clave] ?? 0} destino={celda ? destinoDe({...celda, estado:columna}) : null}/>
         </TableCell>
     )}</>;
 }
 
-function FilaCategoria({fila, columnas, sector, angosta}:{fila:FilaDeCategoria, columnas:ColumnaDeEstado[], sector:SectorElegido|null, angosta:boolean}){
+function FilaCategoria({fila, columnas, previos, angosta}:{fila:FilaDeCategoria, columnas:ColumnaDeEstado[], previos:FiltroPrevio[], angosta:boolean}){
     const [abierta, setAbierta] = React.useState(false);
-    const celda:Celda = {sector, categoria:{valor:fila.categoria, nombre:fila.nombre}};
+    const celda:Celda = {previos, categoria:{valor:fila.categoria, nombre:fila.nombre}};
     const conDetalle = fila.subcategorias.some(sub => sub.subcategoria != null);
     const abrible = conDetalle || angosta;
     const columnasVisibles = angosta ? [] : columnas;
@@ -108,6 +106,10 @@ function FilaCategoria({fila, columnas, sector, angosta}:{fila:FilaDeCategoria, 
                 <TableCell/>
                 <TableCell colSpan={2}>
                     <Stack direction="row" flexWrap="wrap" columnGap={2} rowGap={0.5}>
+                        <Typography variant="body2" component="span">
+                            {EN_USO.titulo}:{' '}
+                            <Cantidad valor={fila.cuenta.enUso} destino={destinoDe({...celda, enUso:true})}/>
+                        </Typography>
                         {columnas.map(columna => <Typography key={columna.clave} variant="body2" component="span">
                             {columna.etiqueta}:{' '}
                             <Cantidad valor={fila.cuenta.porEstado[columna.clave] ?? 0} destino={destinoDe({...celda, estado:columna})}/>
@@ -118,7 +120,7 @@ function FilaCategoria({fila, columnas, sector, angosta}:{fila:FilaDeCategoria, 
             : null}
         {abierta && conDetalle
             ? fila.subcategorias.map(sub => {
-                const deSub:Celda = {sector, subcategoria:{valor:sub.subcategoria, nombre:sub.nombre}};
+                const deSub:Celda = {previos, subcategoria:{valor:sub.subcategoria, nombre:sub.nombre}};
                 return <TableRow key={sub.subcategoria ?? ''} sx={{bgcolor:'action.hover'}}>
                     <TableCell/>
                     <TableCell sx={{pl:4}}>{sub.nombre}</TableCell>
@@ -145,10 +147,10 @@ function FilaTotal({titulo, cuenta, columnas, destino, celda}:{titulo:string, cu
     </TableRow>;
 }
 
-function TablaDelReporte({reporte, sector, angosta}:{reporte:Reporte, sector:SectorElegido|null, angosta:boolean}){
+function TablaDelReporte({reporte, previos, angosta}:{reporte:Reporte, previos:FiltroPrevio[], angosta:boolean}){
     const columnas = angosta ? [] : reporte.columnas;
     const columnasDeFila = reporte.columnas;
-    const anchoTotal = 3 + columnas.length;
+    const anchoTotal = 3 + (columnas.length ? columnas.length + 1 : 0);
     return <TableContainer>
         <Table size="small" aria-label="bienes por categoría">
             <TableHead>
@@ -156,13 +158,16 @@ function TablaDelReporte({reporte, sector, angosta}:{reporte:Reporte, sector:Sec
                     <TableCell padding="checkbox"/>
                     <TableCell>Categoría</TableCell>
                     <TableCell sx={{width:angosta ? '50%' : '30%'}}>Total</TableCell>
+                    {columnas.length
+                        ? <TableCell align="right" title="Bienes que alguien tiene en uso (campo «en uso de» cargado)">{EN_USO.titulo}</TableCell>
+                        : null}
                     {columnas.map(columna =>
                         <TableCell key={columna.clave} align="right" title={columna.descripcion ?? undefined}>{columna.etiqueta}</TableCell>)}
                 </TableRow>
             </TableHead>
             <TableBody>
                 {reporte.principal.map(fila =>
-                    <FilaCategoria key={fila.categoria ?? ''} fila={fila} columnas={columnasDeFila} sector={sector} angosta={angosta}/>)}
+                    <FilaCategoria key={fila.categoria ?? ''} fila={fila} columnas={columnasDeFila} previos={previos} angosta={angosta}/>)}
                 {reporte.aparte.length
                     ? <>
                         <FilaTotal titulo="Total principal" cuenta={reporte.totalPrincipal} columnas={columnas} destino={null} celda={null}/>
@@ -172,15 +177,31 @@ function TablaDelReporte({reporte, sector, angosta}:{reporte:Reporte, sector:Sec
                             </TableCell>
                         </TableRow>
                         {reporte.aparte.map(fila =>
-                            <FilaCategoria key={fila.categoria ?? ''} fila={fila} columnas={columnasDeFila} sector={sector} angosta={angosta}/>)}
+                            <FilaCategoria key={fila.categoria ?? ''} fila={fila} columnas={columnasDeFila} previos={previos} angosta={angosta}/>)}
                         <FilaTotal titulo="Total aparte" cuenta={reporte.totalAparte} columnas={columnas} destino={null} celda={null}/>
                     </>
                     : null}
                 <FilaTotal titulo="Total general" cuenta={reporte.total} columnas={columnas}
-                    destino={destinoDe({sector}, true)} celda={{sector}}/>
+                    destino={destinoDe({previos}, true)} celda={{previos}}/>
             </TableBody>
         </Table>
     </TableContainer>;
+}
+
+function SelectorDeFiltro({titulo, opciones, valor, cargando, onCambio}:{
+    titulo:string, opciones:OpcionDeFiltro[], valor:OpcionDeFiltro|null, cargando:boolean, onCambio:(opcion:OpcionDeFiltro|null) => void,
+}){
+    const conElegida = valor && !opciones.some(opcion => opcion.valor === valor.valor) ? [valor, ...opciones] : opciones;
+    return <Autocomplete
+        options={conElegida}
+        value={valor}
+        onChange={(_evento, opcion) => onCambio(opcion)}
+        getOptionLabel={opcion => opcion.etiqueta}
+        isOptionEqualToValue={(a, b) => a.valor === b.valor}
+        loading={cargando}
+        sx={{width:{xs:'100%', sm:320}}}
+        renderInput={params => <TextField {...params} label={titulo} placeholder="Todos" size="small"/>}
+    />;
 }
 
 export function BienesPorCategoria(){
@@ -189,10 +210,17 @@ export function BienesPorCategoria(){
     const theme = useTheme();
     const angosta = useMediaQuery(theme.breakpoints.down('sm'));
     const [catalogos, setCatalogos] = React.useState<Catalogos|null>(null);
-    const [sector, setSector] = React.useState<(SectorElegido & {etiqueta:string})|null>(null);
+    const [elegidos, setElegidos] = React.useState<Partial<Record<DimensionDeFiltro, OpcionDeFiltro>>>({});
+    const [enUsoDe, setEnUsoDe] = React.useState<OpcionDeFiltro[]|null>(null);
     const [filas, setFilas] = React.useState<Parameters<typeof armarReporte>[0]|null>(null);
     const [error, setError] = React.useState<string|null>(null);
     const secuencia = React.useRef(0);
+
+    const previos = React.useMemo<FiltroPrevio[]>(() => FILTROS_DEL_REPORTE
+        .filter(({dimension}) => elegidos[dimension])
+        .map(({dimension, etiqueta}) => ({dimension, etiqueta, valor:elegidos[dimension]!.valor, texto:elegidos[dimension]!.texto})),
+    [elegidos]);
+    const delSector = React.useMemo(() => previos.filter(previo => previo.dimension === 'sector'), [previos]);
 
     React.useEffect(() => {
         let cancelado = false;
@@ -205,51 +233,69 @@ export function BienesPorCategoria(){
     }, [conn, mostrarError]);
 
     React.useEffect(() => {
+        let cancelado = false;
+        setEnUsoDe(null);
+        conn.ajax.bienes_buscar_agrupado({consulta:JSON.stringify(consultaDelReporte(delSector, ['enusode_responsable']))})
+            .then(respuesta => { if(!cancelado){ setEnUsoDe(opcionesDeAgrupado(respuesta.rows)); } })
+            .catch(err => { if(!cancelado){ mostrarError(err, 'No se pudieron cargar las personas'); setEnUsoDe([]); } });
+        return () => { cancelado = true; };
+    }, [conn, delSector, mostrarError]);
+
+    React.useEffect(() => {
         const numero = ++secuencia.current;
         setFilas(null);
         setError(null);
-        conn.ajax.bienes_buscar_agrupado({consulta:JSON.stringify(consultaDelReporte(sector))})
+        conn.ajax.bienes_buscar_agrupado({consulta:JSON.stringify(consultaDelReporte(previos))})
             .then(respuesta => { if(numero === secuencia.current){ setFilas(respuesta.rows); } })
             .catch(err => { if(numero === secuencia.current){ setError(err instanceof Error ? err.message : String(err)); } });
-    }, [conn, sector]);
+    }, [conn, previos]);
 
     const reporte = React.useMemo(
         () => catalogos && filas ? armarReporte(filas, catalogos.categorias, catalogos.estados) : null,
         [catalogos, filas],
     );
 
+    const elegir = (dimension:DimensionDeFiltro, opcion:OpcionDeFiltro|null) =>
+        setElegidos(anteriores => {
+            const nuevos = {...anteriores};
+            if(opcion){ nuevos[dimension] = opcion; }else{ delete nuevos[dimension]; }
+            return nuevos;
+        });
+
     const descargar = () => {
         if(!reporte){ return; }
         const url = URL.createObjectURL(new Blob([csvDelReporte(reporte)], {type:'text/csv;charset=utf-8'}));
         const enlace = document.createElement('a');
         enlace.href = url;
-        enlace.download = nombreDelCsv(sector, new Date());
+        enlace.download = nombreDelCsv(previos, new Date());
         document.body.appendChild(enlace);
         enlace.click();
         enlace.remove();
         URL.revokeObjectURL(url);
     };
 
+    const opcionesDe:Record<DimensionDeFiltro, OpcionDeFiltro[]|null> = {
+        sector:catalogos?.sectores ?? null,
+        enusode_responsable:enUsoDe,
+    };
+
     return <Box sx={{p:{xs:2, sm:3}, maxWidth:1200, mx:'auto'}}>
         <Stack direction={{xs:'column', sm:'row'}} spacing={2} alignItems={{xs:'stretch', sm:'center'}} sx={{mb:2}}>
-            <Autocomplete
-                options={catalogos?.sectores ?? []}
-                value={sector}
-                onChange={(_evento, valor) => setSector(valor)}
-                getOptionLabel={opcion => opcion.etiqueta}
-                isOptionEqualToValue={(a, b) => a.sector === b.sector}
-                loading={!catalogos}
-                sx={{width:{xs:'100%', sm:360}}}
-                renderInput={params => <TextField {...params} label="Sector" placeholder="Todos" size="small"/>}
-            />
+            {FILTROS_DEL_REPORTE.map(({dimension, titulo}) => <SelectorDeFiltro key={dimension}
+                titulo={titulo}
+                opciones={opcionesDe[dimension] ?? []}
+                valor={elegidos[dimension] ?? null}
+                cargando={opcionesDe[dimension] == null}
+                onCambio={opcion => elegir(dimension, opcion)}
+            />)}
             <Box sx={{flex:1, display:{xs:'none', sm:'block'}}}/>
             <Button variant="outlined" startIcon={<Download/>} onClick={descargar} disabled={!reporte}>Descargar</Button>
         </Stack>
         <Typography variant="body2" color="text.secondary" sx={{mb:1}}>
-            Bienes activos que podés ver{sector ? ` en ${sector.etiqueta}` : ''}. Tocá un número para ver esos bienes.
+            Bienes activos que podés ver{previos.map(previo => `, ${previo.etiqueta} ${previo.texto}`).join('')}. Tocá un número para ver esos bienes.
         </Typography>
         {error ? <Alert severity="error">{error}</Alert> : null}
         {!reporte && !error ? <Typography color="text.secondary">Cargando…</Typography> : null}
-        {reporte ? <TablaDelReporte reporte={reporte} sector={sector} angosta={angosta}/> : null}
+        {reporte ? <TablaDelReporte reporte={reporte} previos={previos} angosta={angosta}/> : null}
     </Box>;
 }

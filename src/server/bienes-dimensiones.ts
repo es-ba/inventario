@@ -61,6 +61,11 @@ const ESPECIALES:Dimension[] = [
     {clave:'enusode_responsable', etiqueta:'asignado a', familia:'asignación',
         sql:fija(textoONulo('b.enusode_responsable'), codigoYTexto('b.enusode_responsable', 'b.enusode_responsable_nombre')),
         reemplaza:['enusode_responsable_nombre']},
+    {clave:'en_uso', etiqueta:'en uso de un responsable', familia:'asignación',
+        sql:fija(
+            `CASE WHEN ${textoONulo('b.enusode_responsable')} IS NULL THEN 'NO' ELSE 'SI' END`,
+            `CASE WHEN ${textoONulo('b.enusode_responsable')} IS NULL THEN 'No' ELSE 'Sí' END`,
+        )},
     {clave:'sede', etiqueta:'sede', familia:'asignación',
         sql:fija(textoONulo('b.sede'), 'b.sede_texto'),
         reemplaza:['sede_nombre']},

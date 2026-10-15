@@ -13,6 +13,8 @@ export function bienes_baja(_context:TableContext):TableDefinition{
         fields:[
             {name:'ficha'              , typeName:'text', title:'ficha'},
             {name:'activo'             , typeName:'boolean', title:'activo'},
+            {name:'categoria'          , typeName:'text', title:'categoría'         , nullable:true},
+            {name:'subcategoria'       , typeName:'text', title:'subcategoría'      , nullable:true},
             {name:'detalle'            , typeName:'text', title:'descripción'       , nullable:true},
             {name:'marca'              , typeName:'text', title:'marca'             , nullable:true},
             {name:'modelo'             , typeName:'text', title:'modelo'            , nullable:true},
@@ -38,6 +40,8 @@ export function bienes_baja(_context:TableContext):TableDefinition{
         ],
         primaryKey:['ficha'],
         foreignKeys:[
+            {references:'categorias'    , fields:['categoria']  , displayFields:['nombre']},
+            {references:'subcategorias' , fields:['subcategoria'], displayFields:['nombre']},
             {references:'estados_baja'  , fields:['estado_baja'], displayFields:['descripcion']},
             {references:'motivos_baja'  , fields:['motivo_baja'], displayFields:['descripcion']},
             {references:'sectores'      , fields:['sector']     , displayFields:['sigla']},

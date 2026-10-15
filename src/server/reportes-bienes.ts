@@ -268,6 +268,8 @@ export const sqlBienesBaja = `
 SELECT
     v.ficha,
     v.activo AS activo,
+    v.categoria,
+    v.subcategoria,
     ${textoONulo('v.detalle')} AS detalle,
     ${textoONulo('v.marca')} AS marca,
     ${textoONulo('v.modelo')} AS modelo,

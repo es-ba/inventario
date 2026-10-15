@@ -17,7 +17,7 @@ Ver proposal.md (Why) para la motivación, y las specs `clasificacion-de-bienes`
 - Un usuario gerencial ve en una sola pantalla cuántos bienes hay por categoría y por estado, sin armar filtros ni conocer los campos.
 - Cada número del reporte es el mismo que da la búsqueda con ese filtro, y se llega a esa búsqueda tocándolo.
 - Cero carga manual en los bienes: la clasificación sale del grupo.
-- Ninguna categoría, subcategoría ni estado escrito en el código. Lo que distingue a los accesorios es un dato del catálogo (`aparte`), no el código ACC.
+- Ninguna categoría, subcategoría ni estado escrito en el código. Separar una categoría es un dato del catálogo (`aparte`), no un código escrito.
 
 **Non-Goals:**
 - Cambiar o limpiar el catálogo de grupos.
@@ -67,7 +67,7 @@ La pantalla pide `{estado:'activo', agruparPor:['categoria','subcategoria','esta
 Los bienes cuyo grupo no tiene subcategoría, o que no tienen grupo, llegan con categoría nula y forman la fila «Sin categoría» del bloque principal. No se esconden: así el total general es siempre el total de bienes activos, y la fila muestra cuánto falta clasificar. Al tocarla se abre la búsqueda con categoría «(sin dato)».
 
 **7. Categorías «aparte».**
-Las categorías con `aparte = true` (ACC en la carga inicial) van debajo del bloque principal, con su subtotal. El reporte muestra tres totales:
+Las categorías con `aparte = true` (ninguna en la carga inicial: Accesorios se pidió junto a las demás) van debajo del bloque principal, con su subtotal. El reporte muestra tres totales:
 
 - **total principal**: las categorías que no son aparte, más «Sin categoría»;
 - **total aparte**;

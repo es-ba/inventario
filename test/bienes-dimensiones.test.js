@@ -38,3 +38,11 @@ test('categoría y subcategoría son dimensiones de clasificación que comparan 
     assert.deepEqual(catalogo.sql.categoria(() => '$1'), {valor: "nullif(btrim(b.categoria), '')", texto: 'b.categoria_texto'});
     assert.deepEqual(catalogo.sql.subcategoria(() => '$1'), {valor: "nullif(btrim(b.subcategoria), '')", texto: 'b.subcategoria_texto'});
 });
+
+test('«en uso de un responsable» es una dimensión de sí/no sobre el responsable de uso', () => {
+    const catalogo = armarCatalogoDeDimensiones(BIENES, (n) => n === 'grupos' ? GRUPOS : undefined, []);
+    const enUso = catalogo.disponibles.find((d) => d.clave === 'en_uso');
+    assert.equal(enUso.etiqueta, 'en uso de un responsable');
+    const {valor} = catalogo.sql.en_uso(() => '$1');
+    assert.match(valor, /CASE WHEN nullif\(btrim\(b\.enusode_responsable\), ''\) IS NULL THEN 'NO' ELSE 'SI' END/);
+});

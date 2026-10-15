@@ -68,6 +68,14 @@ La ficha del bien SHALL mostrar la categoría y la subcategoría junto al grupo,
 - **WHEN** el usuario carga la condición «categoría es alguno de Computadoras, Dispositivos móviles»
 - **THEN** el listado trae sólo los bienes de esas dos categorías
 
-#### Scenario: Elección anterior del desglose
+#### Scenario: Elección anterior del desglose (búsqueda)
 - **WHEN** un usuario que había elegido «Desglosar por: grupo» abre la búsqueda
 - **THEN** el desglose sigue por «grupo»
+
+### Requirement: Clasificación en los listados de control y de bajas
+Los listados de control de bienes y de proceso de baja SHALL mostrar la categoría y la subcategoría como columnas, por su nombre, y SHALL ofrecer un filtro por cada una. El filtro de subcategoría SHALL ofrecer sólo las subcategorías de la categoría elegida, y cambiar la categoría SHALL quitar la subcategoría elegida.
+
+#### Scenario: Filtrar el control por categoría
+- **WHEN** el usuario elige la categoría «Computadoras» en el listado de control
+- **THEN** el listado muestra sólo las computadoras
+- **AND** el filtro de subcategoría ofrece sólo Notebook, PC de escritorio y All-in-one

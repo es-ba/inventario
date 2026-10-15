@@ -29,7 +29,7 @@ En **operaciones → proceso de baja** está el seguimiento de todos los bienes 
 ![El proceso de baja con sus contadores y filtros](img/bajas.jpg)
 
 - Los chips cuentan los bienes por estado de la baja (*solicitada*, *aprobada*, *rechazada*, sin estado). Tocá uno para filtrar.
-- También se puede filtrar por **Estado** y por **Motivo**.
+- También se puede filtrar por **Estado**, **Motivo**, **Categoría** y **Subcategoría** (sólo las de la categoría elegida).
 - La columna **Acciones** tiene los botones que correspondan a cada bien.
 - Tocá una fila para abrir la ficha del bien.
 

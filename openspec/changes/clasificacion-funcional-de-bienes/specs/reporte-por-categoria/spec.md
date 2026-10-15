@@ -27,17 +27,29 @@ Que un usuario gerencial vea en una sola pantalla, sin armar filtros, cuántos b
 - **WHEN** no hay bienes activos de la categoría Vehículos
 - **THEN** la fila «Vehículos» no aparece
 
+### Requirement: Cantidad en uso de un responsable
+Cada fila y cada total SHALL mostrar, en una columna «En uso de un responsable», cuántos de sus bienes tienen cargado quién los usa. Tocar esa cantidad SHALL abrir la búsqueda con esos bienes, con el filtro «en uso de un responsable: Sí».
+
+#### Scenario: Computadoras en uso
+- **WHEN** el usuario toca la cantidad «En uso de un responsable» de Computadoras
+- **THEN** la búsqueda muestra las computadoras que alguien tiene en uso, y el total es el mismo número
+
 ### Requirement: Totales que cierran
 - Las categorías marcadas «aparte» SHALL mostrarse en un bloque propio, debajo de las demás, con su subtotal.
 - Los bienes sin categoría SHALL mostrarse en una fila «Sin categoría», dentro del bloque principal.
-- La pantalla SHALL mostrar el total principal, el total aparte y el total general. El total general SHALL ser igual a la cantidad de bienes activos que el usuario puede ver.
+- Si hay categorías aparte, la pantalla SHALL mostrar el total principal, el total aparte y el total general; si no hay, sólo el total general. El total general SHALL ser igual a la cantidad de bienes activos que el usuario puede ver.
 - En cada fila, el total SHALL ser igual a la suma de sus estados.
 
-#### Scenario: Accesorios aparte
-- **WHEN** la categoría «Accesorios y componentes» está marcada «aparte»
+#### Scenario: Categoría aparte
+- **WHEN** una categoría está marcada «aparte» en el catálogo
 - **THEN** aparece en el bloque de abajo con su subtotal
 - **AND** sus bienes no se suman al total principal
 - **AND** sí se suman al total general
+
+#### Scenario: Accesorios junto a las demás
+- **WHEN** ninguna categoría está marcada «aparte», como en la carga inicial
+- **THEN** «Accesorios y componentes» aparece entre las demás categorías
+- **AND** la pantalla muestra sólo el total general
 
 #### Scenario: Bienes sin clasificar
 - **WHEN** hay bienes activos cuyo grupo no tiene subcategoría
@@ -66,12 +78,23 @@ Que un usuario gerencial vea en una sola pantalla, sin armar filtros, cuántos b
 
 ### Requirement: Filtro por sector
 - La pantalla SHALL ofrecer un selector de sector, opcional, que limita todas las cantidades a los bienes de ese sector.
+- El selector SHALL ofrecer sólo los sectores activos, y cada opción SHALL mostrar el responsable del sector.
 - El sector elegido SHALL viajar a la búsqueda al tocar un número.
 
 #### Scenario: Computadoras de un sector
 - **WHEN** el usuario elige el sector 24
 - **THEN** todas las cantidades cuentan sólo los bienes activos del sector 24
 - **AND** al tocar un número, la búsqueda queda filtrada también por el sector 24
+
+### Requirement: Filtro por persona que tiene el bien en uso
+- La pantalla SHALL ofrecer un selector «En uso de», opcional, con las personas que tienen bienes activos en uso (del sector elegido, si hay uno) y su cantidad.
+- Elegir una persona SHALL limitar todas las cantidades a los bienes que tiene en uso, y SHALL combinarse con el sector.
+- La persona elegida SHALL viajar a la búsqueda al tocar un número.
+
+#### Scenario: Bienes en uso de una persona
+- **WHEN** el usuario elige en «En uso de» a una persona que tiene dos bienes en uso
+- **THEN** el total general es 2
+- **AND** al tocarlo, la búsqueda muestra esos dos bienes con el filtro «en uso de: <persona>»
 
 ### Requirement: Descargar el reporte
 La pantalla SHALL permitir descargar lo que muestra como una planilla:

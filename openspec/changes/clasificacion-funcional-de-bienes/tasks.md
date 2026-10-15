@@ -9,7 +9,7 @@
 - [x] 1.1 Crear `table-categorias.ts` (`categoria`, `nombre` isName, `incluye`, `orden`, `aparte` boolean not null default false; detalle `subcategorias`) y `table-subcategorias.ts` (`subcategoria`, `nombre` isName, `categoria` FK not null), editables con `context.es.administrativo` como `grupos`. Registrarlas en `prepareGetTables()` y en «gestion de datos», junto a «grupos».
 - [x] 1.2 Agregar a `table-grupos.ts` el campo `subcategoria` (nullable, FK a `subcategorias`).
 - [x] 1.3 Agregar a `table-estados_bien.ts` los campos `etiqueta` y `orden` (nullable), y completarlos en `install/estados_bien.tab`: Asignado, Sin asignar, En movimiento y Baja en trámite con orden 1 a 4; Baja sin orden.
-- [x] 1.4 Generar desde la planilla validada `install/categorias.tab` (con ACC marcada `aparte`), `install/subcategorias.tab` y la columna `subcategoria` de `inventario-data/provisorio/grupos.tab`. Correr `npm run dump` y verificar que la suma de activos por categoría da el total de activos, y que no queda ningún grupo con activos sin subcategoría salvo los que Patrimonio dejó así.
+- [x] 1.4 Generar desde la planilla validada `install/categorias.tab` (sin ninguna categoría `aparte`; ACC se marcó y después se pidió junto a las demás), `install/subcategorias.tab` y la columna `subcategoria` de `inventario-data/provisorio/grupos.tab`. Correr `npm run dump` y verificar que la suma de activos por categoría da el total de activos, y que no queda ningún grupo con activos sin subcategoría salvo los que Patrimonio dejó así.
 - [x] 1.5 Escribir `install/cambios/cambios_<fecha>.sql` para producción: `CREATE TABLE` de las dos tablas, `INSERT` de los catálogos, `ALTER TABLE grupos ADD subcategoria` con su FK, `UPDATE grupos` desde una tabla temporal con la equivalencia, y `ALTER TABLE estados_bien ADD etiqueta, orden` con su `UPDATE`. Sin `GRANT`. Validarlo contra una copia antes de entregarlo.
 
 ## 2. Clasificación del bien
@@ -48,6 +48,13 @@
   - descargar y abrir en Excel;
   - verlo a ancho de teléfono sin desplazamiento horizontal;
   - entrar con un rol de visibilidad restringida y ver que cuenta sólo sus bienes.
+
+## 4b. Pedidos posteriores
+
+- [x] 4b.1 Filtro «En uso de» en el reporte (`FILTROS_DEL_REPORTE`, opciones de `bienes_buscar_agrupado` por `enusode_responsable`), con su test.
+- [x] 4b.2 Categoría y subcategoría en `bienes_control` y `bienes_baja` (columnas, claves foráneas para el nombre y filtros de cliente, con `opcionesDe` movido a `base/referencias.ts`). Probado en el navegador contra la base de prueba.
+
+- [x] 4b.3 Columna «En uso de un responsable» (dimensión `en_uso` en `ESPECIALES`) y selector de sectores sólo con activos y con su responsable (`opcionesDeSectores`), con tests. Probado en el navegador contra la base de prueba.
 
 ## 5. Cierre
 

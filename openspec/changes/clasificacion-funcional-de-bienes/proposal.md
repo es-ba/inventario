@@ -16,7 +16,7 @@ El desglose de la búsqueda (`desglose-por-grupo-en-busqueda`) ya muestra cantid
   - la **categoría**: 22 agrupaciones funcionales (Computadoras, Dispositivos móviles, Mobiliario…), las 18 del clasificador propuesto más ACC Accesorios y componentes, CER Ceremonial, INS Instalaciones y divisiones y HER Herramientas;
   - la **subcategoría**: el nivel fino (CMP-01 Notebook, MOV-02 Tablet…), 101 en total.
 - **Cada grupo se asigna a una subcategoría**, y el bien toma la clasificación de su grupo. No se carga nada nuevo en los bienes, y el grupo de cada bien no cambia. La asignación inicial sale de la planilla de equivalencias validada por Patrimonio (`local-clasificacion/equivalencias-grupos.xlsx`).
-- **Las categorías se pueden marcar como «aparte».** ACC sale marcada así. En el reporte, las categorías aparte se muestran por separado y no se suman al total principal, para que los accesorios no inflen los números de gestión. En la búsqueda se tratan igual que las demás.
+- **Las categorías se pueden marcar como «aparte».** En el reporte, las categorías aparte se muestran por separado y no se suman al total principal; en la búsqueda se tratan igual que las demás. Ninguna sale marcada: a pedido del usuario, Accesorios y componentes se muestra junto a las demás.
 - **Pantalla nueva «Bienes por categoría»**, en «reportes», para todos los roles:
   - una tabla con una fila por categoría, que se abre en sus subcategorías;
   - columnas: total y cantidad por estado del bien (asignado, sin asignar, en movimiento, baja en trámite);

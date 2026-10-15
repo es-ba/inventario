@@ -16,7 +16,7 @@ El control registra la verificación física de un bien: que está, en qué esta
 
 - Los chips cuentan los bienes por situación; tocá uno para filtrar.
 - El cuadro **Ficha, serie o código de barras** acepta lo que se escriba o lo que lea un lector de códigos de barras. Con **Enter** abre directamente la ficha, o el bien si hay una sola coincidencia de serie.
-- Se puede filtrar por situación, clase, grupo, sector, espacio y estado, por un **atributo** y su valor, y por un **ítem del último control** y su valor (por ejemplo, ver todos los que tenían un accesorio faltante).
+- Se puede filtrar por situación, clase, categoría, subcategoría (sólo las de la categoría elegida), grupo, sector, espacio y estado, por un **atributo** y su valor, y por un **ítem del último control** y su valor (por ejemplo, ver todos los que tenían un accesorio faltante).
 - Tocá una fila para controlar ese bien. Al volver, el listado conserva filtros y página.
 
 ## Registrar un control

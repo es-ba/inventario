@@ -18,18 +18,23 @@ La categoría y la subcategoría también se ven en la [ficha](#ayuda/ficha) y c
 ## Cómo se lee
 
 - Una fila por categoría, con el **Total** y una barra que muestra su peso frente a la más grande.
+- **En uso de un responsable** cuenta los bienes que alguien tiene en uso (el dato *en uso de* de la ficha está cargado).
 - Las columnas siguientes reparten el total por estado del bien: **Asignado**, **Sin asignar**, **En movimiento** y **Baja en trámite**.
 - La flecha de la izquierda abre la categoría en sus subcategorías.
 - **Sin categoría** reúne los bienes cuyo grupo todavía no tiene subcategoría.
-- Las categorías marcadas como *aparte* (por ejemplo, *Accesorios y componentes*: mouse, teclados, memorias) van abajo, con su propio total, y no suman al **Total principal**. El **Total general** es la suma de los dos y coincide con la cantidad de bienes activos.
+- *Accesorios y componentes* (mouse, teclados, memorias…) es una categoría más, con las demás.
+- El **Total general** coincide con la cantidad de bienes activos.
+- Si en el catálogo una categoría se marca como *aparte*, va abajo, con su propio total, y no suma al **Total principal**; el **Total general** sigue sumando todo. Hoy no hay ninguna marcada.
 
 ## Ver los bienes de un número
 
 Tocá cualquier número para abrir la búsqueda con esos bienes: por ejemplo, el de *Notebook* en la columna *Sin asignar* abre la búsqueda filtrada por *subcategoría: Notebook · estado: Sin asignar*, y el total del listado es el mismo número. El filtro se quita desde **Filtros aplicados**.
 
-## Sector y descarga
+## Sector, en uso de y descarga
 
-- **Sector** limita todas las cantidades a los bienes de ese sector (sin los sectores que dependen de él). El sector también viaja a la búsqueda al tocar un número.
+- **Sector** limita todas las cantidades a los bienes de ese sector (sin los sectores que dependen de él). Ofrece sólo los sectores activos, con su responsable al lado, así también se lo encuentra escribiendo el apellido.
+- **En uso de** limita las cantidades a los bienes que una persona tiene en uso. La lista muestra sólo a quienes tienen bienes activos en uso (del sector elegido, si hay uno), con su cantidad.
+- Los dos se pueden combinar, y viajan a la búsqueda al tocar un número.
 - **Descargar** baja la tabla como planilla, con una fila por subcategoría.
 
 Cada usuario ve en el reporte sólo los bienes que puede ver en la búsqueda.

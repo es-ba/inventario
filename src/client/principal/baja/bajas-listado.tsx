@@ -17,7 +17,7 @@ import {useDatosReferencial} from '../base/cache-tablas';
 import {formatearValor} from '../base/formato-valores';
 import {gridLocaleText} from '../localizacion-grid';
 import type {Fila} from '../base/tipos-tabla';
-import {textoDeReferencia, codigo} from '../base/referencias';
+import {textoDeReferencia, codigo, opcionesDe} from '../base/referencias';
 import {AccionesBaja} from './acciones-baja';
 
 const COLOR_POR_ESTADO:Record<string, 'default'|'info'|'warning'|'success'|'error'> = {
@@ -40,6 +40,8 @@ export function BajasListado({
     const [cargando, setCargando] = React.useState(true);
     const [estado, setEstado] = React.useState(TODOS);
     const [motivo, setMotivo] = React.useState(TODOS);
+    const [categoria, setCategoria] = React.useState(TODOS);
+    const [subcategoria, setSubcategoria] = React.useState(TODOS);
     const estados = useDatosReferencial('estados_baja');
     const motivos = useDatosReferencial('motivos_baja');
 
@@ -71,17 +73,44 @@ export function BajasListado({
         return cuenta;
     }, [filas]);
 
+    const categorias = React.useMemo(
+        () => opcionesDe(filas, 'categoria', f => textoDeReferencia(f.categoria, f.categorias__nombre)),
+        [filas],
+    );
+    const subcategorias = React.useMemo(
+        () => opcionesDe(
+            categoria === TODOS ? filas : filas.filter(f => codigo(f, 'categoria') === categoria),
+            'subcategoria',
+            f => textoDeReferencia(f.subcategoria, f.subcategorias__nombre),
+        ),
+        [categoria, filas],
+    );
+
     const filasVisibles = React.useMemo(() => filas.filter(fila => {
         const suEstado = codigo(fila, 'estado_baja') || SIN_ESTADO;
         const suMotivo = codigo(fila, 'motivo_baja');
         return (estado === TODOS || suEstado === estado)
-            && (motivo === TODOS || suMotivo === motivo);
-    }), [estado, filas, motivo]);
+            && (motivo === TODOS || suMotivo === motivo)
+            && (categoria === TODOS || codigo(fila, 'categoria') === categoria)
+            && (subcategoria === TODOS || codigo(fila, 'subcategoria') === subcategoria);
+    }), [categoria, estado, filas, motivo, subcategoria]);
 
     const columnas = React.useMemo<GridColDef[]>(() => [
         {field:'acciones',headerName:'Acciones',width:300,sortable:false,filterable:false,
             renderCell:params=><Box onClick={evento=>evento.stopPropagation()}><AccionesBaja fila={params.row} onAplicada={()=>void cargar()}/></Box>},
         {field:'ficha', headerName:'Ficha', width:110},
+        {
+            field:'categoria',
+            headerName:'Categoría',
+            width:160,
+            valueGetter:(_v, fila) => textoDeReferencia(fila.categoria, fila.categorias__nombre),
+        },
+        {
+            field:'subcategoria',
+            headerName:'Subcategoría',
+            width:160,
+            valueGetter:(_v, fila) => textoDeReferencia(fila.subcategoria, fila.subcategorias__nombre),
+        },
         {
             field:'detalle',
             headerName:'Descripción',
@@ -209,6 +238,28 @@ export function BajasListado({
                         {textoDeReferencia(valor, fila.descripcion)}
                     </MenuItem>;
                 })}
+            </TextField>
+            <TextField
+                select
+                size="small"
+                label="Categoría"
+                value={categoria}
+                onChange={evento => { setCategoria(evento.target.value); setSubcategoria(TODOS); }}
+                sx={{minWidth:200}}
+            >
+                <MenuItem value={TODOS}>Todas</MenuItem>
+                {categorias.map(([valor, texto]) => <MenuItem key={valor} value={valor}>{texto}</MenuItem>)}
+            </TextField>
+            <TextField
+                select
+                size="small"
+                label="Subcategoría"
+                value={subcategoria}
+                onChange={evento => setSubcategoria(evento.target.value)}
+                sx={{minWidth:200}}
+            >
+                <MenuItem value={TODOS}>Todas</MenuItem>
+                {subcategorias.map(([valor, texto]) => <MenuItem key={valor} value={valor}>{texto}</MenuItem>)}
             </TextField>
         </Stack>
 

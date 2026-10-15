@@ -8,6 +8,8 @@ export function sqlBienesControl(dias:number):string{
     return `
 SELECT
     v.ficha,
+    v.categoria,
+    v.subcategoria,
     v.grupo,
     v.rubro,
     v.clase,
@@ -60,6 +62,8 @@ export function bienes_control(context:TableContext):TableDefinition{
             {name:'ficha'               , typeName:'text'   , title:'ficha'},
             {name:'rubro'               , typeName:'text'   , title:'rubro'          , nullable:true},
             {name:'clase'               , typeName:'text'   , title:'clase'          , nullable:true},
+            {name:'categoria'           , typeName:'text'   , title:'categoría'      , nullable:true},
+            {name:'subcategoria'        , typeName:'text'   , title:'subcategoría'   , nullable:true},
             {name:'grupo'               , typeName:'text'   , title:'grupo'          , nullable:true},
             {name:'detalle'             , typeName:'text'   , title:'descripción'    , nullable:true},
             {name:'marca'               , typeName:'text'   , title:'marca'          , nullable:true},
@@ -81,6 +85,8 @@ export function bienes_control(context:TableContext):TableDefinition{
         ],
         primaryKey:['ficha'],
         foreignKeys:[
+            {references:'categorias'          , fields:['categoria']          , displayFields:['nombre']},
+            {references:'subcategorias'       , fields:['subcategoria']       , displayFields:['nombre']},
             {references:'grupos'              , fields:['grupo']              , displayFields:['descripcion']},
             {references:'marcas'              , fields:['marca']              , displayFields:['descripcion']},
             {references:'sectores'            , fields:['sector']             , displayFields:['sigla']},

@@ -16,7 +16,7 @@ SEG|Seguridad y control de acceso|Cámaras, grabadores, relojes de fichaje|14|fa
 VEH|Vehículos|Automóviles, utilitarios, motos|15|false
 BIB|Biblioteca|Libros y colecciones|16|false
 SOF|Software y licencias|Licencias perpetuas inventariables|17|false
-ACC|Accesorios y componentes|Mouse, teclados, memorias, discos internos, pendrives, cargadores, SIM, repuestos|18|true
+ACC|Accesorios y componentes|Mouse, teclados, memorias, discos internos, pendrives, cargadores, SIM, repuestos|18|false
 CER|Ceremonial|Banderas, mástiles, astas|19|false
 INS|Instalaciones y divisiones|Tabiques, cortinas, toldos|20|false
 HER|Herramientas|Herramientas manuales y eléctricas, escaleras|21|false

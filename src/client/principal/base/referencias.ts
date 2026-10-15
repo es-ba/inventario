@@ -14,7 +14,18 @@ export function codigo(fila:Fila, campo:string):string{
     return String(fila[campo] ?? '').trim();
 }
 
-export type CampoFijo = {fieldName:string, value:unknown, until?:unknown};
+export function opcionesDe(filas:Fila[], campo:string|((fila:Fila) => string), texto:(fila:Fila) => string):[string, string][]{
+    const vistas = new Map<string, string>();
+    for(const fila of filas){
+        const valor = typeof campo === 'string' ? codigo(fila, campo) : campo(fila);
+        if(valor !== '' && !vistas.has(valor)){
+            vistas.set(valor, texto(fila));
+        }
+    }
+    return [...vistas].sort((a, b) => a[1].localeCompare(b[1]));
+}
+
+export type CampoFijo ={fieldName:string, value:unknown, until?:unknown};
 
 export function leerTabla(conn:Connector, tabla:string, fixedFields:CampoFijo[] = []):Promise<Fila[]>{
     return conn.ajax.table_data({

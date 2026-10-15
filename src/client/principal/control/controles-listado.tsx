@@ -23,7 +23,7 @@ import {useAvisos, useConexion} from '../base/contexto-base';
 import {capitalizar, formatearValor} from '../base/formato-valores';
 import {bienesGridLocaleText} from '../localizacion-grid';
 import type {Fila} from '../base/tipos-tabla';
-import {textoDeReferencia, codigo} from '../base/referencias';
+import {textoDeReferencia, codigo, opcionesDe} from '../base/referencias';
 import {
     Par,
     SIN_DATO,
@@ -64,17 +64,6 @@ export function responsableDelSectorDe(fila:Fila):string{
         fila.responsable_sector__apellido, fila.responsable_sector__nombre);
 }
 
-function opcionesDe(filas:Fila[], campo:string|((fila:Fila) => string), texto:(fila:Fila) => string){
-    const vistas = new Map<string, string>();
-    for(const fila of filas){
-        const valor = typeof campo === 'string' ? codigo(fila, campo) : campo(fila);
-        if(valor !== '' && !vistas.has(valor)){
-            vistas.set(valor, texto(fila));
-        }
-    }
-    return [...vistas].sort((a, b) => a[1].localeCompare(b[1]));
-}
-
 export function ChipSituacion({situacion}:{situacion:string}){
     return <Chip
         size="small"
@@ -97,6 +86,8 @@ export function ControlesListado({
     const [cargando, setCargando] = React.useState(true);
     const [situacion, setSituacion] = React.useState(TODOS);
     const [clase, setClase] = React.useState(TODOS);
+    const [categoria, setCategoria] = React.useState(TODOS);
+    const [subcategoria, setSubcategoria] = React.useState(TODOS);
     const [grupo, setGrupo] = React.useState(TODOS);
     const [sector, setSector] = React.useState(TODOS);
     const [espacio, setEspacio] = React.useState(TODOS);
@@ -137,6 +128,18 @@ export function ControlesListado({
     }, [filas]);
 
     const clases = React.useMemo(() => opcionesDe(filas, codigoDeClase, claseDe), [filas]);
+    const categorias = React.useMemo(
+        () => opcionesDe(filas, 'categoria', f => textoDeReferencia(f.categoria, f.categorias__nombre)),
+        [filas],
+    );
+    const subcategorias = React.useMemo(
+        () => opcionesDe(
+            categoria === TODOS ? filas : filas.filter(f => codigo(f, 'categoria') === categoria),
+            'subcategoria',
+            f => textoDeReferencia(f.subcategoria, f.subcategorias__nombre),
+        ),
+        [categoria, filas],
+    );
     const grupos = React.useMemo(
         () => opcionesDe(filas, 'grupo', f => textoDeReferencia(f.grupo, f.grupos__descripcion)),
         [filas],
@@ -159,6 +162,8 @@ export function ControlesListado({
         return filas.filter(fila =>
             (situacion === TODOS || codigo(fila, 'situacion') === situacion)
             && (clase === TODOS || codigoDeClase(fila) === clase)
+            && (categoria === TODOS || codigo(fila, 'categoria') === categoria)
+            && (subcategoria === TODOS || codigo(fila, 'subcategoria') === subcategoria)
             && (grupo === TODOS || codigo(fila, 'grupo') === grupo)
             && (sector === TODOS || codigo(fila, 'sector') === sector)
             && (espacio === TODOS || codigo(fila, 'espacio') === espacio)
@@ -169,7 +174,7 @@ export function ControlesListado({
                 || codigo(fila, 'ficha').toLowerCase().includes(buscado)
                 || codigo(fila, 'serie').toLowerCase().includes(buscado))
         );
-    }, [atributo, busqueda, clase, espacio, estado, filas, grupo, item, sector, situacion, valorAtributo, valorItem]);
+    }, [atributo, busqueda, categoria, clase, espacio, estado, filas, grupo, item, sector, situacion, subcategoria, valorAtributo, valorItem]);
 
     const listaEnOrden = React.useCallback(():Fila[] => {
         const porFicha = new Map(filasVisibles.map(fila => [codigo(fila, 'ficha'), fila]));
@@ -194,6 +199,18 @@ export function ControlesListado({
     const columnas = React.useMemo<GridColDef[]>(() => [
         {field:'ficha', headerName:'Ficha', width:110},
         {field:'clase', headerName:'Clase', width:150, valueGetter:(_v, fila) => claseDe(fila)},
+        {
+            field:'categoria',
+            headerName:'Categoría',
+            width:160,
+            valueGetter:(_v, fila) => textoDeReferencia(fila.categoria, fila.categorias__nombre),
+        },
+        {
+            field:'subcategoria',
+            headerName:'Subcategoría',
+            width:160,
+            valueGetter:(_v, fila) => textoDeReferencia(fila.subcategoria, fila.subcategorias__nombre),
+        },
         {
             field:'grupo',
             headerName:'Grupo',
@@ -335,6 +352,8 @@ export function ControlesListado({
             {filtro('situación', situacion, setSituacion,
                 SITUACIONES_DE_CONTROL.map(s => [s, s.toLowerCase()]))}
             {filtro('clase', clase, setClase, clases)}
+            {filtro('categoría', categoria, nueva => { setCategoria(nueva); setSubcategoria(TODOS); }, categorias)}
+            {filtro('subcategoría', subcategoria, setSubcategoria, subcategorias)}
             {filtro('grupo', grupo, setGrupo, grupos)}
             {filtro('sector', sector, setSector, sectores)}
             {filtro('espacio', espacio, setEspacio, espacios)}

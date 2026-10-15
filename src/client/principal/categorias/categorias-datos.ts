@@ -2,7 +2,9 @@ import type {BienesAgrupadoFila, GrupoFiltro, GrupoFiltroElegido} from '../../..
 import type {BienesBusquedaRequest} from '../../../common/contracts';
 import {textoSinCodigo} from '../columnas-busqueda';
 
-export const DIMENSIONES_DEL_REPORTE = ['categoria', 'subcategoria', 'estado'] as const;
+export const DIMENSIONES_DEL_REPORTE = ['categoria', 'subcategoria', 'estado', 'en_uso'] as const;
+
+export const EN_USO = {dimension:'en_uso', valor:'SI', texto:'Sí', etiqueta:'en uso de un responsable', titulo:'En uso de un responsable'} as const;
 
 export const OTROS = '__otros__';
 
@@ -14,7 +16,7 @@ export type EstadoDeCatalogo = {estado:string, etiqueta:string, descripcion:stri
 
 export type ColumnaDeEstado = {clave:string, etiqueta:string, descripcion:string|null};
 
-export type Cuenta = {total:number, porEstado:Record<string, number>};
+export type Cuenta = {total:number, enUso:number, porEstado:Record<string, number>};
 
 export type FilaDeSubcategoria = {subcategoria:string|null, nombre:string, cuenta:Cuenta};
 
@@ -35,14 +37,20 @@ export type Reporte = {
     total:Cuenta,
 };
 
-export type SectorElegido = {sector:string, texto:string};
+export type FiltroPrevio = {dimension:string, valor:string, texto:string, etiqueta:string};
+
+export const FILTROS_DEL_REPORTE = [
+    {dimension:'sector', etiqueta:'sector', titulo:'Sector'},
+    {dimension:'enusode_responsable', etiqueta:'en uso de', titulo:'En uso de'},
+] as const;
 
 function cuentaVacia():Cuenta{
-    return {total:0, porEstado:{}};
+    return {total:0, enUso:0, porEstado:{}};
 }
 
-function sumar(cuenta:Cuenta, clave:string, cantidad:number){
+function sumar(cuenta:Cuenta, clave:string, cantidad:number, enUso:number){
     cuenta.total += cantidad;
+    cuenta.enUso += enUso;
     cuenta.porEstado[clave] = (cuenta.porEstado[clave] ?? 0) + cantidad;
 }
 
@@ -50,8 +58,9 @@ function sumarCuentas(cuentas:Cuenta[]):Cuenta{
     const suma = cuentaVacia();
     for(const cuenta of cuentas){
         for(const [clave, cantidad] of Object.entries(cuenta.porEstado)){
-            sumar(suma, clave, cantidad);
+            sumar(suma, clave, cantidad, 0);
         }
+        suma.enUso += cuenta.enUso;
     }
     return suma;
 }
@@ -77,15 +86,16 @@ export function armarReporte(
     const catalogo = new Map(categorias.map(categoria => [categoria.categoria, categoria]));
     const porCategoria = new Map<string|null, {cuenta:Cuenta, subcategorias:Map<string|null, FilaDeSubcategoria>}>();
     let hayOtros = false;
-    for(const {valores:[categoria = null, subcategoria = null, estado = null], textos, cantidad} of filas){
+    for(const {valores:[categoria = null, subcategoria = null, estado = null, enUso = null], textos, cantidad} of filas){
         const clave = claveDeEstado(estado);
+        const deEnUso = enUso === EN_USO.valor ? cantidad : 0;
         hayOtros ||= clave === OTROS;
         let grupo = porCategoria.get(categoria);
         if(!grupo){
             grupo = {cuenta:cuentaVacia(), subcategorias:new Map()};
             porCategoria.set(categoria, grupo);
         }
-        sumar(grupo.cuenta, clave, cantidad);
+        sumar(grupo.cuenta, clave, cantidad, deEnUso);
         let sub = grupo.subcategorias.get(subcategoria);
         if(!sub){
             sub = {
@@ -95,7 +105,7 @@ export function armarReporte(
             };
             grupo.subcategorias.set(subcategoria, sub);
         }
-        sumar(sub.cuenta, clave, cantidad);
+        sumar(sub.cuenta, clave, cantidad, deEnUso);
     }
     const filasDeCategoria = [...porCategoria].map(([categoria, {cuenta, subcategorias}]):FilaDeCategoria & {aparte:boolean, orden:number|null} => {
         const delCatalogo = categoria == null ? undefined : catalogo.get(categoria);
@@ -131,7 +141,7 @@ export function armarReporte(
     };
 }
 
-export function consultaDelReporte(sector:SectorElegido|null):BienesBusquedaRequest{
+export function consultaDelReporte(previos:FiltroPrevio[], agruparPor:readonly string[] = DIMENSIONES_DEL_REPORTE):BienesBusquedaRequest{
     return {
         estado:'activo',
         logicOperator:'and',
@@ -141,19 +151,20 @@ export function consultaDelReporte(sector:SectorElegido|null):BienesBusquedaRequ
         page:0,
         pageSize:100,
         sortModel:[],
-        agruparPor:[...DIMENSIONES_DEL_REPORTE],
-        ...(sector ? {grupoFiltro:[{dimension:'sector', valor:sector.sector}]} : {}),
+        agruparPor:[...agruparPor],
+        ...(previos.length ? {grupoFiltro:previos.map(({dimension, valor}) => ({dimension, valor}))} : {}),
     };
 }
 
 export type Celda = {
-    sector:SectorElegido|null,
+    previos:FiltroPrevio[],
     categoria?:{valor:string|null, nombre:string},
     subcategoria?:{valor:string|null, nombre:string},
     estado?:ColumnaDeEstado,
+    enUso?:boolean,
 };
 
-export function filtroDeCelda({sector, categoria, subcategoria, estado}:Celda):GrupoFiltroElegido|null{
+export function filtroDeCelda({previos, categoria, subcategoria, estado, enUso}:Celda):GrupoFiltroElegido|null{
     if(estado?.clave === OTROS){
         return null;
     }
@@ -165,11 +176,44 @@ export function filtroDeCelda({sector, categoria, subcategoria, estado}:Celda):G
         textos.push(valor == null ? SIN_DATO : texto);
         etiquetas.push(etiqueta);
     };
-    if(sector){ agregar('sector', sector.sector, sector.texto, 'sector'); }
+    for(const previo of previos){ agregar(previo.dimension, previo.valor, previo.texto, previo.etiqueta); }
     if(subcategoria){ agregar('subcategoria', subcategoria.valor, subcategoria.nombre, 'subcategoría'); }
     else if(categoria){ agregar('categoria', categoria.valor, categoria.nombre, 'categoría'); }
     if(estado){ agregar('estado', estado.clave, estado.etiqueta, 'estado'); }
+    if(enUso){ agregar(EN_USO.dimension, EN_USO.valor, EN_USO.texto, EN_USO.etiqueta); }
     return partes.length ? {partes, textos, etiquetas} : null;
+}
+
+export type OpcionDeFiltro = {valor:string, texto:string, etiqueta:string};
+
+export function opcionesDeAgrupado(filas:BienesAgrupadoFila[]):OpcionDeFiltro[]{
+    return filas
+        .filter(fila => fila.valores[0] != null)
+        .map(fila => {
+            const valor = fila.valores[0] as string;
+            const texto = textoSinCodigo(fila.textos[0] ?? valor, valor) || valor;
+            return {valor, texto, etiqueta:`${texto} (${fila.cantidad})`};
+        })
+        .sort((a, b) => a.texto.localeCompare(b.texto));
+}
+
+export function opcionesDeSectores(filas:Record<string, unknown>[]):OpcionDeFiltro[]{
+    const texto = (valor:unknown) => valor == null ? '' : String(valor).trim();
+    return filas
+        .filter(fila => fila.activo !== false)
+        .map(fila => {
+            const sector = texto(fila.sector);
+            const sigla = texto(fila.sigla);
+            const nombre = texto(fila.nombre_sector);
+            const responsable = [texto(fila.responsables__apellido), texto(fila.responsables__nombre)].filter(Boolean).join(', ');
+            const delSector = [sigla, nombre].filter(Boolean).join(' — ') || sector;
+            return {
+                valor:sector,
+                texto:sigla || nombre || sector,
+                etiqueta:responsable ? `${delSector} · ${responsable}` : delSector,
+            };
+        })
+        .sort((a, b) => a.etiqueta.localeCompare(b.etiqueta));
 }
 
 export function hashDeBusqueda(filtro:GrupoFiltroElegido|null):string{
@@ -182,8 +226,8 @@ function campoCsv(valor:string|number):string{
 }
 
 export function csvDelReporte(reporte:Reporte):string{
-    const numeros = (cuenta:Cuenta) => [cuenta.total, ...reporte.columnas.map(columna => cuenta.porEstado[columna.clave] ?? 0)];
-    const lineas:(string|number)[][] = [['Categoría', 'Subcategoría', 'Total', ...reporte.columnas.map(columna => columna.etiqueta)]];
+    const numeros = (cuenta:Cuenta) => [cuenta.total, cuenta.enUso, ...reporte.columnas.map(columna => cuenta.porEstado[columna.clave] ?? 0)];
+    const lineas:(string|number)[][] = [['Categoría', 'Subcategoría', 'Total', EN_USO.titulo, ...reporte.columnas.map(columna => columna.etiqueta)]];
     const bloque = (filas:FilaDeCategoria[]) => {
         for(const categoria of filas){
             for(const sub of categoria.subcategorias){
@@ -201,8 +245,8 @@ export function csvDelReporte(reporte:Reporte):string{
     return '﻿' + lineas.map(linea => linea.map(campoCsv).join(';')).join('\r\n') + '\r\n';
 }
 
-export function nombreDelCsv(sector:SectorElegido|null, fecha:Date):string{
+export function nombreDelCsv(previos:FiltroPrevio[], fecha:Date):string{
     const dia = [fecha.getFullYear(), fecha.getMonth() + 1, fecha.getDate()].map(n => String(n).padStart(2, '0')).join('-');
-    const delSector = sector ? `-${sector.sector.replace(/[^\w-]+/g, '_')}` : '';
-    return `bienes-por-categoria${delSector}-${dia}.csv`;
+    const deLosFiltros = previos.map(previo => `-${previo.valor.replace(/[^\w-]+/g, '_')}`).join('');
+    return `bienes-por-categoria${deLosFiltros}-${dia}.csv`;
 }
