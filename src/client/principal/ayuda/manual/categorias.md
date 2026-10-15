@@ -6,12 +6,14 @@ Muestra en una sola tabla cuántos bienes activos hay de cada tipo y en qué est
 
 ## Categoría y subcategoría
 
-Cada bien tiene una clasificación de dos niveles, que sale de su **grupo**:
+Cada bien tiene una clasificación de dos niveles:
 
 - La **subcategoría** es el tipo de bien: *Notebook*, *Tablet*, *Silla*…
 - La **categoría** agrupa subcategorías por función: *Computadoras*, *Dispositivos móviles*, *Mobiliario*…
 
-El grupo no cambia: cada grupo tiene asignada una subcategoría, y todos sus bienes la toman. Por eso, para corregir la clasificación de un bien hay que corregir su grupo, o la subcategoría del grupo. Los catálogos y la asignación están en **gestion de datos → categorías, subcategorías y grupos**.
+La **subcategoría** es un dato de cada bien: se elige en la ficha (sección *Clasificación*), en el alta y en la edición masiva, y se copia al clonar. La **categoría** no se elige: es la de la subcategoría.
+
+El grupo es independiente: cambiar el grupo de un bien no cambia su subcategoría. Al cargar la clasificación por primera vez, cada bien tomó la subcategoría equivalente a su grupo; esa equivalencia queda como referencia en **gestion de datos → grupos** (*subcategoría equivalente*). Los catálogos están en **gestion de datos → categorías** y **subcategorías**.
 
 La categoría y la subcategoría también se ven en la [ficha](#ayuda/ficha) y como columnas y filtros en la [búsqueda](#ayuda/busqueda).
 
@@ -21,7 +23,7 @@ La categoría y la subcategoría también se ven en la [ficha](#ayuda/ficha) y c
 - Las columnas siguientes reparten el total por estado del bien: **Asignado**, **Sin asignar**, **En movimiento** y **Baja en trámite**.
 - La última, **En uso**, separada por una línea, cuenta los bienes cuyo último movimiento tiene cargado un **responsable de uso** (la persona elegida en *en uso de*).
 - La flecha de la izquierda abre la categoría en sus subcategorías.
-- **Sin categoría** reúne los bienes cuyo grupo todavía no tiene subcategoría.
+- **Sin categoría** reúne los bienes que todavía no tienen subcategoría.
 - *Accesorios y componentes* (mouse, teclados, memorias…) es una categoría más, con las demás.
 - El **Total general** coincide con la cantidad de bienes activos.
 - Si en el catálogo una categoría se marca como *aparte*, va abajo, con su propio total, y no suma al **Total principal**; el **Total general** sigue sumando todo. Hoy no hay ninguna marcada.

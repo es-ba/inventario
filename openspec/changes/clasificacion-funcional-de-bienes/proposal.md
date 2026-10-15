@@ -15,7 +15,7 @@ El desglose de la búsqueda (`desglose-por-grupo-en-busqueda`) ya muestra cantid
 - **Una clasificación funcional nueva, de dos niveles, que se suma al grupo sin reemplazarlo:**
   - la **categoría**: 22 agrupaciones funcionales (Computadoras, Dispositivos móviles, Mobiliario…), las 18 del clasificador propuesto más ACC Accesorios y componentes, CER Ceremonial, INS Instalaciones y divisiones y HER Herramientas;
   - la **subcategoría**: el nivel fino (CMP-01 Notebook, MOV-02 Tablet…), 101 en total.
-- **Cada grupo se asigna a una subcategoría**, y el bien toma la clasificación de su grupo. No se carga nada nuevo en los bienes, y el grupo de cada bien no cambia. La asignación inicial sale de la planilla de equivalencias validada por Patrimonio (`local-clasificacion/equivalencias-grupos.xlsx`).
+- **Cada bien guarda su subcategoría**, editable en la ficha, el alta y la edición masiva; la categoría sale de la subcategoría. El grupo queda independiente. La carga inicial toma, para cada bien, la subcategoría equivalente a su grupo según la planilla validada por Patrimonio (`local-clasificacion/equivalencias-grupos.xlsx`), que queda en `grupos.subcategoria` como referencia.
 - **Las categorías se pueden marcar como «aparte».** En el reporte, las categorías aparte se muestran por separado y no se suman al total principal; en la búsqueda se tratan igual que las demás. Ninguna sale marcada: a pedido del usuario, Accesorios y componentes se muestra junto a las demás.
 - **Pantalla nueva «Bienes por categoría»**, en «reportes», para todos los roles:
   - una tabla con una fila por categoría, que se abre en sus subcategorías;
@@ -34,7 +34,6 @@ El desglose de la búsqueda (`desglose-por-grupo-en-busqueda`) ya muestra cantid
 - **El estado del bien gana una etiqueta corta y un orden** (`estados_bien`), para titular las columnas del reporte sin escribir los estados en el código.
 - Fuera de alcance:
   - limpiar el catálogo de grupos o corregir el grupo de bienes puntuales: se hace como dato, con la planilla;
-  - asignar la subcategoría bien por bien, distinta de la de su grupo (ver design.md, decisión 1);
   - la partida presupuestaria: la conciliación sigue con rubro/clase/cuenta;
   - atributos específicos por subcategoría (IMEI, línea, dominio);
   - incluir los subsectores en el filtro por sector del reporte.
@@ -42,7 +41,7 @@ El desglose de la búsqueda (`desglose-por-grupo-en-busqueda`) ya muestra cantid
 ## Capabilities
 
 ### New Capabilities
-- `clasificacion-de-bienes`: catálogos de categorías y subcategorías, la asignación de cada grupo a una subcategoría y la clasificación de cada bien que resulta de su grupo, en la ficha y en la búsqueda.
+- `clasificacion-de-bienes`: catálogos de categorías y subcategorías, la subcategoría propia de cada bien (con la equivalencia por grupo para la carga inicial) y la clasificación en la ficha y en la búsqueda.
 - `reporte-por-categoria`: la pantalla «Bienes por categoría», con las cantidades por categoría, subcategoría y estado, y el paso a la búsqueda desde cada número.
 
 ### Modified Capabilities

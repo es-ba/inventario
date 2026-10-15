@@ -18,7 +18,7 @@ export function subcategorias(context:TableContext):TableDefinition{
             {references:'categorias', fields:['categoria']},
         ],
         detailTables:[
-            {table:'grupos', fields:['subcategoria'], abr:'G', label:'grupos'},
+            {table:'grupos', fields:['subcategoria'], abr:'G', label:'grupos equivalentes'},
         ],
         sortColumns:[{column:'subcategoria'}],
     };

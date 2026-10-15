@@ -2,7 +2,7 @@ type Fila = Record<string, unknown>;
 
 export const CAMPOS_CLONABLES = [
     'tipo_bien', 'prd',
-    'rubro', 'clase', 'cuenta', 'grupo', 'clasificacion',
+    'rubro', 'clase', 'cuenta', 'grupo', 'subcategoria', 'clasificacion',
     'marca', 'modelo', 'annio',
     'importe', 'importetotal', 'orden_compra',
     'entidad_prestadora', 'fecha_inicio', 'fecha_fin', 'renovable', 'condiciones', 'costo_mensual',

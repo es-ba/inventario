@@ -58,6 +58,8 @@
 
 - [x] 4b.4 Barra y porcentaje sobre el total general; explicación de los estados en la ayuda (una referencia bajo la tabla se probó y se sacó a pedido del usuario); descripciones de `estados_bien` aclaradas (también en `cambios_2026-10-15.sql`) y etiqueta corta en el listado de control; los códigos de categoría y subcategoría se probaron en el reporte y se sacaron a pedido del usuario.
 
+- [x] 4b.5 La subcategoría pasa a ser un campo del bien (`bienes.subcategoria`, editable y clonable), con la categoría derivada; `grupos.subcategoria` queda como «subcategoría equivalente». Generador escribe la columna en `bienes.tab`; `cambios_2026-10-15b.sql` agrega la columna y la completa desde el grupo sin auditoría. Probado: el script b sobre una copia de la base anterior da los mismos datos que el dump nuevo. Sin probar en el navegador (ficha, alta, edición masiva), a pedido del usuario.
+
 ## 5. Cierre
 
 - [x] 5.1 Manual:

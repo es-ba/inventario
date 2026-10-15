@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Que cada bien tenga una clasificación funcional de dos niveles (categoría y subcategoría), que sale de su grupo sin cargar nada en el bien, y que esa clasificación se pueda ver, buscar y filtrar en todo el sistema.
+Que cada bien tenga una clasificación funcional de dos niveles (categoría y subcategoría), con la subcategoría como dato propio del bien, independiente de su grupo, y que esa clasificación se pueda ver, buscar y filtrar en todo el sistema.
 
 ## ADDED Requirements
 
@@ -22,28 +22,28 @@ El sistema SHALL tener un catálogo de categorías y otro de subcategorías.
 - **WHEN** el usuario intenta borrar la subcategoría «CMP-01 Notebook», asignada al grupo NOTEBOOK
 - **THEN** el sistema rechaza el borrado
 
-### Requirement: Clasificación del bien por su grupo
-Cada grupo SHALL poder asignarse a una subcategoría. La subcategoría de un bien SHALL ser la de su grupo, y su categoría SHALL ser la de esa subcategoría. El bien no SHALL guardar la clasificación: si cambia el grupo del bien, o la subcategoría asignada al grupo, la clasificación del bien SHALL cambiar sin otra acción. Asignar la clasificación no SHALL modificar el grupo de ningún bien. Un bien cuyo grupo no tiene subcategoría, o que no tiene grupo, SHALL quedar sin categoría ni subcategoría.
+### Requirement: Subcategoría propia de cada bien
+Cada bien SHALL tener una subcategoría propia, opcional, y su categoría SHALL ser la de esa subcategoría. La subcategoría del bien no SHALL depender de su grupo: cambiar el grupo de un bien no SHALL cambiar su subcategoría. Cada grupo SHALL poder guardar una «subcategoría equivalente», que sólo se usa como referencia y para la carga inicial. La carga inicial SHALL completar cada bien sin subcategoría con la equivalente de su grupo, sin pisar las cargadas, y sin modificar el grupo de ningún bien. Un bien sin subcategoría SHALL quedar sin categoría.
 
-#### Scenario: Bien clasificado por su grupo
-- **WHEN** un bien tiene el grupo NOTEBOOK, asignado a la subcategoría «CMP-01 Notebook» de la categoría «CMP Computadoras»
-- **THEN** el bien tiene subcategoría Notebook y categoría Computadoras
+#### Scenario: Carga inicial
+- **WHEN** se aplica la carga inicial a un bien del grupo NOTEBOOK, cuya subcategoría equivalente es «CMP-01 Notebook»
+- **THEN** el bien queda con subcategoría Notebook y categoría Computadoras
+- **AND** su grupo sigue siendo NOTEBOOK
 
-#### Scenario: Cambiar la asignación de un grupo
-- **WHEN** el administrador asigna el grupo IMAC a la subcategoría «CMP-03 All-in-one»
-- **THEN** todos los bienes del grupo IMAC pasan a tener subcategoría All-in-one y categoría Computadoras
-- **AND** el grupo de esos bienes sigue siendo IMAC
+#### Scenario: Cambiar el grupo de un bien
+- **WHEN** el usuario cambia el grupo de un bien de NOTEBOOK a CPU
+- **THEN** la subcategoría del bien sigue siendo Notebook
 
-#### Scenario: Grupo sin asignar
-- **WHEN** se crea un grupo nuevo sin subcategoría y se carga un bien con ese grupo
-- **THEN** el bien queda sin categoría ni subcategoría
+#### Scenario: Corregir la subcategoría de un bien
+- **WHEN** el usuario cambia en la ficha la subcategoría de un bien del grupo TP LINK a «RED-01 Switch»
+- **THEN** el bien queda en la categoría Redes, y los demás bienes del grupo TP LINK no cambian
 
 ### Requirement: Clasificación en la ficha del bien
-La ficha del bien SHALL mostrar la categoría y la subcategoría junto al grupo, por su nombre, sin que puedan editarse.
+La ficha del bien SHALL mostrar la subcategoría y la categoría junto al grupo, por su nombre. La subcategoría SHALL poder elegirse en la ficha, en el alta y en la edición masiva, y SHALL copiarse al clonar un bien. La categoría no SHALL poder editarse: SHALL ser la de la subcategoría elegida.
 
-#### Scenario: Ver la clasificación en la ficha
-- **WHEN** el usuario abre la ficha de un bien del grupo TABLET
-- **THEN** la ficha muestra «categoría: Dispositivos móviles» y «subcategoría: Tablet», sin poder editarlas
+#### Scenario: Elegir la subcategoría en la ficha
+- **WHEN** el usuario edita un bien, elige la subcategoría «MOV-02 Tablet» y guarda
+- **THEN** la ficha muestra «subcategoría: Tablet» y «categoría: Dispositivos móviles»
 
 ### Requirement: Clasificación en la búsqueda de bienes
 - La búsqueda de bienes SHALL mostrar la categoría y la subcategoría como columnas iniciales, antes del grupo, por su nombre.

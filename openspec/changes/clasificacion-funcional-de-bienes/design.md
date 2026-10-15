@@ -16,24 +16,24 @@ Ver proposal.md (Why) para la motivación, y las specs `clasificacion-de-bienes`
 **Goals:**
 - Un usuario gerencial ve en una sola pantalla cuántos bienes hay por categoría y por estado, sin armar filtros ni conocer los campos.
 - Cada número del reporte es el mismo que da la búsqueda con ese filtro, y se llega a esa búsqueda tocándolo.
-- Cero carga manual en los bienes: la clasificación sale del grupo.
+- La subcategoría es un dato de cada bien; la carga inicial sale de la equivalencia por grupo, sin trabajo manual.
 - Ninguna categoría, subcategoría ni estado escrito en el código. Separar una categoría es un dato del catálogo (`aparte`), no un código escrito.
 
 **Non-Goals:**
 - Cambiar o limpiar el catálogo de grupos.
-- Subcategoría por bien.
 - Gráficos con una librería: alcanza con barras de CSS dentro de la tabla.
 - Reportes por período (altas o bajas por mes): esta es una foto del inventario de hoy.
 
 ## Decisions
 
-**1. La clasificación cuelga del grupo, no del bien.**
-`grupos.subcategoria` es una clave foránea nullable a `subcategorias`, y `subcategorias.categoria` es una clave foránea no nula a `categorias`. El bien no guarda nada: su subcategoría y su categoría salen de su grupo.
+**1. El bien guarda su subcategoría; el grupo queda independiente.**
+`bienes.subcategoria` es una clave foránea nullable a `subcategorias`, y `subcategorias.categoria` es una clave foránea no nula a `categorias`. La categoría no se guarda en el bien: sale de su subcategoría.
 
-- Así no hay que cargar ni migrar 10.236 bienes. Un bien nuevo queda clasificado en cuanto se le elige el grupo, y la clasificación no puede contradecir al grupo.
-- La alternativa era una columna `subcategoria` en `bienes`. Eso obliga a cargarla en cada alta, a mantenerla cuando cambia el grupo y a decidir qué vale si las dos no coinciden.
-- Los grupos ambiguos que marcó la planilla (TP LINK, RADIO, CAMARA…) se resuelven como dato: se reasigna el grupo de los bienes que no correspondan, o se separa el grupo en dos.
-- Si la validación de Patrimonio muestra muchos grupos mezclados, se puede sumar después `bienes.subcategoria` nullable como excepción: la derivada pasaría a ser `coalesce(b.subcategoria, g.subcategoria)`, sin tocar lo demás.
+- La primera versión hacía colgar la clasificación del grupo (`grupos.subcategoria` y nada en el bien). Se cambió a pedido del usuario: la clasificación no tiene que estar supeditada al grupo.
+- `grupos.subcategoria` queda como «subcategoría equivalente»: guarda la equivalencia de la planilla y sirvió para la carga inicial (`cambios_2026-10-15b.sql`, que completa sólo los bienes sin subcategoría). No se usa para clasificar.
+- Cambiar el grupo de un bien no cambia su subcategoría; no se propone ni se sincroniza.
+- La subcategoría se edita en la ficha, en el alta y en la edición masiva, y se copia al clonar. Los cambios quedan en el historial del bien; la carga inicial no, porque desactiva la auditoría como `bienes_estado_inicial.sql`.
+- Los grupos ambiguos que marcó la planilla (TP LINK, RADIO, CAMARA…) ya no obligan a tocar el grupo: se corrige la subcategoría de esos bienes.
 
 **2. Catálogos con códigos legibles.**
 - `categorias (categoria text PK, nombre text isName, incluye text, orden integer, aparte boolean not null default false)`.

@@ -16,7 +16,8 @@ export function grupos(context:TableContext):TableDefinition{
             {name:'grupo'             , typeName:'text'    }, 
             {name:'pertenece_a'       , typeName:'text'    },  
             {name:'descripcion'       , typeName:'text'    , isName:true},
-            {name:'subcategoria'      , typeName:'text'    , nullable:true, title:'subcategoría'},
+            {name:'subcategoria'      , typeName:'text'    , nullable:true, title:'subcategoría equivalente',
+                description:'la que se usó para la carga inicial de los bienes del grupo; no cambia la de cada bien'},
         ],
         primaryKey:['grupo'],
         foreignKeys:[

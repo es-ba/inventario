@@ -49,20 +49,28 @@ for (const f of hoja('Equivalencias')) {
     asignacion.set(grupo, subcategoria);
 }
 
-const archivoGrupos = path.join(datos, 'grupos.tab');
-const [encabezado, ...lineas] = fs.readFileSync(archivoGrupos, 'utf8').split(/\r?\n/);
-const columnas = encabezado.split('|');
-const conSubcategoria = columnas.includes('subcategoria') ? columnas : [...columnas, 'subcategoria'];
-const posGrupo = columnas.indexOf('grupo');
-const posSub = conSubcategoria.indexOf('subcategoria');
-const gruposSalida = lineas.filter((l) => l !== '').map((l) => {
-    const valores = l.split('|');
-    while (valores.length < conSubcategoria.length) valores.push('');
-    const grupo = texto(valores[posGrupo]);
-    if (!asignacion.has(grupo)) errores.push(`grupo ${grupo}: no figura en la planilla`);
-    valores[posSub] = asignacion.get(grupo) ?? '';
-    return valores.join('|');
-});
+function conSubcategoriaDelGrupo(archivo, exigirGrupo) {
+    const [encabezado, ...lineas] = fs.readFileSync(archivo, 'utf8').split(/\r?\n/);
+    const columnas = encabezado.split('|');
+    const conSubcategoria = columnas.includes('subcategoria') ? columnas : [...columnas, 'subcategoria'];
+    const posGrupo = columnas.indexOf('grupo');
+    const posSub = conSubcategoria.indexOf('subcategoria');
+    const salida = lineas.filter((l) => l !== '').map((l, i) => {
+        const valores = l.split('|');
+        if (valores.length !== columnas.length) errores.push(`${archivo}, línea ${i + 2}: tiene ${valores.length} columnas y el encabezado ${columnas.length}`);
+        while (valores.length < conSubcategoria.length) valores.push('');
+        const grupo = texto(valores[posGrupo]);
+        if (grupo && !asignacion.has(grupo)) errores.push(`${archivo}: el grupo ${grupo} no figura en la planilla`);
+        if (exigirGrupo && !grupo) errores.push(`${archivo}, línea ${i + 2}: sin grupo`);
+        valores[posSub] = asignacion.get(grupo) ?? '';
+        return valores.join('|');
+    });
+    return {archivo, lineas:[conSubcategoria.join('|'), ...salida]};
+}
+
+const grupos = conSubcategoriaDelGrupo(path.join(datos, 'grupos.tab'), true);
+const bienes = conSubcategoriaDelGrupo(path.join(datos, 'bienes.tab'), false);
+const gruposSalida = grupos.lineas.slice(1);
 
 if (errores.length) {
     console.error(errores.join('\n'));
@@ -74,7 +82,9 @@ const escribir = (archivo, cols, filas) => fs.writeFileSync(archivo,
 
 escribir(path.join(raiz, 'install', 'categorias.tab'), ['categoria', 'nombre', 'incluye', 'orden', 'aparte'], categorias);
 escribir(path.join(raiz, 'install', 'subcategorias.tab'), ['subcategoria', 'nombre', 'categoria'], subcategorias);
-fs.writeFileSync(archivoGrupos, [conSubcategoria.join('|'), ...gruposSalida].join('\n') + '\n');
+for (const {archivo, lineas} of [grupos, bienes]) {
+    fs.writeFileSync(archivo, lineas.join('\n') + '\n');
+}
 
 const sqlTexto = (v) => v === '' || v == null ? 'NULL' : `'${String(v).replace(/'/g, "''")}'`;
 fs.writeFileSync(path.join(raiz, 'local-clasificacion', 'clasificacion-datos.sql'), [

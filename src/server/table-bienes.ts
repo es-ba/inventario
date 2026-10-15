@@ -28,8 +28,7 @@ export const sqlBienes = `
 SELECT 
     b.*,
     ${codigoTextoSql('b.grupo', 'g.descripcion')} AS grupo_texto,
-    g.subcategoria,
-    ${codigoTextoSql('g.subcategoria', 'sc.nombre')} AS subcategoria_texto,
+    ${codigoTextoSql('b.subcategoria', 'sc.nombre')} AS subcategoria_texto,
     sc.categoria,
     ${codigoTextoSql('sc.categoria', 'cat.nombre')} AS categoria_texto,
     ${codigoTextoSql('b.marca', 'ma.descripcion')} AS marca_texto,
@@ -78,7 +77,7 @@ SELECT
     coalesce(ult.usuario_modificacion, ult.usuario_creacion) AS usuario_ultimo_movimiento
     FROM bienes b
 LEFT JOIN grupos g ON g.grupo = b.grupo
-LEFT JOIN subcategorias sc ON sc.subcategoria = g.subcategoria
+LEFT JOIN subcategorias sc ON sc.subcategoria = b.subcategoria
 LEFT JOIN categorias cat ON cat.categoria = sc.categoria
 LEFT JOIN marcas ma ON ma.marca = b.marca
 LEFT JOIN rubros ru ON ru.rubro = b.rubro
@@ -153,7 +152,7 @@ export function bienes(context:TableContext):TableDefinition{
             {name:'clase'                       , typeName:'text'    , nullable:true},
             {name:'cuenta'                      , typeName:'text'    , nullable:true},
             {name:'categoria'                   , typeName:'text'    , editable:false, inTable:false, title:'categoría'},
-            {name:'subcategoria'                , typeName:'text'    , editable:false, inTable:false, title:'subcategoría'},
+            {name:'subcategoria'                , typeName:'text'    , nullable:true, title:'subcategoría'},
             {name:'grupo'                       , typeName:'text'    , nullable:true},
             {name:'marca'                       , typeName:'text'    , nullable:true},
             {name:'serie'                       , typeName:'text'    , nullable:true},
@@ -209,6 +208,7 @@ export function bienes(context:TableContext):TableDefinition{
             {references:'cuentas', fields:['rubro', 'clase', 'cuenta'] },
             {references:'tipo_bien', fields:['tipo_bien']},
             {references:'grupos', fields:['grupo']},
+            {references:'subcategorias', fields:['subcategoria']},
             {references:'motivos_baja', fields:['motivo_baja']},
             {references:'estados_bien', fields:[{source:'estado', target:'estado_bien'}], displayFields:['descripcion']},
             {references:'estados_baja', fields:['estado_baja']},
@@ -216,7 +216,6 @@ export function bienes(context:TableContext):TableDefinition{
             {references:'ordenes_compra', fields:['orden_compra']},
         ],
         softForeignKeys:[
-            {references:'subcategorias', fields:['subcategoria']},
             {references:'categorias', fields:['categoria']},
         ],
         constraints:[
