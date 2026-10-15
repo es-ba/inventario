@@ -96,7 +96,7 @@ export function bienes_control(context:TableContext):TableDefinition{
                 alias:'responsable_sector', displayFields:['apellido', 'nombre']},
             {references:'responsables'        , fields:['responsable']        ,
                 alias:'responsable', displayFields:['apellido', 'nombre']},
-            {references:'estados_bien'        , fields:[{source:'estado', target:'estado_bien'}], displayFields:['descripcion']},
+            {references:'estados_bien'        , fields:[{source:'estado', target:'estado_bien'}], displayFields:['etiqueta', 'descripcion']},
         ],
         detailTables:[
             {table:'controles_bien', fields:['ficha'], abr:'Ctl', label:'controles'},

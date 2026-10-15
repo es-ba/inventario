@@ -150,7 +150,7 @@ export function ControlesListado({
     );
     const espacios = React.useMemo(() => opcionesDe(filas, 'espacio', espacioDe), [filas]);
     const estados = React.useMemo(
-        () => opcionesDe(filas, 'estado', f => textoDeReferencia(f.estado, f.estados_bien__descripcion)),
+        () => opcionesDe(filas, 'estado', f => textoDeReferencia(f.estado, f.estados_bien__etiqueta)),
         [filas],
     );
     const atributos = React.useMemo(() => opcionesDePares(filas.map(f => f.atributos as Par[])), [filas]);
@@ -230,7 +230,7 @@ export function ControlesListado({
             field:'estado',
             headerName:'Estado',
             width:130,
-            valueGetter:(_v, fila) => textoDeReferencia(fila.estado, fila.estados_bien__descripcion),
+            valueGetter:(_v, fila) => textoDeReferencia(fila.estado, fila.estados_bien__etiqueta),
         },
         {
             field:'sector',

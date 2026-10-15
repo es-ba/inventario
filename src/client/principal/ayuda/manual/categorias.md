@@ -17,18 +17,33 @@ La categoría y la subcategoría también se ven en la [ficha](#ayuda/ficha) y c
 
 ## Cómo se lee
 
-- Una fila por categoría, con el **Total** y una barra que muestra su peso frente a la más grande.
-- **En uso de un responsable** cuenta los bienes que alguien tiene en uso (el dato *en uso de* de la ficha está cargado).
+- Una fila por categoría, con su código (*CMP — Computadoras*), el **Total**, una barra y el porcentaje que esa categoría representa sobre el **Total general**. Las subcategorías también llevan su código (*CMP-01 — Notebook*).
 - Las columnas siguientes reparten el total por estado del bien: **Asignado**, **Sin asignar**, **En movimiento** y **Baja en trámite**.
+- La última, **En uso**, separada por una línea, cuenta los bienes que alguien tiene en uso (el dato *en uso de* de la ficha está cargado).
 - La flecha de la izquierda abre la categoría en sus subcategorías.
 - **Sin categoría** reúne los bienes cuyo grupo todavía no tiene subcategoría.
 - *Accesorios y componentes* (mouse, teclados, memorias…) es una categoría más, con las demás.
 - El **Total general** coincide con la cantidad de bienes activos.
 - Si en el catálogo una categoría se marca como *aparte*, va abajo, con su propio total, y no suma al **Total principal**; el **Total general** sigue sumando todo. Hoy no hay ninguna marcada.
 
+## Qué significa cada estado
+
+El estado del bien no se carga a mano: lo calcula el sistema, y cada bien está en uno solo. Si se cumplen varias condiciones, vale la primera de esta lista:
+
+1. **Baja en trámite**: se pidió la baja del bien y todavía no se aprobó ni se rechazó.
+2. **En movimiento**: el bien está en una solicitud de movimiento que ya se envió y todavía no se procesó. Las solicitudes en borrador no cuentan.
+3. **Asignado**: su último movimiento lo deja en un sector o a cargo de un responsable directo.
+4. **Sin asignar**: su último movimiento no tiene sector ni responsable, o nunca se movió.
+
+Los bienes dados de baja no aparecen en este reporte, que cuenta sólo los activos.
+
+**En uso** no es un estado: cuenta los bienes que alguien tiene en uso (el dato *en uso de* de la ficha está cargado), sin importar su estado. Por eso esa columna no suma con las demás.
+
+Debajo de la tabla, **Qué significa cada columna** resume estas definiciones.
+
 ## Ver los bienes de un número
 
-Tocá cualquier número para abrir la búsqueda con esos bienes: por ejemplo, el de *Notebook* en la columna *Sin asignar* abre la búsqueda filtrada por *subcategoría: Notebook · estado: Sin asignar*, y el total del listado es el mismo número. El filtro se quita desde **Filtros aplicados**.
+Tocá cualquier número para abrir la búsqueda con esos bienes: por ejemplo, el de *Notebook* en la columna *Sin asignar* abre la búsqueda filtrada por *subcategoría: CMP-01 — Notebook · estado: Sin asignar*, y el total del listado es el mismo número. El filtro se quita desde **Filtros aplicados**.
 
 ## Sector, en uso de y descarga
 

@@ -11,7 +11,7 @@ Que un usuario gerencial vea en una sola pantalla, sin armar filtros, cuántos b
 - La pantalla SHALL mostrar una fila por categoría, en el orden del catálogo, con el total de bienes y la cantidad en cada estado del bien.
 - Los estados SHALL ser los del catálogo que tienen orden, en ese orden y con su etiqueta. Si algún bien está en un estado sin orden, SHALL sumarse en una columna «Otros».
 - Cada fila de categoría SHALL poder abrirse para mostrar sus subcategorías con las mismas columnas. Al entrar, todas SHALL estar cerradas.
-- Junto al total de cada categoría SHALL verse una barra proporcional a la categoría más grande de su bloque.
+- Junto al total de cada categoría SHALL verse una barra proporcional a su parte del total general, y ese porcentaje.
 - Las categorías sin bienes no SHALL mostrarse.
 
 #### Scenario: Ver cuántas computadoras hay
@@ -27,11 +27,11 @@ Que un usuario gerencial vea en una sola pantalla, sin armar filtros, cuántos b
 - **WHEN** no hay bienes activos de la categoría Vehículos
 - **THEN** la fila «Vehículos» no aparece
 
-### Requirement: Cantidad en uso de un responsable
-Cada fila y cada total SHALL mostrar, en una columna «En uso de un responsable», cuántos de sus bienes tienen cargado quién los usa. Tocar esa cantidad SHALL abrir la búsqueda con esos bienes, con el filtro «en uso de un responsable: Sí».
+### Requirement: Cantidad en uso
+Cada fila y cada total SHALL mostrar, en una columna «En uso» al final, separada de las columnas de estado, cuántos de sus bienes tienen cargado quién los usa. Tocar esa cantidad SHALL abrir la búsqueda con esos bienes, con el filtro «en uso de un responsable: Sí».
 
 #### Scenario: Computadoras en uso
-- **WHEN** el usuario toca la cantidad «En uso de un responsable» de Computadoras
+- **WHEN** el usuario toca la cantidad «En uso» de Computadoras
 - **THEN** la búsqueda muestra las computadoras que alguien tiene en uso, y el total es el mismo número
 
 ### Requirement: Totales que cierran

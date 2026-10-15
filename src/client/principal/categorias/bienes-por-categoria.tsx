@@ -11,7 +11,7 @@ import type {Fila} from '../base/tipos-tabla';
 import {irA} from '../render-connected-app-inventario';
 import {
     FILTROS_DEL_REPORTE, armarReporte, consultaDelReporte, csvDelReporte, filtroDeCelda, hashDeBusqueda, nombreDelCsv,
-    EN_USO, opcionesDeAgrupado, opcionesDeSectores,
+    EN_USO, opcionesDeAgrupado, opcionesDeSectores, porcentaje,
     type CategoriaDeCatalogo, type Celda, type ColumnaDeEstado, type Cuenta, type EstadoDeCatalogo,
     type FilaDeCategoria, type FiltroPrevio, type OpcionDeFiltro, type Reporte,
 } from './categorias-datos';
@@ -63,17 +63,19 @@ function destinoDe(celda:Celda, siempre = false):string|null{
     return filtro || siempre ? hashDeBusqueda(filtro) : null;
 }
 
+const SEPARADOR = {borderLeft:1, borderLeftColor:'divider'};
+
 function CeldasDeEstado({cuenta, columnas, celda}:{cuenta:Cuenta, columnas:ColumnaDeEstado[], celda:Celda|null}){
-    return <>{columnas.length
-        ? <TableCell align="right">
-            <Cantidad valor={cuenta.enUso} destino={celda ? destinoDe({...celda, enUso:true}) : null}/>
-        </TableCell>
-        : null}
-    {columnas.map(columna =>
+    return <>{columnas.map(columna =>
         <TableCell key={columna.clave} align="right">
             <Cantidad valor={cuenta.porEstado[columna.clave] ?? 0} destino={celda ? destinoDe({...celda, estado:columna}) : null}/>
         </TableCell>
-    )}</>;
+    )}
+    {columnas.length
+        ? <TableCell align="right" sx={SEPARADOR}>
+            <Cantidad valor={cuenta.enUso} destino={celda ? destinoDe({...celda, enUso:true}) : null}/>
+        </TableCell>
+        : null}</>;
 }
 
 function FilaCategoria({fila, columnas, previos, angosta}:{fila:FilaDeCategoria, columnas:ColumnaDeEstado[], previos:FiltroPrevio[], angosta:boolean}){
@@ -97,6 +99,10 @@ function FilaCategoria({fila, columnas, previos, angosta}:{fila:FilaDeCategoria,
                 <Stack direction="row" spacing={1} alignItems="center">
                     <Box sx={{minWidth:48, textAlign:'right'}}><Cantidad valor={fila.cuenta.total} destino={destinoDe(celda)} fuerte/></Box>
                     <Barra proporcion={fila.proporcion}/>
+                    <Typography variant="body2" color="text.secondary" sx={{minWidth:44, textAlign:'right'}}
+                        title="Parte del total general">
+                        {porcentaje(fila.proporcion)}
+                    </Typography>
                 </Stack>
             </TableCell>
             <CeldasDeEstado cuenta={fila.cuenta} columnas={columnasVisibles} celda={celda}/>
@@ -106,15 +112,15 @@ function FilaCategoria({fila, columnas, previos, angosta}:{fila:FilaDeCategoria,
                 <TableCell/>
                 <TableCell colSpan={2}>
                     <Stack direction="row" flexWrap="wrap" columnGap={2} rowGap={0.5}>
-                        <Typography variant="body2" component="span">
-                            {EN_USO.titulo}:{' '}
-                            <Cantidad valor={fila.cuenta.enUso} destino={destinoDe({...celda, enUso:true})}/>
-                        </Typography>
                         {columnas.map(columna => <Typography key={columna.clave} variant="body2" component="span">
                             {columna.etiqueta}:{' '}
                             <Cantidad valor={fila.cuenta.porEstado[columna.clave] ?? 0} destino={destinoDe({...celda, estado:columna})}/>
                         </Typography>)}
                     </Stack>
+                    <Typography variant="body2" sx={{mt:0.5}}>
+                        {EN_USO.titulo}:{' '}
+                        <Cantidad valor={fila.cuenta.enUso} destino={destinoDe({...celda, enUso:true})}/>
+                    </Typography>
                 </TableCell>
             </TableRow>
             : null}
@@ -158,11 +164,13 @@ function TablaDelReporte({reporte, previos, angosta}:{reporte:Reporte, previos:F
                     <TableCell padding="checkbox"/>
                     <TableCell>Categoría</TableCell>
                     <TableCell sx={{width:angosta ? '50%' : '30%'}}>Total</TableCell>
-                    {columnas.length
-                        ? <TableCell align="right" title="Bienes que alguien tiene en uso (campo «en uso de» cargado)">{EN_USO.titulo}</TableCell>
-                        : null}
                     {columnas.map(columna =>
                         <TableCell key={columna.clave} align="right" title={columna.descripcion ?? undefined}>{columna.etiqueta}</TableCell>)}
+                    {columnas.length
+                        ? <TableCell align="right" sx={{...SEPARADOR, whiteSpace:'nowrap'}} title="Bienes que alguien tiene en uso (dato «en uso de» cargado); se cuenta aparte del estado">
+                            {EN_USO.titulo}
+                        </TableCell>
+                        : null}
                 </TableRow>
             </TableHead>
             <TableBody>
@@ -186,6 +194,25 @@ function TablaDelReporte({reporte, previos, angosta}:{reporte:Reporte, previos:F
             </TableBody>
         </Table>
     </TableContainer>;
+}
+
+function ReferenciaDeColumnas({columnas}:{columnas:ColumnaDeEstado[]}){
+    const items = [
+        ...columnas,
+        {clave:EN_USO.dimension, etiqueta:EN_USO.titulo, descripcion:'Alguien tiene el bien en uso: está cargado el dato «en uso de» de la ficha. Se cuenta aparte del estado, por eso no suma con las columnas anteriores.'},
+    ];
+    return <Box sx={{mt:3}}>
+        <Typography variant="subtitle2" gutterBottom>Qué significa cada columna</Typography>
+        <Box component="dl" sx={{m:0, display:'grid', gridTemplateColumns:{xs:'1fr', sm:'max-content 1fr'}, columnGap:2, rowGap:0.5}}>
+            {items.map(({clave, etiqueta, descripcion}) => <React.Fragment key={clave}>
+                <Typography component="dt" variant="body2" sx={{fontWeight:600}}>{etiqueta}</Typography>
+                <Typography component="dd" variant="body2" color="text.secondary" sx={{m:0, mb:{xs:1, sm:0}}}>{descripcion ?? ''}</Typography>
+            </React.Fragment>)}
+        </Box>
+        <Typography variant="body2" color="text.secondary" sx={{mt:1}}>
+            Cada bien está en un solo estado: el sistema lo calcula y la suma de los estados es el total.
+        </Typography>
+    </Box>;
 }
 
 function SelectorDeFiltro({titulo, opciones, valor, cargando, onCambio}:{
@@ -297,5 +324,6 @@ export function BienesPorCategoria(){
         {error ? <Alert severity="error">{error}</Alert> : null}
         {!reporte && !error ? <Typography color="text.secondary">Cargando…</Typography> : null}
         {reporte ? <TablaDelReporte reporte={reporte} previos={previos} angosta={angosta}/> : null}
+        {reporte ? <ReferenciaDeColumnas columnas={reporte.columnas}/> : null}
     </Box>;
 }

@@ -2,8 +2,10 @@
 --   * Crea los catálogos categorias (22) y subcategorias (101) y la columna grupos.subcategoria.
 --   * Asigna cada grupo a una subcategoría según la planilla de equivalencias (borrador, antes de la validación de Patrimonio).
 --     Generado con scripts/clasificacion-desde-planilla.cjs; cuando vuelva la planilla validada se corre de nuevo y sólo cambia el UPDATE de grupos.
---   * Agrega etiqueta y orden a estados_bien, para titular las columnas del reporte «Bienes por categoría».
--- No toca el grupo de ningún bien. Los permisos de las tablas nuevas para inventario_admin (select, insert, update, delete) los da quien administra la base.
+--   * Agrega etiqueta y orden a estados_bien, para titular las columnas del reporte «Bienes por categoría», y aclara sus descripciones.
+-- No toca el grupo de ningún bien.
+-- Las tablas nuevas llevan los mismos permisos que en el dump (select, insert, update, delete para el usuario de la app).
+-- Se le dan al _admin que corresponde al _owner del set role, así el script sirve igual en producción y en muleto.
 
 set role to inventario_owner;
 set search_path = "inventario", public;
@@ -43,6 +45,13 @@ alter table "subcategorias" alter column "categoria" set not null;
 alter table "subcategorias" add constraint "subcategorias categorias REL" foreign key ("categoria") references "categorias" ("categoria")  on update cascade;
 create index "categoria 4 subcategorias IDX" ON "subcategorias" ("categoria");
 
+DO $$
+BEGIN
+    EXECUTE format('grant select, insert, update, delete on "categorias", "subcategorias" to %I',
+        regexp_replace(current_user, '_owner$', '_admin'));
+END
+$$;
+
 alter table "grupos" add column "subcategoria" text;
 alter table "grupos" add constraint "subcategoria<>''" check ("subcategoria"<>'');
 alter table "grupos" add constraint "grupos subcategorias REL" foreign key ("subcategoria") references "subcategorias" ("subcategoria")  on update cascade;
@@ -51,13 +60,13 @@ create index "subcategoria 4 grupos IDX" ON "grupos" ("subcategoria");
 alter table "estados_bien" add column "etiqueta" text;
 alter table "estados_bien" add column "orden" integer;
 alter table "estados_bien" add constraint "etiqueta<>''" check ("etiqueta"<>'');
-UPDATE estados_bien e SET etiqueta = v.etiqueta, orden = v.orden FROM (VALUES
-('BAJA', 'Baja', NULL::integer),
-('BAJA_EN_TRAMITE', 'Baja en trámite', 4),
-('EN_MOVIMIENTO', 'En movimiento', 3),
-('ASIGNADO', 'Asignado', 1),
-('SIN_ASIGNAR', 'Sin asignar', 2)
-) AS v(estado_bien, etiqueta, orden) WHERE e.estado_bien = v.estado_bien;
+UPDATE estados_bien e SET descripcion = v.descripcion, etiqueta = v.etiqueta, orden = v.orden FROM (VALUES
+('BAJA', 'Bien dado de baja', 'Baja', NULL::integer),
+('BAJA_EN_TRAMITE', 'Se pidió la baja y espera aprobación', 'Baja en trámite', 4),
+('EN_MOVIMIENTO', 'En una solicitud de movimiento enviada y todavía no procesada', 'En movimiento', 3),
+('ASIGNADO', 'Ubicado en un sector o a cargo de un responsable', 'Asignado', 1),
+('SIN_ASIGNAR', 'Sin sector ni responsable asignado', 'Sin asignar', 2)
+) AS v(estado_bien, descripcion, etiqueta, orden) WHERE e.estado_bien = v.estado_bien;
 
 INSERT INTO categorias (categoria, nombre, incluye, orden, aparte) VALUES
 ('CMP', 'Computadoras', 'Equipos de cómputo personal', 1, false),

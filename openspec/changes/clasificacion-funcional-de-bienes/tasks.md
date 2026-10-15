@@ -54,7 +54,9 @@
 - [x] 4b.1 Filtro «En uso de» en el reporte (`FILTROS_DEL_REPORTE`, opciones de `bienes_buscar_agrupado` por `enusode_responsable`), con su test.
 - [x] 4b.2 Categoría y subcategoría en `bienes_control` y `bienes_baja` (columnas, claves foráneas para el nombre y filtros de cliente, con `opcionesDe` movido a `base/referencias.ts`). Probado en el navegador contra la base de prueba.
 
-- [x] 4b.3 Columna «En uso de un responsable» (dimensión `en_uso` en `ESPECIALES`) y selector de sectores sólo con activos y con su responsable (`opcionesDeSectores`), con tests. Probado en el navegador contra la base de prueba.
+- [x] 4b.3 Columna «En uso» al final y separada de los estados (dimensión `en_uso` en `ESPECIALES`) y selector de sectores sólo con activos y con su responsable (`opcionesDeSectores`), con tests. Probado en el navegador contra la base de prueba.
+
+- [x] 4b.4 Barra y porcentaje sobre el total general; referencia de columnas bajo la tabla; descripciones de `estados_bien` aclaradas (también en `cambios_2026-10-15.sql`) y etiqueta corta en el listado de control; códigos en categorías y subcategorías del reporte.
 
 ## 5. Cierre
 

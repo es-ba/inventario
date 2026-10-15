@@ -20,7 +20,7 @@ El desglose de la búsqueda (`desglose-por-grupo-en-busqueda`) ya muestra cantid
 - **Pantalla nueva «Bienes por categoría»**, en «reportes», para todos los roles:
   - una tabla con una fila por categoría, que se abre en sus subcategorías;
   - columnas: total y cantidad por estado del bien (asignado, sin asignar, en movimiento, baja en trámite);
-  - una barra que muestra el peso de cada categoría;
+  - una barra y el porcentaje de cada categoría sobre el total general;
   - las categorías aparte, debajo, con su propio subtotal, y el total general al pie;
   - un filtro opcional por sector;
   - tocar cualquier número abre la búsqueda de bienes con ese filtro, para ver qué bienes son;

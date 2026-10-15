@@ -20,7 +20,7 @@ require.extensions['.ts'] = function transpileTypeScript(module, filename) {
 };
 
 const {
-    armarReporte, consultaDelReporte, filtroDeCelda, hashDeBusqueda, csvDelReporte, nombreDelCsv, opcionesDeAgrupado, opcionesDeSectores, OTROS,
+    armarReporte, consultaDelReporte, filtroDeCelda, hashDeBusqueda, csvDelReporte, nombreDelCsv, opcionesDeAgrupado, opcionesDeSectores, porcentaje, OTROS,
 } = require(path.join(projectRoot, 'src/client/principal/categorias/categorias-datos.ts'));
 const {grupoFiltroDesdeTexto} = require(path.join(projectRoot, 'src/common/bienes-agrupar.ts'));
 
@@ -55,9 +55,9 @@ const FILAS = [
 
 test('ordena por el catálogo, separa las categorías aparte y deja sin categoría al final', () => {
     const reporte = armarReporte(FILAS, CATEGORIAS, ESTADOS);
-    assert.deepEqual(reporte.principal.map(f => f.nombre), ['Computadoras', 'Dispositivos móviles', 'Sin categoría']);
-    assert.deepEqual(reporte.aparte.map(f => f.nombre), ['Accesorios y componentes']);
-    assert.deepEqual(reporte.principal[0].subcategorias.map(s => s.nombre), ['Notebook', 'PC de escritorio']);
+    assert.deepEqual(reporte.principal.map(f => f.nombre), ['CMP — Computadoras', 'MOV — Dispositivos móviles', 'Sin categoría']);
+    assert.deepEqual(reporte.aparte.map(f => f.nombre), ['ACC — Accesorios y componentes']);
+    assert.deepEqual(reporte.principal[0].subcategorias.map(s => s.nombre), ['CMP-01 — Notebook', 'CMP-02 — PC de escritorio']);
 });
 
 test('los totales cierran', () => {
@@ -87,12 +87,18 @@ test('las columnas son los estados con orden; uno sin orden va a «Otros»', () 
     assert.equal(conBaja.principal[0].cuenta.total, 22);
 });
 
-test('una categoría sin bienes no aparece y la barra es relativa al bloque', () => {
+test('una categoría sin bienes no aparece y la barra es la parte del total general', () => {
     const reporte = armarReporte(FILAS, CATEGORIAS, ESTADOS);
     assert.equal(reporte.principal.some(f => f.categoria === 'VEH'), false);
-    assert.equal(reporte.principal[1].proporcion, 1);
-    assert.equal(reporte.principal[0].proporcion, 20 / 50);
-    assert.equal(reporte.aparte[0].proporcion, 1);
+    assert.equal(reporte.principal[1].proporcion, 50 / 94);
+    assert.equal(reporte.principal[0].proporcion, 20 / 94);
+    assert.equal(reporte.aparte[0].proporcion, 20 / 94);
+    const suma = [...reporte.principal, ...reporte.aparte].reduce((t, f) => t + f.proporcion, 0);
+    assert.ok(Math.abs(suma - 1) < 1e-9);
+    assert.equal(porcentaje(0.1248), '12 %');
+    assert.equal(porcentaje(0.0002), '< 0,1 %');
+    assert.equal(porcentaje(0), '0 %');
+    assert.equal(porcentaje(0.0425), '4,3 %');
 });
 
 test('el filtro de cada celda', () => {
@@ -161,13 +167,13 @@ test('el CSV abre en Excel con acentos y tiene los mismos números', () => {
     const csv = csvDelReporte(armarReporte(FILAS, CATEGORIAS, ESTADOS));
     assert.equal(csv.charCodeAt(0), 0xFEFF);
     const lineas = csv.slice(1).trimEnd().split('\r\n');
-    assert.equal(lineas[0], 'Categoría;Subcategoría;Total;En uso de un responsable;Asignado;Sin asignar');
-    assert.ok(lineas.includes('Computadoras;Notebook;13;6;10;3'));
-    assert.ok(lineas.includes('Dispositivos móviles;Tablet;50;50;50;0'));
-    assert.ok(lineas.includes('Sin categoría;(sin dato);4;0;0;4'));
-    assert.ok(lineas.includes('Total principal;;74;56;67;7'));
-    assert.ok(lineas.includes('Accesorios y componentes;Mouse;20;0;20;0'));
-    assert.equal(lineas.at(-1), 'Total general;;94;56;87;7');
+    assert.equal(lineas[0], 'Categoría;Subcategoría;Total;Asignado;Sin asignar;En uso');
+    assert.ok(lineas.includes('CMP — Computadoras;CMP-01 — Notebook;13;10;3;6'));
+    assert.ok(lineas.includes('MOV — Dispositivos móviles;MOV-02 — Tablet;50;50;0;50'));
+    assert.ok(lineas.includes('Sin categoría;(sin dato);4;0;4;0'));
+    assert.ok(lineas.includes('Total principal;;74;67;7;56'));
+    assert.ok(lineas.includes('ACC — Accesorios y componentes;ACC-01 — Mouse;20;20;0;0'));
+    assert.equal(lineas.at(-1), 'Total general;;94;87;7;56');
     assert.equal(nombreDelCsv([{dimension: 'sector', valor: '2 4', texto: '', etiqueta: ''}], new Date(2026, 9, 5)), 'bienes-por-categoria-2_4-2026-10-05.csv');
     assert.equal(nombreDelCsv([], new Date(2026, 9, 5)), 'bienes-por-categoria-2026-10-05.csv');
 });

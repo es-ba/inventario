@@ -95,7 +95,7 @@ Se agregan `etiqueta` (Asignado, Sin asignar, En movimiento, Baja en trámite, B
 - La `descripcion` va como ayuda en el encabezado.
 
 **10. Visualización simple.**
-Una tabla de MUI con filas de categoría que se abren (todas cerradas al entrar) y una barra horizontal de CSS en la columna del total, proporcional a la categoría más grande del bloque. El número siempre se ve junto a la barra, así que la barra no es la única forma de leer el dato.
+Una tabla de MUI con filas de categoría que se abren (todas cerradas al entrar) y una barra horizontal de CSS en la columna del total, proporcional a la parte de la categoría sobre el total general, con el porcentaje al lado (al principio era relativa a la categoría más grande, y se leía como un porcentaje que no era). El número y el porcentaje siempre se ven, así que la barra no es la única forma de leer el dato.
 
 En el teléfono, las columnas por estado se reemplazan por el total con la barra, y el detalle por estado se ve al abrir la categoría.
 

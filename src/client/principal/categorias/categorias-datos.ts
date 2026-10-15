@@ -4,7 +4,7 @@ import {textoSinCodigo} from '../columnas-busqueda';
 
 export const DIMENSIONES_DEL_REPORTE = ['categoria', 'subcategoria', 'estado', 'en_uso'] as const;
 
-export const EN_USO = {dimension:'en_uso', valor:'SI', texto:'Sí', etiqueta:'en uso de un responsable', titulo:'En uso de un responsable'} as const;
+export const EN_USO = {dimension:'en_uso', valor:'SI', texto:'Sí', etiqueta:'en uso de un responsable', titulo:'En uso'} as const;
 
 export const OTROS = '__otros__';
 
@@ -69,9 +69,14 @@ function porOrdenYCodigo<T>(orden:(x:T) => number|null, codigo:(x:T) => string){
     return (a:T, b:T) => (orden(a) ?? Infinity) - (orden(b) ?? Infinity) || codigo(a).localeCompare(codigo(b));
 }
 
-function conProporcion(filas:FilaDeCategoria[]):FilaDeCategoria[]{
-    const mayor = Math.max(0, ...filas.map(fila => fila.cuenta.total));
-    return filas.map(fila => ({...fila, proporcion:mayor ? fila.cuenta.total / mayor : 0}));
+function conProporcion(filas:FilaDeCategoria[], total:number):FilaDeCategoria[]{
+    return filas.map(fila => ({...fila, proporcion:total ? fila.cuenta.total / total : 0}));
+}
+
+export function porcentaje(proporcion:number):string{
+    const decimales = proporcion < 0.1 ? 1 : 0;
+    const valor = Math.round(proporcion * 100 * 10 ** decimales) / 10 ** decimales;
+    return proporcion > 0 && valor === 0 ? '< 0,1 %' : `${String(valor).replace('.', ',')} %`;
 }
 
 export function armarReporte(
@@ -100,7 +105,7 @@ export function armarReporte(
         if(!sub){
             sub = {
                 subcategoria,
-                nombre:subcategoria == null ? SIN_DATO : textoSinCodigo(textos[1] ?? subcategoria, subcategoria),
+                nombre:subcategoria == null ? SIN_DATO : textos[1] ?? subcategoria,
                 cuenta:cuentaVacia(),
             };
             grupo.subcategorias.set(subcategoria, sub);
@@ -111,7 +116,7 @@ export function armarReporte(
         const delCatalogo = categoria == null ? undefined : catalogo.get(categoria);
         return {
             categoria,
-            nombre:categoria == null ? 'Sin categoría' : delCatalogo?.nombre ?? categoria,
+            nombre:categoria == null ? 'Sin categoría' : delCatalogo ? `${categoria} — ${delCatalogo.nombre}` : categoria,
             cuenta,
             subcategorias:[...subcategorias.values()].sort((a, b) =>
                 a.subcategoria == null ? 1 : b.subcategoria == null ? -1 : a.subcategoria.localeCompare(b.subcategoria)),
@@ -124,8 +129,9 @@ export function armarReporte(
         .sort((a, b) => a.categoria == null ? 1 : b.categoria == null ? -1
             : porOrdenYCodigo<typeof a>(x => x.orden, x => x.categoria ?? '')(a, b))
         .map(({aparte:_aparte, orden:_orden, ...fila}) => fila);
-    const principal = conProporcion(ordenar(filasDeCategoria.filter(fila => !fila.aparte)));
-    const aparte = conProporcion(ordenar(filasDeCategoria.filter(fila => fila.aparte)));
+    const totalGeneral = filasDeCategoria.reduce((suma, fila) => suma + fila.cuenta.total, 0);
+    const principal = conProporcion(ordenar(filasDeCategoria.filter(fila => !fila.aparte)), totalGeneral);
+    const aparte = conProporcion(ordenar(filasDeCategoria.filter(fila => fila.aparte)), totalGeneral);
     const totalPrincipal = sumarCuentas(principal.map(fila => fila.cuenta));
     const totalAparte = sumarCuentas(aparte.map(fila => fila.cuenta));
     return {
@@ -226,8 +232,8 @@ function campoCsv(valor:string|number):string{
 }
 
 export function csvDelReporte(reporte:Reporte):string{
-    const numeros = (cuenta:Cuenta) => [cuenta.total, cuenta.enUso, ...reporte.columnas.map(columna => cuenta.porEstado[columna.clave] ?? 0)];
-    const lineas:(string|number)[][] = [['Categoría', 'Subcategoría', 'Total', EN_USO.titulo, ...reporte.columnas.map(columna => columna.etiqueta)]];
+    const numeros = (cuenta:Cuenta) => [cuenta.total, ...reporte.columnas.map(columna => cuenta.porEstado[columna.clave] ?? 0), cuenta.enUso];
+    const lineas:(string|number)[][] = [['Categoría', 'Subcategoría', 'Total', ...reporte.columnas.map(columna => columna.etiqueta), EN_USO.titulo]];
     const bloque = (filas:FilaDeCategoria[]) => {
         for(const categoria of filas){
             for(const sub of categoria.subcategorias){
