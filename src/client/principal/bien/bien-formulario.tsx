@@ -18,6 +18,7 @@ import type {GridColDef} from '@mui/x-data-grid';
 import type {FieldDefinition, FixedFields, TableDefinition} from 'frontend-plus';
 
 import {useAvisos, useConexion, usePermisos, useSalida} from '../base/contexto-base';
+import {Cargando} from '../base/cargando';
 import {useEstructuraTabla} from '../base/cache-tablas';
 import {DetailTable} from '../base/detail-table';
 import {FormFieldRenderer} from '../base/form-field-renderer';
@@ -363,7 +364,7 @@ export function BienFormulario({
     }, [editor.row, mostrarError]);
 
     if(cargando || definicion == null){
-        return <Box sx={{display:'flex', justifyContent:'center', p:6}}><CircularProgress/></Box>;
+        return <Cargando/>;
     }
     if(noEncontrado){
         return <Box sx={{p:3}}>

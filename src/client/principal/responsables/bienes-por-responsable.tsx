@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Box, Button, Stack, Tab, Tabs, TextField, Typography} from '@mui/material';
+import {Autocomplete, Box, Button, Stack, Tab, Tabs, TextField, Typography} from '@mui/material';
 import {ArrowBack, Download} from '@mui/icons-material';
 import {DataGrid, GridColDef} from '@mui/x-data-grid';
 
@@ -31,15 +31,33 @@ function ListaDeResponsables({filas, cargando, onAbrir}:{
     const [buscado, setBuscado] = React.useState('');
     const visibles = React.useMemo(() => filas.filter(fila => pasaBusqueda(fila, buscado)), [buscado, filas]);
     return <>
-        <TextField
-            size="small"
-            label="Buscar responsable"
-            value={buscado}
-            onChange={evento => setBuscado(evento.target.value)}
+        <Autocomplete<ResponsableDelReporte, false, false, true>
+            freeSolo
+            options={filas}
+            value={null}
+            inputValue={buscado}
+            onInputChange={(_evento, valor, motivo) => { if(motivo !== 'reset'){ setBuscado(valor); } }}
+            onChange={(_evento, opcion) => { if(opcion && typeof opcion !== 'string'){ onAbrir(opcion); } }}
+            getOptionLabel={opcion => typeof opcion === 'string' ? opcion : opcion.nombre}
+            filterOptions={(opciones, {inputValue}) => opciones.filter(opcion => pasaBusqueda(opcion, inputValue))}
+            renderOption={(props, opcion) => {
+                const {key, ...resto} = props as React.HTMLAttributes<HTMLLIElement> & {key?:React.Key};
+                return <li {...resto} key={key ?? opcion.responsable}>
+                    <Box>
+                        {opcion.nombre}
+                        <Typography variant="body2" color="text.secondary">
+                            {opcion.aCargo.toLocaleString('es-AR')} a cargo · {opcion.enUso.toLocaleString('es-AR')} en uso
+                        </Typography>
+                    </Box>
+                </li>;
+            }}
+            blurOnSelect
+            loading={cargando}
             sx={{mb:2, width:{xs:'100%', sm:360}}}
+            renderInput={params => <TextField {...params} size="small" label="Buscar responsable"/>}
         />
         <Typography variant="body2" color="text.secondary" sx={{mb:1}}>
-            Bienes activos que podés ver. Tocá una persona para ver sus bienes por categoría.
+            Bienes activos que podés ver. Elegí una persona en el buscador o tocala en la lista para ver sus bienes por categoría.
         </Typography>
         <DataGrid
             rows={visibles}

@@ -7,6 +7,7 @@ import {Download, KeyboardArrowDown, KeyboardArrowRight} from '@mui/icons-materi
 
 import {claveDeAtributo} from '../../../common/bienes-agrupar';
 import {useAvisos, useConexion} from '../base/contexto-base';
+import {Cargando} from '../base/cargando';
 import {leerTabla} from '../base/referencias';
 import type {Fila} from '../base/tipos-tabla';
 import {Barra, Cantidad, SEPARADOR, descargarCsv, encabezadosDeTipos, estadosDesde, tiposDesde} from '../categorias/bienes-por-categoria';
@@ -330,7 +331,7 @@ export function BienesPorModelo(){
             Bienes activos que podés ver{previos.map(previo => `, ${previo.etiqueta} ${previo.texto}`).join('')}. Abrí una subcategoría para ver su marca, modelo y atributos; tocá un número para ver esos bienes.
         </Typography>
         {error ? <Alert severity="error">{error}</Alert> : null}
-        {!arbol && !error ? <Typography color="text.secondary">Cargando…</Typography> : null}
+        {!arbol && !error ? <Cargando/> : null}
         {arbol && filtrado && !filtrado.raices.length
             ? <Alert severity="info">{buscado.trim() ? `Nada coincide con «${buscado.trim()}».` : 'No hay bienes con estos filtros.'}</Alert>
             : null}

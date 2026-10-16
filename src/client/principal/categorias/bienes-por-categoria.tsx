@@ -6,6 +6,7 @@ import {
 import {Download, KeyboardArrowDown, KeyboardArrowRight} from '@mui/icons-material';
 
 import {useAvisos, useConexion} from '../base/contexto-base';
+import {Cargando} from '../base/cargando';
 import {leerTabla} from '../base/referencias';
 import type {Fila} from '../base/tipos-tabla';
 import type {BienesAgrupadoFila} from '../../../common/bienes-agrupar';
@@ -318,7 +319,7 @@ export function VistaDelReporte({reporte, error, previos}:{reporte:Reporte|null,
     const angosta = useMediaQuery(theme.breakpoints.down('sm'));
     return <>
         {error ? <Alert severity="error">{error}</Alert> : null}
-        {!reporte && !error ? <Typography color="text.secondary">Cargando…</Typography> : null}
+        {!reporte && !error ? <Cargando/> : null}
         {reporte ? <TablaDelReporte reporte={reporte} previos={previos} angosta={angosta}/> : null}
     </>;
 }

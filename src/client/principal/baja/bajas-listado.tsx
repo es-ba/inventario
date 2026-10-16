@@ -3,7 +3,6 @@ import {
     Box,
     Button,
     Chip,
-    CircularProgress,
     MenuItem,
     Stack,
     TextField,
@@ -13,6 +12,7 @@ import {DataGrid, GridColDef, GridRowParams} from '@mui/x-data-grid';
 import type {FixedFields} from 'frontend-plus';
 
 import {useAvisos, useConexion} from '../base/contexto-base';
+import {Cargando} from '../base/cargando';
 import {useDatosReferencial} from '../base/cache-tablas';
 import {formatearValor} from '../base/formato-valores';
 import {gridLocaleText} from '../localizacion-grid';
@@ -264,7 +264,7 @@ export function BajasListado({
         </Stack>
 
         {cargando
-            ? <Box sx={{display:'flex', justifyContent:'center', p:6}}><CircularProgress/></Box>
+            ? <Cargando/>
             : <DataGrid
                 rows={filasVisibles}
                 columns={columnas}

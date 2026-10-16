@@ -15,7 +15,7 @@ Una fila por persona con bienes, ordenada por la cantidad a cargo:
 
 **Sin responsable** reúne los bienes de sectores que no tienen responsable, y los que no tienen sector.
 
-El cuadro **Buscar responsable** filtra por apellido, nombre o código, sin importar acentos ni mayúsculas.
+El cuadro **Buscar responsable** filtra la lista por apellido, nombre o código, sin importar acentos ni mayúsculas, y a la vez sugiere las personas que coinciden, con lo que tienen a cargo y en uso. Elegir una de las sugerencias abre sus bienes, igual que tocarla en la lista.
 
 ## Los bienes de una persona
 

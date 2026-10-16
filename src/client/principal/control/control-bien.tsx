@@ -6,7 +6,6 @@ import {
     Card,
     CardContent,
     Chip,
-    CircularProgress,
     Divider,
     MenuItem,
     Stack,
@@ -18,6 +17,7 @@ import {
 import {ArrowBack} from '@mui/icons-material';
 
 import {useAvisos, useConexion, usePermisos, useRegistrarEdicion} from '../base/contexto-base';
+import {Cargando} from '../base/cargando';
 import {formatearValor} from '../base/formato-valores';
 import type {Fila} from '../base/tipos-tabla';
 import {leerTabla, textoDeReferencia} from '../base/referencias';
@@ -313,7 +313,7 @@ export function ControlBien({
         </Typography>
 
         {cargando
-            ? <Box sx={{display:'flex', justifyContent:'center', p:6}}><CircularProgress/></Box>
+            ? <Cargando/>
             : <Stack spacing={3}>
                 <Card variant="outlined">
                     <CardContent>

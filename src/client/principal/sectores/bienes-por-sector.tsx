@@ -6,6 +6,7 @@ import {
 import {ArrowBack, Download, KeyboardArrowDown, KeyboardArrowRight} from '@mui/icons-material';
 
 import {useAvisos, useConexion} from '../base/contexto-base';
+import {Cargando} from '../base/cargando';
 import {leerTabla} from '../base/referencias';
 import {
     Barra, Cantidad, CeldasDeEstado, SEPARADOR, VistaDelReporte, descargarReporte, destinoDe, encabezadosDeTipos, estadosDesde,
@@ -206,7 +207,7 @@ export function BienesPorSector(){
                 Bienes activos que podés ver, por el organigrama. Tocá un número para ver esos bienes, o el nombre de un área para verlos por categoría.
             </Typography>
             {error ? <Alert severity="error">{error}</Alert> : null}
-            {!organigrama && !error ? <Typography color="text.secondary">Cargando…</Typography> : null}
+            {!organigrama && !error ? <Cargando/> : null}
             {organigrama
                 ? <ArbolDelOrganigrama organigrama={organigrama} abiertos={abiertos} marcado={marcado}
                     onAlternar={alternar} onAbrir={setDetalle}/>
