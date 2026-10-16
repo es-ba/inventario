@@ -17,7 +17,7 @@ import {Delete} from '@mui/icons-material';
 import type {FixedFields} from 'frontend-plus';
 
 import {useConfirmar, useAvisos, useConexion, usePermisos, useSalida} from '../base/contexto-base';
-import {unmountConnectedAppInventario} from '../render-connected-app-inventario';
+import {vinculo} from '../render-connected-app-inventario';
 import {formatearValor} from '../base/formato-valores';
 import {TabPanel, propsDeSolapa} from '../base/tab-panel';
 import type {Fila} from '../base/tipos-tabla';
@@ -132,13 +132,9 @@ export function SolicitudBienes({
                             {filas.map(fila => <TableRow key={String(fila.ficha)}>
                                 <TableCell>
                                     <Link
-                                        component="button"
                                         variant="body2"
                                         title={`Abrir la ficha del bien ${String(fila.ficha ?? '')}`}
-                                        onClick={() => solicitarSalida(() => {
-                                            unmountConnectedAppInventario();
-                                            location.hash = `w=principal&ficha=${encodeURIComponent(String(fila.ficha ?? ''))}`;
-                                        })}
+                                        {...vinculo(`w=principal&ficha=${encodeURIComponent(String(fila.ficha ?? ''))}`, solicitarSalida)}
                                     >
                                         {String(fila.ficha ?? '')}
                                     </Link>

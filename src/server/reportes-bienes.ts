@@ -2,9 +2,10 @@
 
 import {sqlBienes, textoONuloSql} from './table-bienes';
 import {CLASES_PARQUE_TECNOLOGICO, condicionParqueTecnologico} from './controles-bien';
+import {CODIGO_SIN_ASIGNAR} from '../common/reportes';
 
 
-export const SIN_ASIGNAR = '(sin asignar)';
+export const SIN_ASIGNAR = CODIGO_SIN_ASIGNAR;
 
 const textoONulo = textoONuloSql;
 

@@ -46,3 +46,20 @@ test('«en uso de un responsable» es una dimensión de sí/no sobre el responsa
     const {valor} = catalogo.sql.en_uso(() => '$1');
     assert.match(valor, /CASE WHEN nullif\(btrim\(b\.enusode_responsable\), ''\) IS NULL THEN 'NO' ELSE 'SI' END/);
 });
+
+test('«sector y subsectores» filtra por la rama del organigrama y no se ofrece para agrupar', () => {
+    const catalogo = armarCatalogoDeDimensiones(BIENES, (n) => n === 'grupos' ? GRUPOS : undefined, []);
+    assert.equal(catalogo.disponibles.some((d) => d.clave === 'sector_rama'), false);
+    const sql = catalogo.sql.sector_rama(() => '$1');
+    assert.equal(sql.filtro('$7::text'), "sector_pertenece(nullif(btrim(b.sector), ''), $7::text)");
+    assert.equal(catalogo.sql.sector(() => '$1').filtro, undefined);
+});
+
+test('el modelo es una dimensión de clasificación que compara por el texto sin espacios repetidos', () => {
+    const conModelo = {...BIENES, fields: [...BIENES.fields, {name: 'modelo'}]};
+    const catalogo = armarCatalogoDeDimensiones(conModelo, (n) => n === 'grupos' ? GRUPOS : undefined, []);
+    const modelos = catalogo.disponibles.filter((d) => d.clave === 'modelo');
+    assert.deepEqual(modelos, [{clave: 'modelo', etiqueta: 'modelo', familia: 'clasificación'}]);
+    const modelo = "nullif(regexp_replace(btrim(b.modelo), '\\s+', ' ', 'g'), '')";
+    assert.deepEqual(catalogo.sql.modelo(() => '$1'), {valor: modelo, texto: modelo});
+});

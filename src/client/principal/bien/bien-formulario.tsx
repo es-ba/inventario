@@ -31,7 +31,7 @@ import {datosParaClonar} from './clonar-bien';
 import {BienHeader, ResumenDelBien} from './bien-header';
 import {AccionesBaja} from '../baja/acciones-baja';
 import {MoverBienes, AvisoMovimiento, ResultadoMovimiento} from '../mover-bienes';
-import {unmountConnectedAppInventario} from '../render-connected-app-inventario';
+import {vinculo} from '../render-connected-app-inventario';
 import {prepararEtiquetasCodigosBarra} from '../../../common/codigos-barra';
 import {imprimirEtiquetasCodigosBarra} from '../imprimir-codigos-barra';
 
@@ -82,11 +82,7 @@ const COLUMNA_SOLICITUD_ORIGEN:GridColDef[] = [{
         size="small"
         title={`Ir a la solicitud ${row.acta_origen}`}
         aria-label={`ir a la solicitud ${row.acta_origen}`}
-        onClick={evento => {
-            evento.stopPropagation();
-            unmountConnectedAppInventario();
-            location.hash = `w=solicitudes&acta=${encodeURIComponent(String(row.acta_origen))}`;
-        }}
+        {...vinculo(`w=solicitudes&acta=${encodeURIComponent(String(row.acta_origen))}`)}
     >
         <OpenInNew fontSize="small"/>
     </IconButton>,

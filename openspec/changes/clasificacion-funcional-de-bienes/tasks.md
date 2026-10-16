@@ -60,6 +60,8 @@
 
 - [x] 4b.5 La subcategoría pasa a ser un campo del bien (`bienes.subcategoria`, editable y clonable), con la categoría derivada; `grupos.subcategoria` queda como «subcategoría equivalente». Generador escribe la columna en `bienes.tab`; `cambios_2026-10-15b.sql` agrega la columna y la completa desde el grupo sin auditoría. Probado: el script b sobre una copia de la base anterior da los mismos datos que el dump nuevo. Sin probar en el navegador (ficha, alta, edición masiva), a pedido del usuario.
 
+- [x] 4b.6 Pantalla «Bienes por responsable» (`ws-responsables.tsx`, `principal/responsables/`): la lista de `reporte_bienes_por_responsable` y, al abrir una persona, sus bienes a cargo o en uso con la tabla del reporte por categoría (`useReporteDeCategorias`). La grilla de backend-plus se sacó del menú a pedido del usuario (la definición queda, la usa la pantalla). Probado en el navegador: los totales de cada persona coinciden con la lista y con la búsqueda.
+
 ## 5. Cierre
 
 - [x] 5.1 Manual:

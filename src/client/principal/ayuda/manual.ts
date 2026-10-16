@@ -9,6 +9,9 @@ import controles from './manual/controles.md';
 import calendario from './manual/calendario.md';
 import movimientos from './manual/movimientos.md';
 import categorias from './manual/categorias.md';
+import responsables from './manual/responsables.md';
+import sectores from './manual/sectores.md';
+import modelos from './manual/modelos.md';
 import grillas from './manual/grillas.md';
 import siper from './manual/siper.md';
 
@@ -16,6 +19,9 @@ import imgBajas from './manual/img/bajas.jpg';
 import imgBusqueda from './manual/img/busqueda.jpg';
 import imgCalendario from './manual/img/calendario.jpg';
 import imgCategorias from './manual/img/categorias.jpg';
+import imgResponsables from './manual/img/responsables.jpg';
+import imgSectores from './manual/img/sectores.jpg';
+import imgModelos from './manual/img/modelos.jpg';
 import imgControlBien from './manual/img/control-bien.jpg';
 import imgControles from './manual/img/controles.jpg';
 import imgFicha from './manual/img/ficha.jpg';
@@ -33,6 +39,9 @@ const IMAGENES:Record<string, string> = {
     'busqueda.jpg':imgBusqueda,
     'calendario.jpg':imgCalendario,
     'categorias.jpg':imgCategorias,
+    'responsables.jpg':imgResponsables,
+    'sectores.jpg':imgSectores,
+    'modelos.jpg':imgModelos,
     'control-bien.jpg':imgControlBien,
     'controles.jpg':imgControles,
     'ficha.jpg':imgFicha,
@@ -66,6 +75,9 @@ export const MANUAL:SeccionDeAyuda[] = [
     seccion('calendario', calendario),
     seccion('movimientos', movimientos),
     seccion('categorias', categorias),
+    seccion('sectores', sectores),
+    seccion('responsables', responsables),
+    seccion('modelos', modelos),
     seccion('grillas', grillas),
     seccion('siper', siper),
 ];

@@ -1,4 +1,4 @@
-tipo_asignacion|descripcion
-ACTA|Acta
-COMODATO|Comodato
-NORMAL|Normal
+tipo_asignacion|descripcion|orden
+ACTA|Acta|2
+COMODATO|Comodato|1
+NORMAL|Normal|

@@ -13,11 +13,11 @@ Al ingresar se ve el menú principal. Cada persona ve sólo las opciones que su 
 | **mis bienes** | Los bienes que tenés a tu cargo y los que están en uso tuyo. |
 | **inventario** | Las grillas completas de bienes: todos, en alta y en baja. |
 | **operaciones** | Declaraciones, solicitudes de movimiento, proceso de baja y control de bienes. |
-| **reportes** | Bienes por sector, por responsable y por espacio, parque tecnológico y consulta de movimientos. |
+| **reportes** | Bienes por categoría, por sector, por responsable, por atributos y por espacio, y consulta de movimientos. |
 | **gestion de datos** | Sectores, responsables, espacios y demás catálogos (sólo con permiso para gestionar datos). |
 | **ayuda** | Este manual. |
 
-En cada pantalla, el botón **☰** de la barra superior vuelve al menú, y el botón **?** abre la ayuda de esa pantalla en un panel lateral sin perder lo que estabas haciendo.
+En cada pantalla, el botón **☰** de la barra superior abre un panel con las mismas opciones del menú, para ir directo a otra pantalla, el botón **⌂** vuelve al menú principal, y el botón **?** abre la ayuda de esa pantalla en un panel lateral sin perder lo que estabas haciendo.
 
 ![El panel de ayuda abierto sobre la ficha de un bien](img/panel-ayuda.jpg)
 

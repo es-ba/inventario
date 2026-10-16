@@ -45,13 +45,34 @@ export function unmountConnectedAppInventario():void{
 }
 
 export function volverAlMenu():void{
-    unmountConnectedAppInventario();
-    location.hash = '';
+    irA('');
 }
 
 export function irA(hash:string):void{
     unmountConnectedAppInventario();
+    const anterior = location.hash;
     location.hash = hash;
+    if(location.hash === anterior){
+        (myOwn as unknown as {showPage:() => void}).showPage();
+    }
+}
+
+export function abreAparte(evento:React.MouseEvent):boolean{
+    return evento.button !== 0 || evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.altKey;
+}
+
+export function vinculo(hash:string, salir:(destino:() => void) => void = destino => destino()){
+    return {
+        href:`${location.pathname}${location.search}#${hash}`,
+        onClick:(evento:React.MouseEvent) => {
+            evento.stopPropagation();
+            if(abreAparte(evento)){
+                return;
+            }
+            evento.preventDefault();
+            salir(() => irA(hash));
+        },
+    };
 }
 
 export function renderConnectedAppInventario(

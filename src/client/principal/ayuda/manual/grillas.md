@@ -6,10 +6,7 @@ Muchas opciones del menú (**inventario**, **mis bienes**, **reportes**, **gesti
 
 | Reporte | Muestra |
 |---|---|
-| **bienes por sector** | Cantidad de bienes de cada sector. |
-| **bienes por responsable** | Cantidad de bienes a cargo y en uso de cada persona. |
 | **bienes por espacio** | Cantidad de bienes de cada espacio físico. |
-| **parque tecnológico** | Los equipos informáticos, con su último control. |
 | **consulta de movimientos** | Ver [Consulta de movimientos](#ayuda/movimientos). |
 
 ## Usar una grilla

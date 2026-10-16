@@ -21,7 +21,7 @@ import type {Connector, FieldDefinition} from 'frontend-plus';
 import {FormFieldRenderer} from './base/form-field-renderer';
 import {useDestinoDelSector} from './base/destino-del-sector';
 import {useSalida} from './base/contexto-base';
-import {unmountConnectedAppInventario} from './render-connected-app-inventario';
+import {vinculo} from './render-connected-app-inventario';
 import type {Fila} from './base/tipos-tabla';
 import {
     CampoDelMovimiento,
@@ -137,10 +137,7 @@ export type ResultadoMovimiento =
 export function AvisoMovimiento({resultado, onCerrar}:{resultado:ResultadoMovimiento, onCerrar:() => void}){
     const solicitarSalida = useSalida();
     return <Alert severity="success" onClose={onCerrar} sx={{mb:2}}
-        action={resultado.modo === 'acta' ? <Button onClick={() => solicitarSalida(() => {
-            unmountConnectedAppInventario();
-            location.hash = `w=solicitudes&acta=${encodeURIComponent(resultado.acta)}`;
-        })}>Abrir solicitud N.º {resultado.acta}</Button> : undefined}>
+        action={resultado.modo === 'acta' ? <Button {...vinculo(`w=solicitudes&acta=${encodeURIComponent(resultado.acta)}`, solicitarSalida)}>Abrir solicitud N.º {resultado.acta}</Button> : undefined}>
         {resultado.message}
     </Alert>;
 }

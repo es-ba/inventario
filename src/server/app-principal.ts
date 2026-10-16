@@ -331,10 +331,10 @@ export class AppInventario extends AppBackend{
         menuContent.push(
             {menuType: 'menu', name: 'reportes', label: 'reportes', menuContent: [
                 {menuType: 'bienes_por_categoria', name: 'bienes_por_categoria', label: 'bienes por categoría'},
-                {menuType: 'table', name: 'reporte_bienes_por_sector', label: 'bienes por sector'},
-                {menuType: 'table', name: 'reporte_bienes_por_responsable', label: 'bienes por responsable'},
+                {menuType: 'bienes_por_sector', name: 'bienes_por_sector', label: 'bienes por sector'},
+                {menuType: 'bienes_por_responsable', name: 'bienes_por_responsable', label: 'bienes por responsable'},
                 {menuType: 'table', name: 'reporte_bienes_por_espacio', label: 'bienes por espacio'},
-                {menuType: 'table', name: 'parque_tecnologico', label: 'parque tecnológico'},
+                {menuType:'bienes_por_modelo', name:'bienes_por_modelo', label:'bienes por atributos'},
                 {menuType: 'movimientos', name: 'consulta_movimientos', label: 'consulta de movimientos'},
                 {menuType: 'table', name: 'movimientos_consulta', label: 'movimientos (grilla)'},
             ]}

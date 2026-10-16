@@ -12,6 +12,7 @@ export function tipo_asignacion(context:TableContext):TableDefinition{
         fields:[
             {name:'tipo_asignacion' , typeName:'text'},
             {name:'descripcion' , typeName:'text'},
+            {name:'orden'       , typeName:'integer', nullable:true},
         ],
         primaryKey:['tipo_asignacion']
     };

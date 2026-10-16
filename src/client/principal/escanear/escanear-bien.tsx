@@ -3,7 +3,7 @@ import {Alert, Box, Button, Chip, CircularProgress, Divider, Stack, TextField, T
 
 import {useConexion} from '../base/contexto-base';
 import type {Fila} from '../base/tipos-tabla';
-import {irA} from '../render-connected-app-inventario';
+import {vinculo} from '../render-connected-app-inventario';
 import {useDescripcionDeEstado} from '../bien/vista-rapida-bien';
 import {colorDeEstado} from '../bien/presentacion-bien';
 import {FotoDelBien} from '../bien/foto-del-bien';
@@ -163,7 +163,7 @@ export function EscanearBien(){
                             variant="contained"
                             size="large"
                             fullWidth
-                            onClick={() => irA(`w=principal&ficha=${encodeURIComponent(String(estado.bien.ficha))}`)}
+                            {...vinculo(`w=principal&ficha=${encodeURIComponent(String(estado.bien.ficha))}`)}
                         >
                             Abrir ficha
                         </Button>

@@ -16,7 +16,7 @@ import {DataGrid, GridColDef, GridPaginationModel} from '@mui/x-data-grid';
 import {useAvisos, useConexion} from '../base/contexto-base';
 import {formatearValor} from '../base/formato-valores';
 import {bienesGridLocaleText} from '../localizacion-grid';
-import {irA} from '../render-connected-app-inventario';
+import {vinculo} from '../render-connected-app-inventario';
 import {Ubicacion} from '../base/ubicacion';
 import {hoyYmd, sumarDias, textoDeFecha} from '../../../common/calendario';
 import {BienDelGrupo, ChipDeTipo, GrupoDelDia, TipoVisible, colorDelTipo, fondoDelTipo} from './calendario-comun';
@@ -34,9 +34,9 @@ function columnasDelTipo(tipo:string, grupo:GrupoDelDia):GridColDef[]{
     const bien:GridColDef[] = [
         {
             field:'ficha', headerName:'Ficha', width:110, sortable:false,
-            renderCell:({row}) => <Link component="button" variant="body2"
+            renderCell:({row}) => <Link variant="body2"
                 title={`Abrir la ficha del bien ${row.ficha}`}
-                onClick={() => irA(`w=principal&ficha=${encodeURIComponent(String(row.ficha))}`)}>
+                {...vinculo(`w=principal&ficha=${encodeURIComponent(String(row.ficha))}`)}>
                 {String(row.ficha)}
             </Link>,
         },
@@ -217,7 +217,7 @@ export function CalendarioDia({
                                     : null}
                                 <Box sx={{flex:1}}/>
                                 {g.enlace
-                                    ? <Button size="small" startIcon={<OpenInNew/>} onClick={() => irA(g.enlace!)}>
+                                    ? <Button size="small" startIcon={<OpenInNew/>} {...vinculo(g.enlace!)}>
                                         Abrir solicitud
                                     </Button>
                                     : null}

@@ -37,9 +37,9 @@ const ESTADOS = [
     {estado: 'ASIGNADO', etiqueta: 'Asignado', descripcion: 'Ubicado en un sector', orden: 1},
 ];
 
-const fila = (categoria, subcategoria, estado, cantidad, nombre, enUso = 'NO') => ({
-    valores: [categoria, subcategoria, estado, enUso],
-    textos: [categoria, subcategoria && `${subcategoria} — ${nombre}`, estado, enUso === 'SI' ? 'Sí' : 'No'],
+const fila = (categoria, subcategoria, estado, cantidad, nombre, enUso = 'NO', grupo = subcategoria && `G${subcategoria}`) => ({
+    valores: [categoria, subcategoria, grupo, estado, enUso],
+    textos: [categoria, subcategoria && `${subcategoria} — ${nombre}`, grupo && `${grupo} — ${(nombre ?? '').toUpperCase()}`, estado, enUso === 'SI' ? 'Sí' : 'No'],
     cantidad,
 });
 
@@ -142,7 +142,7 @@ test('un filtro de la dirección inválido se ignora', () => {
 });
 
 test('la consulta pide los activos y lleva el sector y la persona', () => {
-    assert.deepEqual(consultaDelReporte([]).agruparPor, ['categoria', 'subcategoria', 'estado', 'en_uso']);
+    assert.deepEqual(consultaDelReporte([]).agruparPor, ['categoria', 'subcategoria', 'grupo', 'estado', 'en_uso']);
     assert.equal(consultaDelReporte([]).estado, 'activo');
     assert.equal(consultaDelReporte([]).grupoFiltro, undefined);
     assert.deepEqual(consultaDelReporte([
@@ -167,13 +167,13 @@ test('el CSV abre en Excel con acentos y tiene los mismos números', () => {
     const csv = csvDelReporte(armarReporte(FILAS, CATEGORIAS, ESTADOS));
     assert.equal(csv.charCodeAt(0), 0xFEFF);
     const lineas = csv.slice(1).trimEnd().split('\r\n');
-    assert.equal(lineas[0], 'Categoría;Subcategoría;Total;Asignado;Sin asignar;En uso');
-    assert.ok(lineas.includes('Computadoras;Notebook;13;10;3;6'));
-    assert.ok(lineas.includes('Dispositivos móviles;Tablet;50;50;0;50'));
-    assert.ok(lineas.includes('Sin categoría;(sin dato);4;0;4;0'));
-    assert.ok(lineas.includes('Total principal;;74;67;7;56'));
-    assert.ok(lineas.includes('Accesorios y componentes;Mouse;20;20;0;0'));
-    assert.equal(lineas.at(-1), 'Total general;;94;87;7;56');
+    assert.equal(lineas[0], 'Categoría;Subcategoría;Grupo;Total;Asignado;Sin asignar;En uso');
+    assert.ok(lineas.includes('Computadoras;Notebook;NOTEBOOK;13;10;3;6'));
+    assert.ok(lineas.includes('Dispositivos móviles;Tablet;TABLET;50;50;0;50'));
+    assert.ok(lineas.includes('Sin categoría;(sin dato);(sin dato);4;0;4;0'));
+    assert.ok(lineas.includes('Total principal;;;74;67;7;56'));
+    assert.ok(lineas.includes('Accesorios y componentes;Mouse;MOUSE;20;20;0;0'));
+    assert.equal(lineas.at(-1), 'Total general;;;94;87;7;56');
     assert.equal(nombreDelCsv([{dimension: 'sector', valor: '2 4', texto: '', etiqueta: ''}], new Date(2026, 9, 5)), 'bienes-por-categoria-2_4-2026-10-05.csv');
     assert.equal(nombreDelCsv([], new Date(2026, 9, 5)), 'bienes-por-categoria-2026-10-05.csv');
 });
@@ -187,4 +187,69 @@ test('el selector de sectores ofrece sólo los activos, con su responsable', () 
         {valor: '31', texto: 'ABC', etiqueta: 'ABC — Sin jefe'},
         {valor: '24', texto: 'DGE', etiqueta: 'DGE — Dirección General · PEREZ, Ana'},
     ]);
+});
+
+test('cada subcategoría se abre en sus grupos, que suman la subcategoría', () => {
+    const filas = [
+        fila('CMP', 'CMP-01', 'ASIGNADO', 6, 'Notebook', 'SI', 'NB'),
+        fila('CMP', 'CMP-01', 'SIN_ASIGNAR', 2, 'Notebook', 'NO', 'NB'),
+        fila('CMP', 'CMP-01', 'ASIGNADO', 9, 'Notebook', 'NO', 'PC'),
+        fila('CMP', 'CMP-01', 'ASIGNADO', 1, 'Notebook', 'NO', null),
+    ];
+    const [notebook] = armarReporte(filas, CATEGORIAS, ESTADOS).principal[0].subcategorias;
+    assert.deepEqual(notebook.grupos.map(g => [g.grupo, g.nombre, g.cuenta.total]), [['PC', 'NOTEBOOK', 9], ['NB', 'NOTEBOOK', 8], [null, '(sin dato)', 1]]);
+    assert.equal(notebook.grupos.reduce((t, g) => t + g.cuenta.total, 0), notebook.cuenta.total);
+    assert.equal(notebook.grupos[1].cuenta.enUso, 6);
+    assert.equal(notebook.grupos[1].cuenta.porEstado.SIN_ASIGNAR, 2);
+});
+
+test('la celda de un grupo filtra por subcategoría y grupo, y con dos filtros previos y estado llega a 5 partes', () => {
+    const sector = {dimension: 'sector', valor: '24', texto: 'DGE', etiqueta: 'sector'};
+    const persona = {dimension: 'enusode_responsable', valor: '27', texto: 'Pérez, Ana', etiqueta: 'en uso de'};
+    const filtro = filtroDeCelda({
+        previos: [sector, persona],
+        subcategoria: {valor: 'CMP-01', nombre: 'Notebook'},
+        grupo: {valor: 'NB', nombre: 'NOTEBOOK'},
+        estado: {clave: 'ASIGNADO', etiqueta: 'Asignado'},
+    });
+    assert.deepEqual(filtro.partes.map(p => p.dimension), ['sector', 'enusode_responsable', 'subcategoria', 'grupo', 'estado']);
+    assert.deepEqual(filtro.textos.slice(2, 4), ['Notebook', 'NOTEBOOK']);
+    assert.equal(filtro.etiquetas[3], 'grupo');
+    assert.deepEqual(filtroDeCelda({previos: [], subcategoria: {valor: 'CMP-01', nombre: 'Notebook'}, grupo: {valor: null, nombre: '(sin dato)'}}).partes,
+        [{dimension: 'subcategoria', valor: 'CMP-01'}, {dimension: 'grupo', valor: null}]);
+});
+
+const TIPOS = [
+    {tipo: 'NORMAL', descripcion: 'Normal', orden: null},
+    {tipo: 'ACTA', descripcion: 'Acta', orden: 2},
+    {tipo: 'COMODATO', descripcion: 'Comodato', orden: 1},
+];
+const deTipo = (categoria, subcategoria, grupo, tipo, cantidad) => ({valores: [categoria, subcategoria, grupo, tipo], textos: [], cantidad});
+
+test('comodato y acta: columnas del catálogo con orden, sumadas en categoría, subcategoría, grupo y totales', () => {
+    const reporte = armarReporte(FILAS, CATEGORIAS, ESTADOS, [
+        deTipo('CMP', 'CMP-01', 'GCMP-01', 'COMODATO', 4),
+        deTipo('CMP', 'CMP-01', 'GCMP-01', 'ACTA', 1),
+        deTipo('CMP', 'CMP-01', 'GCMP-01', 'NORMAL', 3),
+        deTipo('CMP', 'CMP-01', 'GCMP-01', null, 5),
+        deTipo('MOV', 'MOV-02', 'GMOV-02', 'COMODATO', 30),
+    ], TIPOS);
+    assert.deepEqual(reporte.tipos, [{clave: 'COMODATO', etiqueta: 'Comodato'}, {clave: 'ACTA', etiqueta: 'Acta'}]);
+    const [computadoras, moviles] = reporte.principal;
+    assert.deepEqual(computadoras.cuenta.porTipo, {COMODATO: 4, ACTA: 1, NORMAL: 3});
+    assert.equal(computadoras.subcategorias[0].grupos[0].cuenta.porTipo.COMODATO, 4);
+    assert.equal(moviles.subcategorias[0].cuenta.porTipo.COMODATO, 30);
+    assert.equal(reporte.total.porTipo.COMODATO, 34);
+    assert.equal(computadoras.cuenta.total, 20);
+    const lineas = csvDelReporte(reporte).slice(1).trimEnd().split('\r\n');
+    assert.equal(lineas[0], 'Categoría;Subcategoría;Grupo;Total;Asignado;Sin asignar;En uso;Comodato;Acta');
+    assert.ok(lineas.includes('Computadoras;Notebook;NOTEBOOK;13;10;3;6;4;1'));
+    assert.equal(lineas.at(-1), 'Total general;;;94;87;7;56;34;1');
+});
+
+test('la celda de comodato filtra por tipo de asignación', () => {
+    const filtro = filtroDeCelda({previos: [], subcategoria: {valor: 'CMP-01', nombre: 'Notebook'}, tipo: {clave: 'COMODATO', etiqueta: 'Comodato'}});
+    assert.deepEqual(filtro.partes, [{dimension: 'subcategoria', valor: 'CMP-01'}, {dimension: 'tipo_asignacion', valor: 'COMODATO'}]);
+    assert.deepEqual(filtro.textos, ['Notebook', 'Comodato']);
+    assert.deepEqual(filtro.etiquetas, ['subcategoría', 'tipo de asignación']);
 });

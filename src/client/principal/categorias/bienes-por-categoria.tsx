@@ -8,22 +8,23 @@ import {Download, KeyboardArrowDown, KeyboardArrowRight} from '@mui/icons-materi
 import {useAvisos, useConexion} from '../base/contexto-base';
 import {leerTabla} from '../base/referencias';
 import type {Fila} from '../base/tipos-tabla';
-import {irA} from '../render-connected-app-inventario';
+import type {BienesAgrupadoFila} from '../../../common/bienes-agrupar';
+import {vinculo} from '../render-connected-app-inventario';
 import {
-    FILTROS_DEL_REPORTE, armarReporte, consultaDelReporte, csvDelReporte, filtroDeCelda, hashDeBusqueda, nombreDelCsv,
-    EN_USO, opcionesDeAgrupado, opcionesDeSectores, porcentaje,
-    type CategoriaDeCatalogo, type Celda, type ColumnaDeEstado, type Cuenta, type EstadoDeCatalogo,
-    type FilaDeCategoria, type FiltroPrevio, type OpcionDeFiltro, type Reporte,
+    DIMENSIONES_DEL_REPORTE, FILTROS_DEL_REPORTE, armarReporte, consultaDelReporte, csvDelReporte, filtroDeCelda, hashDeBusqueda, nombreDelCsv,
+    DIMENSIONES_DE_TIPOS, EN_USO, opcionesDeAgrupado, opcionesDeSectores, porcentaje,
+    type CategoriaDeCatalogo, type Celda, type ColumnaDeEstado, type ColumnaDeTipo, type Cuenta, type EstadoDeCatalogo, type TipoDeCatalogo,
+    type FilaDeCategoria, type FilaDeSubcategoria, type FiltroPrevio, type OpcionDeFiltro, type Reporte,
 } from './categorias-datos';
 
-type Catalogos = {categorias:CategoriaDeCatalogo[], estados:EstadoDeCatalogo[], sectores:OpcionDeFiltro[]};
+type Catalogos = {categorias:CategoriaDeCatalogo[], estados:EstadoDeCatalogo[], tipos:TipoDeCatalogo[]};
 
 type DimensionDeFiltro = typeof FILTROS_DEL_REPORTE[number]['dimension'];
 
 const texto = (valor:unknown) => valor == null ? '' : String(valor).trim();
 const numeroONulo = (valor:unknown) => valor == null || valor === '' ? null : Number(valor);
 
-function catalogosDesde(categorias:Fila[], estados:Fila[], sectores:Fila[]):Catalogos{
+function catalogosDesde(categorias:Fila[], estados:Fila[], tipos:Fila[]):Catalogos{
     return {
         categorias:categorias.map(fila => ({
             categoria:texto(fila.categoria),
@@ -31,41 +32,57 @@ function catalogosDesde(categorias:Fila[], estados:Fila[], sectores:Fila[]):Cata
             orden:numeroONulo(fila.orden),
             aparte:fila.aparte === true,
         })),
-        estados:estados.map(fila => ({
-            estado:texto(fila.estado_bien),
-            etiqueta:texto(fila.etiqueta),
-            descripcion:texto(fila.descripcion) || null,
-            orden:numeroONulo(fila.orden),
-        })),
-        sectores:opcionesDeSectores(sectores),
+        estados:estadosDesde(estados),
+        tipos:tiposDesde(tipos),
     };
 }
 
-function Cantidad({valor, destino, fuerte = false}:{valor:number, destino:string|null, fuerte?:boolean}){
+export function tiposDesde(tipos:Fila[]):TipoDeCatalogo[]{
+    return tipos.map(fila => ({tipo:texto(fila.tipo_asignacion), descripcion:texto(fila.descripcion), orden:numeroONulo(fila.orden)}));
+}
+
+export function encabezadosDeTipos(tipos:ColumnaDeTipo[]){
+    return tipos.map((tipo, indice) =>
+        <TableCell key={tipo.clave} align="right" sx={indice ? undefined : SEPARADOR}
+            title={`Bienes cuyo último movimiento tiene tipo de asignación «${tipo.etiqueta}»; se cuenta aparte del estado`}>
+            {tipo.etiqueta}
+        </TableCell>);
+}
+
+export function estadosDesde(estados:Fila[]):EstadoDeCatalogo[]{
+    return estados.map(fila => ({
+        estado:texto(fila.estado_bien),
+        etiqueta:texto(fila.etiqueta),
+        descripcion:texto(fila.descripcion) || null,
+        orden:numeroONulo(fila.orden),
+    }));
+}
+
+export function Cantidad({valor, destino, fuerte = false}:{valor:number, destino:string|null, fuerte?:boolean}){
     const contenido = <Box component="span" sx={{fontWeight:fuerte ? 700 : undefined}}>{valor.toLocaleString('es-AR')}</Box>;
     if(destino == null || valor === 0){
         return contenido;
     }
-    return <Link component="button" underline="hover" title="Ver estos bienes" onClick={() => irA(destino)}
+    return <Link underline="hover" title="Ver estos bienes" {...vinculo(destino)}
         sx={{font:'inherit', verticalAlign:'baseline'}}>
         {contenido}
     </Link>;
 }
 
-function Barra({proporcion}:{proporcion:number}){
+export function Barra({proporcion}:{proporcion:number}){
     return <Box aria-hidden sx={{flex:1, minWidth:40, height:8, borderRadius:4, bgcolor:'action.hover'}}>
         <Box sx={{width:`${Math.round(proporcion * 100)}%`, height:'100%', borderRadius:4, bgcolor:'primary.main'}}/>
     </Box>;
 }
 
-function destinoDe(celda:Celda, siempre = false):string|null{
+export function destinoDe(celda:Celda, siempre = false):string|null{
     const filtro = filtroDeCelda(celda);
     return filtro || siempre ? hashDeBusqueda(filtro) : null;
 }
 
-const SEPARADOR = {borderLeft:1, borderLeftColor:'divider'};
+export const SEPARADOR = {borderLeft:1, borderLeftColor:'divider'};
 
-function CeldasDeEstado({cuenta, columnas, celda}:{cuenta:Cuenta, columnas:ColumnaDeEstado[], celda:Celda|null}){
+export function CeldasDeEstado({cuenta, columnas, celda, tipos = []}:{cuenta:Cuenta, columnas:ColumnaDeEstado[], celda:Celda|null, tipos?:ColumnaDeTipo[]}){
     return <>{columnas.map(columna =>
         <TableCell key={columna.clave} align="right">
             <Cantidad valor={cuenta.porEstado[columna.clave] ?? 0} destino={celda ? destinoDe({...celda, estado:columna}) : null}/>
@@ -75,13 +92,18 @@ function CeldasDeEstado({cuenta, columnas, celda}:{cuenta:Cuenta, columnas:Colum
         ? <TableCell align="right" sx={SEPARADOR}>
             <Cantidad valor={cuenta.enUso} destino={celda ? destinoDe({...celda, enUso:true}) : null}/>
         </TableCell>
+        : null}
+    {columnas.length
+        ? tipos.map((tipo, indice) => <TableCell key={tipo.clave} align="right" sx={indice ? undefined : SEPARADOR}>
+            <Cantidad valor={cuenta.porTipo[tipo.clave] ?? 0} destino={celda ? destinoDe({...celda, tipo}) : null}/>
+        </TableCell>)
         : null}</>;
 }
 
-function FilaCategoria({fila, columnas, previos, angosta}:{fila:FilaDeCategoria, columnas:ColumnaDeEstado[], previos:FiltroPrevio[], angosta:boolean}){
+function FilaCategoria({fila, columnas, tipos, previos, angosta}:{fila:FilaDeCategoria, columnas:ColumnaDeEstado[], tipos:ColumnaDeTipo[], previos:FiltroPrevio[], angosta:boolean}){
     const [abierta, setAbierta] = React.useState(false);
     const celda:Celda = {previos, categoria:{valor:fila.categoria, nombre:fila.nombre}};
-    const conDetalle = fila.subcategorias.some(sub => sub.subcategoria != null);
+    const conDetalle = fila.subcategorias.some(sub => sub.subcategoria != null || sub.grupos.some(grupo => grupo.grupo != null));
     const abrible = conDetalle || angosta;
     const columnasVisibles = angosta ? [] : columnas;
     return <>
@@ -105,7 +127,7 @@ function FilaCategoria({fila, columnas, previos, angosta}:{fila:FilaDeCategoria,
                     </Typography>
                 </Stack>
             </TableCell>
-            <CeldasDeEstado cuenta={fila.cuenta} columnas={columnasVisibles} celda={celda}/>
+            <CeldasDeEstado cuenta={fila.cuenta} columnas={columnasVisibles} celda={celda} tipos={tipos}/>
         </TableRow>
         {abierta && angosta
             ? <TableRow>
@@ -117,46 +139,72 @@ function FilaCategoria({fila, columnas, previos, angosta}:{fila:FilaDeCategoria,
                             <Cantidad valor={fila.cuenta.porEstado[columna.clave] ?? 0} destino={destinoDe({...celda, estado:columna})}/>
                         </Typography>)}
                     </Stack>
-                    <Typography variant="body2" sx={{mt:0.5}}>
-                        {EN_USO.titulo}:{' '}
-                        <Cantidad valor={fila.cuenta.enUso} destino={destinoDe({...celda, enUso:true})}/>
-                    </Typography>
+                    <Stack direction="row" flexWrap="wrap" columnGap={2} rowGap={0.5} sx={{mt:0.5}}>
+                        <Typography variant="body2" component="span">
+                            {EN_USO.titulo}:{' '}
+                            <Cantidad valor={fila.cuenta.enUso} destino={destinoDe({...celda, enUso:true})}/>
+                        </Typography>
+                        {tipos.map(tipo => <Typography key={tipo.clave} variant="body2" component="span">
+                            {tipo.etiqueta}:{' '}
+                            <Cantidad valor={fila.cuenta.porTipo[tipo.clave] ?? 0} destino={destinoDe({...celda, tipo})}/>
+                        </Typography>)}
+                    </Stack>
                 </TableCell>
             </TableRow>
             : null}
         {abierta && conDetalle
-            ? fila.subcategorias.map(sub => {
-                const deSub:Celda = {previos, subcategoria:{valor:sub.subcategoria, nombre:sub.nombre}};
-                return <TableRow key={sub.subcategoria ?? ''} sx={{bgcolor:'action.hover'}}>
-                    <TableCell/>
-                    <TableCell sx={{pl:4}}>{sub.nombre}</TableCell>
-                    <TableCell>
-                        <Box sx={{minWidth:48, textAlign:'right', display:'inline-block'}}>
-                            <Cantidad valor={sub.cuenta.total} destino={destinoDe(deSub)}/>
-                        </Box>
-                    </TableCell>
-                    <CeldasDeEstado cuenta={sub.cuenta} columnas={columnasVisibles} celda={deSub}/>
-                </TableRow>;
-            })
+            ? fila.subcategorias.map(sub =>
+                <FilaSubcategoria key={sub.subcategoria ?? ''} sub={sub} columnas={columnasVisibles} tipos={tipos} previos={previos}/>)
             : null}
     </>;
 }
 
-function FilaTotal({titulo, cuenta, columnas, destino, celda}:{titulo:string, cuenta:Cuenta, columnas:ColumnaDeEstado[], destino:string|null, celda:Celda|null}){
+function FilaSubcategoria({sub, columnas, tipos, previos}:{sub:FilaDeSubcategoria, columnas:ColumnaDeEstado[], tipos:ColumnaDeTipo[], previos:FiltroPrevio[]}){
+    const [abierta, setAbierta] = React.useState(false);
+    const deSub:Celda = {previos, subcategoria:{valor:sub.subcategoria, nombre:sub.nombre}};
+    const fila = (clave:string, nombre:React.ReactNode, total:number, celda:Celda, cuenta:Cuenta, sangria:number, fondo:string) =>
+        <TableRow key={clave} sx={{bgcolor:fondo}}>
+            <TableCell/>
+            <TableCell sx={{pl:sangria}}>{nombre}</TableCell>
+            <TableCell>
+                <Box sx={{minWidth:48, textAlign:'right', display:'inline-block'}}>
+                    <Cantidad valor={total} destino={destinoDe(celda)}/>
+                </Box>
+            </TableCell>
+            <CeldasDeEstado cuenta={cuenta} columnas={columnas} celda={celda} tipos={tipos}/>
+        </TableRow>;
+    const nombre = <Stack direction="row" alignItems="center" spacing={0.5}>
+        <IconButton size="small" aria-label={abierta ? `cerrar ${sub.nombre}` : `abrir ${sub.nombre}`} title={abierta ? 'Ocultar los grupos' : 'Ver los grupos'}
+            aria-expanded={abierta} onClick={() => setAbierta(!abierta)} sx={{ml:-1}}>
+            {abierta ? <KeyboardArrowDown fontSize="small"/> : <KeyboardArrowRight fontSize="small"/>}
+        </IconButton>
+        <span>{sub.nombre}</span>
+    </Stack>;
+    return <>
+        {fila('sub', nombre, sub.cuenta.total, deSub, sub.cuenta, 3, 'action.hover')}
+        {abierta
+            ? sub.grupos.map(grupo => fila(grupo.grupo ?? '', <Typography variant="body2" component="span" color="text.secondary">{grupo.nombre}</Typography>,
+                grupo.cuenta.total, {...deSub, grupo:{valor:grupo.grupo, nombre:grupo.nombre}}, grupo.cuenta, 8, 'action.selected'))
+            : null}
+    </>;
+}
+
+function FilaTotal({titulo, cuenta, columnas, tipos, destino, celda}:{titulo:string, cuenta:Cuenta, columnas:ColumnaDeEstado[], tipos:ColumnaDeTipo[], destino:string|null, celda:Celda|null}){
     return <TableRow sx={{'& > *':{fontWeight:700}}}>
         <TableCell/>
         <TableCell component="th" scope="row" sx={{fontWeight:700}}>{titulo}</TableCell>
         <TableCell>
             <Box sx={{minWidth:48, textAlign:'right', display:'inline-block'}}><Cantidad valor={cuenta.total} destino={destino} fuerte/></Box>
         </TableCell>
-        <CeldasDeEstado cuenta={cuenta} columnas={columnas} celda={celda}/>
+        <CeldasDeEstado cuenta={cuenta} columnas={columnas} celda={celda} tipos={tipos}/>
     </TableRow>;
 }
 
 function TablaDelReporte({reporte, previos, angosta}:{reporte:Reporte, previos:FiltroPrevio[], angosta:boolean}){
     const columnas = angosta ? [] : reporte.columnas;
     const columnasDeFila = reporte.columnas;
-    const anchoTotal = 3 + (columnas.length ? columnas.length + 1 : 0);
+    const tipos = reporte.tipos;
+    const anchoTotal = 3 + (columnas.length ? columnas.length + 1 + tipos.length : 0);
     return <TableContainer>
         <Table size="small" aria-label="bienes por categoría">
             <TableHead>
@@ -171,25 +219,26 @@ function TablaDelReporte({reporte, previos, angosta}:{reporte:Reporte, previos:F
                             {EN_USO.titulo}
                         </TableCell>
                         : null}
+                    {columnas.length ? encabezadosDeTipos(tipos) : null}
                 </TableRow>
             </TableHead>
             <TableBody>
                 {reporte.principal.map(fila =>
-                    <FilaCategoria key={fila.categoria ?? ''} fila={fila} columnas={columnasDeFila} previos={previos} angosta={angosta}/>)}
+                    <FilaCategoria key={fila.categoria ?? ''} fila={fila} columnas={columnasDeFila} tipos={tipos} previos={previos} angosta={angosta}/>)}
                 {reporte.aparte.length
                     ? <>
-                        <FilaTotal titulo="Total principal" cuenta={reporte.totalPrincipal} columnas={columnas} destino={null} celda={null}/>
+                        <FilaTotal titulo="Total principal" cuenta={reporte.totalPrincipal} columnas={columnas} tipos={tipos} destino={null} celda={null}/>
                         <TableRow>
                             <TableCell colSpan={anchoTotal} sx={{pt:3}}>
                                 <Typography variant="subtitle2" color="text.secondary">Aparte: no suman al total principal</Typography>
                             </TableCell>
                         </TableRow>
                         {reporte.aparte.map(fila =>
-                            <FilaCategoria key={fila.categoria ?? ''} fila={fila} columnas={columnasDeFila} previos={previos} angosta={angosta}/>)}
-                        <FilaTotal titulo="Total aparte" cuenta={reporte.totalAparte} columnas={columnas} destino={null} celda={null}/>
+                            <FilaCategoria key={fila.categoria ?? ''} fila={fila} columnas={columnasDeFila} tipos={tipos} previos={previos} angosta={angosta}/>)}
+                        <FilaTotal titulo="Total aparte" cuenta={reporte.totalAparte} columnas={columnas} tipos={tipos} destino={null} celda={null}/>
                     </>
                     : null}
-                <FilaTotal titulo="Total general" cuenta={reporte.total} columnas={columnas}
+                <FilaTotal titulo="Total general" cuenta={reporte.total} columnas={columnas} tipos={tipos}
                     destino={destinoDe({previos}, true)} celda={{previos}}/>
             </TableBody>
         </Table>
@@ -212,31 +261,87 @@ function SelectorDeFiltro({titulo, opciones, valor, cargando, onCambio}:{
     />;
 }
 
+export function useReporteDeCategorias(previos:FiltroPrevio[]):{reporte:Reporte|null, error:string|null}{
+    const conn = useConexion();
+    const {mostrarError} = useAvisos();
+    const [catalogos, setCatalogos] = React.useState<Catalogos|null>(null);
+    const [filas, setFilas] = React.useState<{deEstados:BienesAgrupadoFila[], deTipos:BienesAgrupadoFila[]}|null>(null);
+    const [error, setError] = React.useState<string|null>(null);
+    const secuencia = React.useRef(0);
+    const clave = JSON.stringify(previos);
+
+    React.useEffect(() => {
+        let cancelado = false;
+        Promise.all([leerTabla(conn, 'categorias'), leerTabla(conn, 'estados_bien'), leerTabla(conn, 'tipo_asignacion')])
+            .then(([categorias, estados, tipos]) => {
+                if(!cancelado){ setCatalogos(catalogosDesde(categorias, estados, tipos)); }
+            })
+            .catch(err => { if(!cancelado){ mostrarError(err, 'No se pudieron cargar los catálogos'); } });
+        return () => { cancelado = true; };
+    }, [conn, mostrarError]);
+
+    React.useEffect(() => {
+        const numero = ++secuencia.current;
+        setFilas(null);
+        setError(null);
+        const pedir = (dimensiones:readonly string[]) =>
+            conn.ajax.bienes_buscar_agrupado({consulta:JSON.stringify(consultaDelReporte(JSON.parse(clave), dimensiones))}).then(respuesta => respuesta.rows);
+        Promise.all([pedir(DIMENSIONES_DEL_REPORTE), pedir(DIMENSIONES_DE_TIPOS)])
+            .then(([deEstados, deTipos]) => { if(numero === secuencia.current){ setFilas({deEstados, deTipos}); } })
+            .catch(err => { if(numero === secuencia.current){ setError(err instanceof Error ? err.message : String(err)); } });
+    }, [conn, clave]);
+
+    const reporte = React.useMemo(
+        () => catalogos && filas ? armarReporte(filas.deEstados, catalogos.categorias, catalogos.estados, filas.deTipos, catalogos.tipos) : null,
+        [catalogos, filas],
+    );
+    return {reporte, error};
+}
+
+export function descargarReporte(reporte:Reporte, previos:FiltroPrevio[]){
+    descargarCsv(csvDelReporte(reporte), nombreDelCsv(previos, new Date()));
+}
+
+export function descargarCsv(contenido:string, nombre:string){
+    const url = URL.createObjectURL(new Blob([contenido], {type:'text/csv;charset=utf-8'}));
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = nombre;
+    document.body.appendChild(enlace);
+    enlace.click();
+    enlace.remove();
+    URL.revokeObjectURL(url);
+}
+
+export function VistaDelReporte({reporte, error, previos}:{reporte:Reporte|null, error:string|null, previos:FiltroPrevio[]}){
+    const theme = useTheme();
+    const angosta = useMediaQuery(theme.breakpoints.down('sm'));
+    return <>
+        {error ? <Alert severity="error">{error}</Alert> : null}
+        {!reporte && !error ? <Typography color="text.secondary">Cargando…</Typography> : null}
+        {reporte ? <TablaDelReporte reporte={reporte} previos={previos} angosta={angosta}/> : null}
+    </>;
+}
+
 export function BienesPorCategoria(){
     const conn = useConexion();
     const {mostrarError} = useAvisos();
-    const theme = useTheme();
-    const angosta = useMediaQuery(theme.breakpoints.down('sm'));
-    const [catalogos, setCatalogos] = React.useState<Catalogos|null>(null);
+    const [sectores, setSectores] = React.useState<OpcionDeFiltro[]|null>(null);
     const [elegidos, setElegidos] = React.useState<Partial<Record<DimensionDeFiltro, OpcionDeFiltro>>>({});
     const [enUsoDe, setEnUsoDe] = React.useState<OpcionDeFiltro[]|null>(null);
-    const [filas, setFilas] = React.useState<Parameters<typeof armarReporte>[0]|null>(null);
-    const [error, setError] = React.useState<string|null>(null);
-    const secuencia = React.useRef(0);
 
     const previos = React.useMemo<FiltroPrevio[]>(() => FILTROS_DEL_REPORTE
         .filter(({dimension}) => elegidos[dimension])
         .map(({dimension, etiqueta}) => ({dimension, etiqueta, valor:elegidos[dimension]!.valor, texto:elegidos[dimension]!.texto})),
     [elegidos]);
     const delSector = React.useMemo(() => previos.filter(previo => previo.dimension === 'sector'), [previos]);
+    const {reporte, error} = useReporteDeCategorias(previos);
 
     React.useEffect(() => {
         let cancelado = false;
-        Promise.all([leerTabla(conn, 'categorias'), leerTabla(conn, 'estados_bien'), leerTabla(conn, 'sectores')])
-            .then(([categorias, estados, sectores]) => {
-                if(!cancelado){ setCatalogos(catalogosDesde(categorias, estados, sectores)); }
-            })
-            .catch(err => { if(!cancelado){ mostrarError(err, 'No se pudieron cargar los catálogos'); } });
+        leerTabla(conn, 'sectores')
+            .then(filas => { if(!cancelado){ setSectores(opcionesDeSectores(filas)); } })
+            .catch(err => { if(!cancelado){ mostrarError(err, 'No se pudieron cargar los sectores'); setSectores([]); } });
         return () => { cancelado = true; };
     }, [conn, mostrarError]);
 
@@ -249,20 +354,6 @@ export function BienesPorCategoria(){
         return () => { cancelado = true; };
     }, [conn, delSector, mostrarError]);
 
-    React.useEffect(() => {
-        const numero = ++secuencia.current;
-        setFilas(null);
-        setError(null);
-        conn.ajax.bienes_buscar_agrupado({consulta:JSON.stringify(consultaDelReporte(previos))})
-            .then(respuesta => { if(numero === secuencia.current){ setFilas(respuesta.rows); } })
-            .catch(err => { if(numero === secuencia.current){ setError(err instanceof Error ? err.message : String(err)); } });
-    }, [conn, previos]);
-
-    const reporte = React.useMemo(
-        () => catalogos && filas ? armarReporte(filas, catalogos.categorias, catalogos.estados) : null,
-        [catalogos, filas],
-    );
-
     const elegir = (dimension:DimensionDeFiltro, opcion:OpcionDeFiltro|null) =>
         setElegidos(anteriores => {
             const nuevos = {...anteriores};
@@ -270,20 +361,8 @@ export function BienesPorCategoria(){
             return nuevos;
         });
 
-    const descargar = () => {
-        if(!reporte){ return; }
-        const url = URL.createObjectURL(new Blob([csvDelReporte(reporte)], {type:'text/csv;charset=utf-8'}));
-        const enlace = document.createElement('a');
-        enlace.href = url;
-        enlace.download = nombreDelCsv(previos, new Date());
-        document.body.appendChild(enlace);
-        enlace.click();
-        enlace.remove();
-        URL.revokeObjectURL(url);
-    };
-
     const opcionesDe:Record<DimensionDeFiltro, OpcionDeFiltro[]|null> = {
-        sector:catalogos?.sectores ?? null,
+        sector:sectores,
         enusode_responsable:enUsoDe,
     };
 
@@ -297,13 +376,13 @@ export function BienesPorCategoria(){
                 onCambio={opcion => elegir(dimension, opcion)}
             />)}
             <Box sx={{flex:1, display:{xs:'none', sm:'block'}}}/>
-            <Button variant="outlined" startIcon={<Download/>} onClick={descargar} disabled={!reporte}>Descargar</Button>
+            <Button variant="outlined" startIcon={<Download/>} onClick={() => reporte && descargarReporte(reporte, previos)} disabled={!reporte}>
+                Descargar
+            </Button>
         </Stack>
         <Typography variant="body2" color="text.secondary" sx={{mb:1}}>
             Bienes activos que podés ver{previos.map(previo => `, ${previo.etiqueta} ${previo.texto}`).join('')}. Tocá un número para ver esos bienes.
         </Typography>
-        {error ? <Alert severity="error">{error}</Alert> : null}
-        {!reporte && !error ? <Typography color="text.secondary">Cargando…</Typography> : null}
-        {reporte ? <TablaDelReporte reporte={reporte} previos={previos} angosta={angosta}/> : null}
+        <VistaDelReporte reporte={reporte} error={error} previos={previos}/>
     </Box>;
 }

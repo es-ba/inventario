@@ -24,7 +24,7 @@ test('la pantalla lee el bien de bienes por ficha, monta la cámara sólo mientr
     assert.match(pantalla, /estado\.nombre === 'leyendo' && motivo == null\s*\? <>\s*<LectorDeCamara onLeido=\{alLeer\} onSinCamara=\{setMotivo\}\/>/);
     assert.equal(pantalla.match(/<LectorDeCamara/g).length, 1);
     assert.match(pantalla, /<SeccionesDeBien secciones=\{seccionesDeVistaRapida\(estado\.bien, descripcionDeEstado\)\}\/>/);
-    assert.match(pantalla, /irA\(`w=principal&ficha=\$\{encodeURIComponent\(String\(estado\.bien\.ficha\)\)\}`\)/);
+    assert.match(pantalla, /vinculo\(`w=principal&ficha=\$\{encodeURIComponent\(String\(estado\.bien\.ficha\)\)\}`\)/);
     assert.match(pantalla, /fichaDesdeCodigoLeido\(texto\) \?\? texto/);
     assert.match(pantalla, /No encontré la ficha \$\{ficha\}\./);
     for (const motivo of ['insegura', 'sin_lector', 'sin_camara', 'sin_permiso']) {

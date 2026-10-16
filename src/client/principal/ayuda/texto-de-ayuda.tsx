@@ -3,7 +3,7 @@ import {Box} from '@mui/material';
 import {marked} from 'marked';
 
 import {useSalida} from '../base/contexto-base';
-import {irA} from '../render-connected-app-inventario';
+import {abreAparte, irA} from '../render-connected-app-inventario';
 
 export function TextoDeAyuda({texto, onSeccion}:{texto:string, onSeccion:(clave:string) => void}){
     const solicitarSalida = useSalida();
@@ -15,7 +15,7 @@ export function TextoDeAyuda({texto, onSeccion}:{texto:string, onSeccion:(clave:
             if(href.startsWith('#ayuda/')){
                 evento.preventDefault();
                 onSeccion(href.slice('#ayuda/'.length));
-            }else if(href.startsWith('#w=')){
+            }else if(href.startsWith('#w=') && !abreAparte(evento)){
                 evento.preventDefault();
                 solicitarSalida(() => irA(href.slice(1)));
             }

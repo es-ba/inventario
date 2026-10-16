@@ -1,6 +1,6 @@
 estado_bien|descripcion|etiqueta|orden
 BAJA|Bien dado de baja|Baja|
-BAJA_EN_TRAMITE|Se pidió la baja y espera aprobación|Baja en trámite|4
-EN_MOVIMIENTO|En una solicitud de movimiento enviada y todavía no procesada|En movimiento|3
+BAJA_EN_TRAMITE|Se pidió la baja y espera aprobación|Baja en trámite|
+EN_MOVIMIENTO|En una solicitud de movimiento enviada y todavía no procesada|En movimiento|
 ASIGNADO|Ubicado en un sector o a cargo de un responsable|Asignado|1
 SIN_ASIGNAR|Sin sector ni responsable asignado|Sin asignar|2

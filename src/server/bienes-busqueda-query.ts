@@ -56,7 +56,7 @@ const MAXIMO_VALORES = 500;
 
 const PAGE_SIZES = new Set([10, 25, 50, 100]);
 
-export type DimensionSql = (addValue: (value: unknown) => string) => {valor: string, texto: string};
+export type DimensionSql = (addValue: (value: unknown) => string) => {valor: string, texto: string, filtro?: (parametro: string) => string};
 
 function opcional<K extends string, V>(clave: K, valor: V | undefined): Partial<Record<K, V>> {
     return valor === undefined ? {} : {[clave]: valor} as Record<K, V>;
@@ -548,10 +548,12 @@ function buildFiltradoCte(
         where.push(busquedaRapida.condicion);
     }
     for (const {dimension, valor} of request.grupoFiltro ?? []) {
-        const expresion = sqlDeDimension(dimension, options, addValue).valor;
+        const {valor: expresion, filtro} = sqlDeDimension(dimension, options, addValue);
         where.push(valor == null
             ? `(${expresion}) IS NULL`
-            : `(${expresion}) = ${addValue(valor)}::text`);
+            : filtro
+                ? filtro(`${addValue(valor)}::text`)
+                : `(${expresion}) = ${addValue(valor)}::text`);
     }
     const armarCte = (base: string) => `WITH bienes_filtrados AS (
         SELECT b.*
@@ -568,7 +570,7 @@ function sqlDeDimension(
     dimension: DimensionAgrupar,
     options: BienesBusquedaQueryOptions,
     addValue: (value: unknown) => string,
-): {valor: string, texto: string} {
+): ReturnType<DimensionSql> {
     const armar = options.dimensiones && Object.prototype.hasOwnProperty.call(options.dimensiones, dimension)
         ? options.dimensiones[dimension]
         : undefined;

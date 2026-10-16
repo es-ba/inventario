@@ -20,7 +20,7 @@ export type CatalogoDeDimensiones = {
     reemplazos:Record<string, string[]>,
 };
 
-type Dimension = {clave:string, etiqueta:string, familia:FamiliaDimension, sql:DimensionSql, reemplaza?:string[]};
+type Dimension = {clave:string, etiqueta:string, familia:FamiliaDimension, sql:DimensionSql, reemplaza?:string[], soloFiltro?:boolean};
 
 function identificador(nombre:string):string{
     return `"${nombre.replace(/"/g, '""')}"`;
@@ -29,6 +29,8 @@ function identificador(nombre:string):string{
 function textoONulo(expresion:string):string{
     return `nullif(btrim(${expresion}), '')`;
 }
+
+const MODELO_SIN_ESPACIOS_REPETIDOS = "nullif(regexp_replace(btrim(b.modelo), '\\s+', ' ', 'g'), '')";
 
 function codigoYTexto(codigo:string, texto:string):string{
     return `CASE
@@ -52,6 +54,12 @@ const ESPECIALES:Dimension[] = [
     {clave:'sector', etiqueta:'sector', familia:'asignación',
         sql:fija(textoONulo('b.sector'), 'b.sector_texto'),
         reemplaza:['sector_sigla', 'nombre_sector']},
+    {clave:'sector_rama', etiqueta:'sector y subsectores', familia:'asignación', soloFiltro:true,
+        sql:() => ({
+            valor:textoONulo('b.sector'),
+            texto:'b.sector_texto',
+            filtro:parametro => `sector_pertenece(${textoONulo('b.sector')}, ${parametro})`,
+        })},
     {clave:'responsable_sector', etiqueta:'responsable del sector', familia:'asignación',
         sql:fija(textoONulo(RESPONSABLE_DEL_SECTOR), codigoYTexto(RESPONSABLE_DEL_SECTOR, NOMBRE_DEL_RESPONSABLE_DEL_SECTOR)),
         reemplaza:['responsable_sector_nombre']},
@@ -78,6 +86,8 @@ const ESPECIALES:Dimension[] = [
         sql:fija(textoONulo('b.categoria'), 'b.categoria_texto')},
     {clave:'subcategoria', etiqueta:'subcategoría', familia:'clasificación',
         sql:fija(textoONulo('b.subcategoria'), 'b.subcategoria_texto')},
+    {clave:'modelo', etiqueta:'modelo', familia:'clasificación',
+        sql:fija(MODELO_SIN_ESPACIOS_REPETIDOS, MODELO_SIN_ESPACIOS_REPETIDOS)},
     {clave:'clase', etiqueta:'clase', familia:'clasificación',
         sql:fija(
             `CASE WHEN ${textoONulo('b.clase')} IS NULL THEN NULL ELSE concat_ws('/', btrim(b.rubro), btrim(b.clase)) END`,
@@ -164,7 +174,7 @@ export function armarCatalogoDeDimensiones(
         ...dimensionesPorAtributos(atributos).sort(porClave),
     ];
     return {
-        disponibles:todas.map(({clave, etiqueta, familia, reemplaza}) =>
+        disponibles:todas.filter(d => !d.soloFiltro).map(({clave, etiqueta, familia, reemplaza}) =>
             reemplaza?.length ? {clave, etiqueta, familia, reemplaza} : {clave, etiqueta, familia}),
         sql:Object.fromEntries(todas.map(d => [d.clave, d.sql])),
         reemplazos:Object.fromEntries(todas.filter(d => d.reemplaza?.length).map(d => [d.clave, d.reemplaza!])),

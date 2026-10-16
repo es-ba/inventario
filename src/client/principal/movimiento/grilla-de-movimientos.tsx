@@ -8,7 +8,7 @@ import {Ubicacion} from '../base/ubicacion';
 import type {Fila} from '../base/tipos-tabla';
 import {momentoDe} from '../bien/historial-datos';
 import {gridLocaleText} from '../localizacion-grid';
-import {irA} from '../render-connected-app-inventario';
+import {vinculo} from '../render-connected-app-inventario';
 
 function texto(valor:unknown):string{
     return formatearValor(valor).trim();
@@ -30,9 +30,9 @@ export function GrillaDeMovimientos({
         const solicitud:GridColDef = {
             field:'acta_origen', headerName:'Solicitud', width:100,
             valueGetter:(valor:unknown) => valor == null ? null : Number(valor),
-            renderCell:({row}) => row.acta_origen == null ? null : <Link component="button" variant="body2"
+            renderCell:({row}) => row.acta_origen == null ? null : <Link variant="body2"
                 title={`Abrir la solicitud ${row.acta_origen}`}
-                onClick={() => solicitarSalida(() => irA(`w=solicitudes&acta=${encodeURIComponent(String(row.acta_origen))}`))}>
+                {...vinculo(`w=solicitudes&acta=${encodeURIComponent(String(row.acta_origen))}`, solicitarSalida)}>
                 {String(row.acta_origen)}
             </Link>,
         };
@@ -44,9 +44,9 @@ export function GrillaDeMovimientos({
             },
             {
                 field:'ficha', headerName:'Ficha', width:110,
-                renderCell:({row}) => <Link component="button" variant="body2"
+                renderCell:({row}) => <Link variant="body2"
                     title={`Abrir la ficha del bien ${row.ficha}`}
-                    onClick={() => solicitarSalida(() => irA(`w=principal&ficha=${encodeURIComponent(String(row.ficha))}`))}>
+                    {...vinculo(`w=principal&ficha=${encodeURIComponent(String(row.ficha))}`, solicitarSalida)}>
                     {String(row.ficha)}
                 </Link>,
             },
