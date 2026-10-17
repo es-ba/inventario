@@ -73,6 +73,7 @@ install:
       - ../install/responsables_activos_trg.sql
       - ../install/trazabilidad_atributos_documentacion_trg.sql
       - ../install/bienes_baja_estado_trg.sql
+      - ../install/bienes_subcategoria_del_grupo_trg.sql
       - ../install/declaraciones_estado_trg.sql
       - ../install/solicitudes_documentos_trg.sql
       - ../install/sector_texto_trg.sql

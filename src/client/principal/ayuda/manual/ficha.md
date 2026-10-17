@@ -19,7 +19,7 @@ Tocá la miniatura para verla en grande. Con **Sacar foto** se carga una nueva: 
 
 Muestra los datos del bien. Arriba están las acciones disponibles:
 
-- **Editar**: abre los datos agrupados en secciones (*Datos generales*, *Clasificación*, *Clasificación contable*, *Identificación*, *Compra*, *Información adicional* y *Otros datos*). Pulsá **Guardar** para confirmar o **Cancelar** para descartar. En *Clasificación* se elige la subcategoría; la categoría se completa sola y no se edita (ver [Bienes por categoría](#ayuda/categorias)).
+- **Editar**: abre los datos agrupados en secciones (*Datos generales*, *Clasificación*, *Clasificación contable*, *Identificación*, *Compra*, *Información adicional* y *Otros datos*). Pulsá **Guardar** para confirmar o **Cancelar** para descartar. En *Clasificación* se elige la subcategoría; la categoría se completa sola y no se edita (ver [Bienes por categoría](#ayuda/categorias)). Al guardar un cambio de grupo, la subcategoría pasa a ser la equivalente de ese grupo (si la tiene), salvo que en el mismo cambio hayas elegido otra subcategoría; después se puede cambiar libremente. Lo mismo vale al editar varios bienes y en las grillas.
 - **Mover**: ver [Mover bienes](#ayuda/mover). Sólo en bienes activos y con permiso para mover.
 - **Clonar**: abre el alta de un bien nuevo con los datos de este ya cargados, para dar de alta bienes parecidos sin tipear todo.
 - **Solicitar baja**, **Dar de baja**, **Aprobar**, **Rechazar** o **Restaurar**: ver [Bajas](#ayuda/bajas).
