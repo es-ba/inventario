@@ -10,6 +10,7 @@ import {
     GrupoFiltro,
     MAXIMO_CONJUNTOS,
     MAXIMO_DIMENSIONES,
+    PREFIJO_ATRIBUTO,
     claveDeAtributo,
 } from '../common/bienes-agrupar';
 
@@ -676,12 +677,30 @@ export function buildBienesAgrupadoQuery(
     }
     const dimensiones = [...new Set(conjuntos.flat())];
     const {cte, filterValues, addValue} = buildFiltradoCte(request, options);
-    const columnas = dimensiones.map((dimension, i) => {
-        const {valor, texto} = sqlDeDimension(dimension, options, addValue);
-        return `${valor} AS valor_${i},\n               ${texto} AS texto_${i}`;
-    }).join(',\n               ');
+    const atributoDe = (dimension: DimensionAgrupar) => dimension.startsWith(PREFIJO_ATRIBUTO)
+        && options.dimensiones && Object.prototype.hasOwnProperty.call(options.dimensiones, dimension)
+        ? dimension.slice(PREFIJO_ATRIBUTO.length)
+        : null;
+    const sqls = dimensiones.map((dimension) => {
+        const atributo = atributoDe(dimension);
+        if (atributo == null) {
+            return sqlDeDimension(dimension, options, addValue);
+        }
+        const valor = `nullif(btrim(atr.valores->>${addValue(atributo)}::text), '')`;
+        return {valor, texto: valor};
+    });
+    const columnas = sqls.map(({valor, texto}, i) => texto === valor
+        ? `${valor} AS valor_${i}`
+        : `${valor} AS valor_${i},\n               ${texto} AS texto_${i}`).join(',\n               ');
     const valores = dimensiones.map((_dimension, i) => `d.valor_${i}`);
-    const textos = dimensiones.map((_dimension, i) => `min(d.texto_${i})`);
+    const textos = sqls.map(({valor, texto}, i) => texto === valor ? `min(d.valor_${i})` : `min(d.texto_${i})`);
+    const conAtributos = dimensiones.some((dimension) => atributoDe(dimension) != null)
+        ? `\n          LEFT JOIN (
+            SELECT ficha, jsonb_object_agg(atributo, valor) AS valores
+              FROM bien_atributo
+             GROUP BY ficha
+          ) atr ON atr.ficha = b.ficha`
+        : '';
     const agrupamientos = conjuntos.map((conjunto) =>
         `(${conjunto.map((dimension) => valores[dimensiones.indexOf(dimension)]).join(', ')})`);
     const sql = `${cte}
@@ -689,7 +708,7 @@ export function buildBienesAgrupadoQuery(
                jsonb_build_array(${textos.join(', ')}) AS textos,
                jsonb_build_array(${valores.map((valor) => `GROUPING(${valor})`).join(', ')}) AS agrupados,
                count(*)::integer AS cantidad
-          FROM bienes_filtrados b
+          FROM bienes_filtrados b${conAtributos}
           CROSS JOIN LATERAL (
             SELECT ${columnas}
           ) d

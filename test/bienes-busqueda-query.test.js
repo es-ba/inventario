@@ -339,3 +339,20 @@ test('agrupa varios conjuntos en una sola consulta y separa las filas por conjun
     assert.throws(() => buildBienesAgrupadoQuery(request({conjuntos: [[]]}), options({dimensiones})), /por qué agrupar/);
     assert.throws(() => buildBienesAgrupadoQuery(request({conjuntos: Array.from({length: 101}, (_x, i) => [`d${i}`])}), options({dimensiones})), /conjuntos/);
 });
+
+test('agrupar por atributo usa un solo join a bien_atributo y no repite el texto cuando es el valor', () => {
+    const {buildBienesAgrupadoQuery} = loadQueryModule();
+    const dimensiones = {
+        'atributo:ram': () => { throw new Error('no debería armar la subconsulta por fila'); },
+        modelo: () => ({valor: 'b.modelo', texto: 'b.modelo'}),
+        estado: () => ({valor: 'b.estado', texto: 'b.estado_texto'}),
+    };
+    const consulta = buildBienesAgrupadoQuery(request({agruparPor: ['atributo:ram', 'modelo', 'estado']}), options({dimensiones}));
+    assert.match(consulta.sql, /LEFT JOIN \(\s*SELECT ficha, jsonb_object_agg\(atributo, valor\) AS valores\s*FROM bien_atributo\s*GROUP BY ficha\s*\) atr ON atr\.ficha = b\.ficha/);
+    assert.match(consulta.sql, /nullif\(btrim\(atr\.valores->>\$\d+::text\), ''\) AS valor_0/);
+    assert.doesNotMatch(consulta.sql, /AS texto_0|AS texto_1/);
+    assert.match(consulta.sql, /b\.estado_texto AS texto_2/);
+    assert.ok(consulta.values.includes('ram'));
+    const sinAtributos = buildBienesAgrupadoQuery(request({agruparPor: ['estado']}), options({dimensiones}));
+    assert.doesNotMatch(sinAtributos.sql, /bien_atributo/);
+});
