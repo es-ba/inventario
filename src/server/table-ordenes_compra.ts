@@ -1,12 +1,13 @@
 
 import {TableDefinition, TableContext} from "./types-principal";
+import {puedeElRol} from "./capacidades-roles";
 
 export function ordenes_compra(context:TableContext):TableDefinition{
     return {
         name:'ordenes_compra',
         elementName:'orden_compra', 
         title:'orden_compra',
-        editable:context.es.administrativo,
+        editable:!!context.forDump || puedeElRol(context.user?.rol, 'puede_gestionar_datos'),
         fields:[
             {name:'orden_compra'                        , typeName:'text'    },
             {name:'codigo'                              , typeName:'text'    , isName:true},

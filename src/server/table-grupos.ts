@@ -5,13 +5,14 @@
 "use strict";
 
 import {TableDefinition, TableContext} from "./types-principal";
+import {puedeElRol} from "./capacidades-roles";
 
 export function grupos(context:TableContext):TableDefinition{
     return {
         name:'grupos',
         elementName:'grupo', 
         title:'Grupos',
-        editable:context.es.administrativo,
+        editable:!!context.forDump || puedeElRol(context.user?.rol, 'puede_gestionar_datos'),
         fields:[
             {name:'grupo'             , typeName:'text'    }, 
             {name:'pertenece_a'       , typeName:'text'    },  

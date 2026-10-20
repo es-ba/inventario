@@ -63,6 +63,7 @@ El repo `frontend-inventario` **ya no se usa**. No trabajar ahí ni tomarlo como
 - **Endpoints custom:** se registran en `addSchrödingerServices` (autenticación opcional) o `addUnloggedServices` (público).
 - **Secuencias autonumeradoras:** definir el campo con `{...field, sequence:{ firstValue:N, name:'mi_seq' }}` y backend-plus las crea via adapt.
 - **Triggers SQL custom:** agregarlos a `install/*.sql` y registrarlos en `def-config.ts` bajo `install.dump.scripts.pre-adapt` o `post-adapt`.
+- **Permisos de catálogos:** marcas, grupos, categorías, subcategorías y órdenes de compra se editan con `puedeElRol(context.user?.rol, 'puede_gestionar_datos')`, la misma capacidad que muestra el menú «gestión de datos» (hoy admin y administrador). No usar `context.es.administrativo` para esto: incluye a superior y administrativo. El resto de ese menú (sectores, espacios, proveedores, sedes, atributos) sigue editable sólo por admin.
 
 ## Adjuntos a bienes
 

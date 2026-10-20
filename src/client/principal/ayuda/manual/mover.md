@@ -11,8 +11,8 @@ Mover cambia la asignación de uno o varios bienes: responsable, sector, sede, e
 
 | Opción | Qué pasa |
 |---|---|
-| **Crear solicitud de movimiento** | Se crea una solicitud con los bienes elegidos. Los bienes quedan *En movimiento* y el cambio se registra cuando la solicitud se procesa. Es la forma habitual cuando hace falta documentación (comodato, acta de entrega). Ver [Solicitudes de movimiento](#ayuda/solicitudes). |
 | **Registrar movimiento inmediato** | El destino se aplica en el momento y queda registrado en el historial de cada bien. |
+| **Crear solicitud de movimiento** | Se crea una solicitud con los bienes elegidos. Los bienes quedan *En movimiento* y el cambio se registra cuando la solicitud se procesa. Es la forma habitual cuando hace falta documentación (comodato, acta de entrega). Ver [Solicitudes de movimiento](#ayuda/solicitudes). |
 
 ## Completar el destino
 

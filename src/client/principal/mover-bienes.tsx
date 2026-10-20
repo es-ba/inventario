@@ -284,8 +284,8 @@ export function MoverBienes({
                 onChange={(_e, valor) => { if(valor){ setModo(valor); setError(null); } }}
                 sx={{mb:2}}
             >
-                <ToggleButton value="acta">Crear solicitud de movimiento</ToggleButton>
                 <ToggleButton value="directo">Registrar movimiento inmediato</ToggleButton>
+                <ToggleButton value="acta">Crear solicitud de movimiento</ToggleButton>
             </ToggleButtonGroup>
 
             {modo === 'acta' ? <>

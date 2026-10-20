@@ -1,13 +1,14 @@
 "use strict";
 
 import {TableDefinition, TableContext} from "./types-principal";
+import {puedeElRol} from "./capacidades-roles";
 
 export function subcategorias(context:TableContext):TableDefinition{
     return {
         name:'subcategorias',
         elementName:'subcategoría',
         title:'Subcategorías',
-        editable:context.es.administrativo,
+        editable:!!context.forDump || puedeElRol(context.user?.rol, 'puede_gestionar_datos'),
         fields:[
             {name:'subcategoria', typeName:'text', title:'subcategoría'},
             {name:'nombre'      , typeName:'text', isName:true},
