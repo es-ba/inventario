@@ -68,3 +68,4 @@ local-*
 /dist
 
 /migracion
+.claude/launch.json
