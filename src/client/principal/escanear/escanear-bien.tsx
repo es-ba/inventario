@@ -4,7 +4,7 @@ import {Alert, Box, Button, Chip, CircularProgress, Divider, Stack, TextField, T
 import {useConexion} from '../base/contexto-base';
 import type {Fila} from '../base/tipos-tabla';
 import {vinculo} from '../render-connected-app-inventario';
-import {useDescripcionDeEstado} from '../bien/vista-rapida-bien';
+import {useEstadoDeBien} from '../bien/vista-rapida-bien';
 import {colorDeEstado} from '../bien/presentacion-bien';
 import {FotoDelBien} from '../bien/foto-del-bien';
 import {fichaDesdeCodigoLeido} from '../../../common/codigos-barra';
@@ -25,13 +25,13 @@ type Estado =
     | {nombre:'aviso', texto:string};
 
 function BienLeido({bien}:{bien:Fila}){
-    const descripcionDeEstado = useDescripcionDeEstado();
+    const estadoDeBien = useEstadoDeBien();
     const estado = String(bien.estado ?? '').trim();
     const detalle = String(bien.detalle ?? '').trim();
     return <Box>
         <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" useFlexGap>
             <Typography variant="h5" component="h2" sx={{fontWeight:600}}>Ficha {String(bien.ficha)}</Typography>
-            {estado ? <Chip size="small" color={colorDeEstado(estado)} label={descripcionDeEstado(estado) ?? estado}/> : null}
+            {estado ? <Chip size="small" color={colorDeEstado(estado)} label={estadoDeBien(estado).etiqueta} title={estadoDeBien(estado).descripcion}/> : null}
         </Stack>
         {detalle ? <Typography sx={{mt:0.5, mb:2, wordBreak:'break-word'}}>{detalle}</Typography> : null}
         <Box sx={{mb:2}}>

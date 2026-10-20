@@ -13,7 +13,7 @@ type Vista =
 function PantallaBajas(){
     const [vista, setVista] = React.useState<Vista>({nombre:'listado'});
 
-    return <PantallaInventario ayuda="bajas" titulo={vista.nombre === 'bien' ? `Baja - Bien ${vista.ficha}` : 'Proceso de baja'}>
+    return <PantallaInventario ayuda="bajas" titulo={vista.nombre === 'bien' ? `Baja del bien ${vista.ficha}` : 'Proceso de baja'}>
         {vista.nombre === 'bien'
             ? <BienFormulario
                 ficha={vista.ficha}

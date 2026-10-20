@@ -6,6 +6,7 @@ import {formatearValor} from '../base/formato-valores';
 import type {Fila} from '../base/tipos-tabla';
 import {colorDeEstado} from './presentacion-bien';
 import {FotoDelBien} from './foto-del-bien';
+import {useEstadoDeBien} from './vista-rapida-bien';
 
 export type ResumenDelBien = {
     movimientos?:unknown,
@@ -27,7 +28,6 @@ const CAMPO_DESCRIPTIVO:Record<string, string> = {
     sector:'sector_sigla',
     sede:'sede_nombre',
     espacio:'espacio_numero',
-    estado:'estados_bien__descripcion',
 };
 
 function conDescripcion(fila:Fila, campo:string):string{
@@ -103,7 +103,8 @@ export function BienHeader({
     const descripcion = comoTexto(row.detalle)
         || comoTexto(row.observacion)
         || comoTexto(row.modelo);
-    const estado = conDescripcion(row, 'estado');
+    const estadoDeBien = useEstadoDeBien();
+    const estado = comoTexto(row.estado);
     const {delSector, directo} = responsablesDelBien(row);
     const asignacion = conDescripcion(row, 'tipo_asignacion');
     const ubicacion = [
@@ -140,7 +141,7 @@ export function BienHeader({
                         Ficha {ficha || '—'}
                     </Typography>
                     {estado
-                        ? <Chip label={estado} size="small" color={colorDeEstado(row.estado)}/>
+                        ? <Chip label={estadoDeBien(estado).etiqueta} title={estadoDeBien(estado).descripcion} size="small" color={colorDeEstado(row.estado)}/>
                         : null}
                 </Stack>
 

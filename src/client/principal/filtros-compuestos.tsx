@@ -641,17 +641,18 @@ export function FiltrosCompuestos({
     const updateFilter = (id:string, patch:Partial<BienesBusquedaFilterDraft>) => {
         onFiltersChange(filters.map(filter => filter.id === id ? {...filter, ...patch} : filter));
     };
+    const sinCondiciones = filters.length === 0;
     return <Paper
         variant="outlined"
         component="form"
-        sx={{p:2, mb:2}}
+        sx={{p:sinCondiciones ? 1 : 2, mb:2}}
         onSubmit={(event:React.FormEvent) => {
             event.preventDefault();
             onSearch();
         }}
     >
         <Stack spacing={1.5}>
-            <Stack direction={{xs:'column', sm:'row'}} spacing={1.5} alignItems={{sm:'center'}}>
+            {sinCondiciones ? null : <Stack direction={{xs:'column', sm:'row'}} spacing={1.5} alignItems={{sm:'center'}}>
                 <Typography variant="h6" sx={{flex:1}}>Búsqueda avanzada</Typography>
                 <TextField
                     select
@@ -667,13 +668,7 @@ export function FiltrosCompuestos({
                     <MenuItem value="and">Todas las condiciones</MenuItem>
                     <MenuItem value="or">Alguna condición</MenuItem>
                 </TextField>
-            </Stack>
-
-            {filters.length === 0 &&
-                <Typography variant="body2" color="text.secondary">
-                    Sin condiciones: Buscar mostrará los bienes de la pestaña seleccionada.
-                </Typography>
-            }
+            </Stack>}
 
             {filters.map(filter => {
                 const selectedTarget = targetFromFilter(filter, fieldTargets) ?? undefined;
@@ -782,7 +777,7 @@ export function FiltrosCompuestos({
                     disabled={loading}
                     onClick={() => onFiltersChange([...filters, createEmptyFilter()])}
                 >
-                    Agregar condición
+                    {sinCondiciones ? 'Búsqueda avanzada' : 'Agregar condición'}
                 </Button>
                 <Button
                     size="small"

@@ -18,6 +18,7 @@ import './ws-sectores';
 import './ws-modelos';
 import './ws-escanear';
 import './ws-ayuda';
+import './ws-inicio';
 import {renderConnectedAppInventario} from './principal/render-connected-app-inventario';
 
 type Vista =
@@ -29,18 +30,20 @@ function PantallaPrincipal({
     fixedFields,
     ficha,
     grupoFiltroInicial,
+    textoInicial,
 }:{
     conn:Connector;
     fixedFields:FixedFields;
     ficha?:string;
     grupoFiltroInicial:GrupoFiltroElegido|null;
+    textoInicial?:string;
 }){
     const [vista, setVista] = React.useState<Vista>(ficha ? {nombre:'bien', ficha} : {nombre:'busqueda'});
     const [actualizacion, setActualizacion] = React.useState<{ficha:string, version:number}>();
 
     return <PantallaInventario ayuda={vista.nombre === 'bien' ? 'ficha' : 'busqueda'} titulo={vista.nombre === 'bien'
-        ? `Inventario - Bien ${vista.ficha ?? (vista.clon ? `nuevo (copia de ${vista.clon.de})` : 'nuevo')}`
-        : 'Inventario - Principal'}>
+        ? `Bien ${vista.ficha ?? (vista.clon ? `nuevo (copia de ${vista.clon.de})` : 'nuevo')}`
+        : 'Bienes'}>
         {vista.nombre === 'bien'
             ? <BienFormulario
                 key={vista.ficha ?? (vista.clon ? `clon-${vista.clon.vez}` : 'nuevo')}
@@ -60,6 +63,7 @@ function PantallaPrincipal({
                 onAbrirBien={ficha => setVista({nombre:'bien', ficha})}
                 onNuevoBien={() => setVista({nombre:'bien', ficha:undefined})}
                 grupoFiltroInicial={grupoFiltroInicial}
+                textoInicial={textoInicial}
             />
         </Box>
     </PantallaInventario>;
@@ -78,6 +82,7 @@ myOwn.wScreens.principal = function principal(addrParams:any){
         ({conn, fixedFields}) =>
             <PantallaPrincipal conn={conn} fixedFields={fixedFields}
                 ficha={addrParams.ficha ? String(addrParams.ficha) : undefined}
-                grupoFiltroInicial={grupoFiltroDesdeTexto(addrParams.filtro)}/>
+                grupoFiltroInicial={grupoFiltroDesdeTexto(addrParams.filtro)}
+                textoInicial={addrParams.texto ? String(addrParams.texto) : undefined}/>
     );
 };

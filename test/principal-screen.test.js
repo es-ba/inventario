@@ -21,7 +21,7 @@ test('defines the embedded React principal wScreen', () => {
     assert.match(renderer, /connectedRoot\.unmount/);
     assert.match(renderer, /MutationObserver/);
     assert.match(renderer, /data\.reactScreen|dataset\.reactScreen/);
-    assert.match(source, /Inventario - Principal/);
+    assert.match(source, /titulo=\{vista\.nombre === 'bien'[\s\S]*: 'Bienes'\}/);
     assert.match(source, /Volver al menú/);
     assert.match(source, /@mui\/material/);
     assert.match(source, /MenuIcon/);

@@ -23,7 +23,7 @@ import type {Fila} from '../base/tipos-tabla';
 import {leerTabla, textoDeReferencia} from '../base/referencias';
 import {armarGruposPorItem, itemAplica, VALORES_SI_NO} from '../../../common/controles';
 import {espacioDe, responsableDelSectorDe} from './controles-listado';
-import {SeccionesDeBien, useDescripcionDeEstado} from '../bien/vista-rapida-bien';
+import {SeccionesDeBien, useEstadoDeBien} from '../bien/vista-rapida-bien';
 import {FotoDelBien} from '../bien/foto-del-bien';
 import {seccionesDeVistaRapida} from '../bien/vista-rapida-datos';
 
@@ -171,7 +171,7 @@ export function ControlBien({
     const [error, setError] = React.useState<string|null>(null);
     const [bienCompleto, setBienCompleto] = React.useState<Fila|null>(null);
     const [atributosDelBien, setAtributosDelBien] = React.useState<Fila[]>([]);
-    const descripcionDeEstado = useDescripcionDeEstado();
+    const estadoDeBien = useEstadoDeBien();
 
     const cargarAtributos = React.useCallback(async () => {
         setAtributosDelBien(await leerTabla(conn, 'bien_atributo', [{fieldName:'ficha', value:ficha}]));
@@ -323,7 +323,7 @@ export function ControlBien({
                                 <Box sx={{mb:2}}>
                                     <FotoDelBien ficha={String(bienCompleto.ficha)} numero={bienCompleto.foto} puedeSacar lado={120}/>
                                 </Box>
-                                <SeccionesDeBien secciones={seccionesDeVistaRapida(bienCompleto, descripcionDeEstado)}/>
+                                <SeccionesDeBien secciones={seccionesDeVistaRapida(bienCompleto, estadoDeBien)}/>
                             </>
                             : null}
                         <Typography variant="subtitle2" color="primary" sx={{mb:0.5}}>Atributos</Typography>

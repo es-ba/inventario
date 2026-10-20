@@ -13,6 +13,13 @@ export type EntradaDeNavegacion = {
     hijos?:EntradaDeNavegacion[];
 };
 
+export const INICIO = 'inicio';
+
+export function entradasDelMenu():EntradaDeNavegacion[]{
+    const menu = (myOwn as unknown as {config:{menu?:ItemDeMenu[]}}).config.menu ?? [];
+    return entradasDeNavegacion(menu.filter(item => item.name !== INICIO));
+}
+
 export function entradasDeNavegacion(menu:ItemDeMenu[], padres:string[] = []):EntradaDeNavegacion[]{
     return menu.filter(item => item.visible !== false).map(item => {
         const ruta = [...padres, item.name];

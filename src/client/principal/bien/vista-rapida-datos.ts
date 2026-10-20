@@ -12,19 +12,13 @@ const valor = (dato:unknown):string => {
     return texto === '' ? SIN_DATO : texto;
 };
 
-const conDescripcion = (codigo:unknown, descripcion:string|null|undefined):string => {
-    const base = valor(codigo);
-    const extra = (descripcion ?? '').trim();
-    return base === SIN_DATO || extra === '' || extra === base ? base : `${base} — ${extra}`;
-};
-
-export function seccionesDeVistaRapida(row:Fila, descripcionDeEstado:(estado:string) => string|null|undefined):SeccionDeVistaRapida[]{
+export function seccionesDeVistaRapida(row:Fila, estadoDeBien:(estado:string) => {etiqueta:string}):SeccionDeVistaRapida[]{
     const dato = (etiqueta:string, contenido:unknown):DatoDeVistaRapida => ({etiqueta, valor:valor(contenido)});
     return [
         {titulo:'Datos principales', datos:[
             dato('ficha', row.ficha),
             dato('descripción', row.detalle),
-            {etiqueta:'estado', valor:conDescripcion(row.estado, descripcionDeEstado(String(row.estado ?? '')))},
+            dato('estado', row.estado == null ? null : estadoDeBien(String(row.estado)).etiqueta),
             dato('categoría', row.categoria),
             dato('subcategoría', row.subcategoria),
             dato('rubro', row.rubro),

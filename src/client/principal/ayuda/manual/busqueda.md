@@ -23,7 +23,7 @@ Los resultados aparecen en este orden:
 
 Sirve para armar condiciones precisas.
 
-1. Pulsá **Agregar condición**.
+1. Pulsá **Búsqueda avanzada** (con alguna condición ya cargada, el botón se llama **Agregar condición**).
 2. Elegí el **Campo o atributo**, el **Operador** y el **Valor**.
 3. Repetí para sumar más condiciones y elegí en **Combinación** si tienen que cumplirse **Todas las condiciones** o **Alguna condición**.
 4. Pulsá **Buscar**.

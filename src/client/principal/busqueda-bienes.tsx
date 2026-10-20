@@ -143,6 +143,7 @@ type BusquedaBienesProps = {
     accionSeleccion?:AccionSeleccionBienes;
     fichasExcluidas?:ReadonlySet<string>;
     grupoFiltroInicial?:GrupoFiltroElegido|null;
+    textoInicial?:string;
 };
 
 const operatorMap:Record<string, BienesBusquedaOperator> = {
@@ -313,6 +314,7 @@ export function BusquedaBienes({
     accionSeleccion,
     fichasExcluidas,
     grupoFiltroInicial = null,
+    textoInicial = '',
 }:BusquedaBienesProps){
     const permisos = usePermisos();
     const veInactivos = permisos.guardar || permisos.aprobarBaja || permisos.restaurarBaja;
@@ -346,7 +348,7 @@ export function BusquedaBienes({
     const [sortModel, setSortModel] =
         React.useState<GridSortModel>([]);
     const [filterModel, setFilterModel] =
-        React.useState<GridFilterModel>({items:[], quickFilterValues:[]});
+        React.useState<GridFilterModel>({items:[], quickFilterValues:textoInicial.split(/\s+/).filter(Boolean)});
     const [searchVersion, setSearchVersion] = React.useState(0);
     const [expandedRowIds, setExpandedRowIds] = React.useState<Set<string>>(new Set());
     const [enVista, setEnVista] = React.useState<BienesBusquedaRow|null>(null);

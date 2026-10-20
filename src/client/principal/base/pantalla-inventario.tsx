@@ -4,7 +4,7 @@ import {Close, ExpandLess, ExpandMore, HelpOutline, Home, Menu as MenuIcon, Open
 
 import {useSalida} from './contexto-base';
 import {vinculo} from '../render-connected-app-inventario';
-import {EntradaDeNavegacion, entradasDeNavegacion, ItemDeMenu} from './navegacion';
+import {EntradaDeNavegacion, entradasDelMenu} from './navegacion';
 import {tituloDePagina} from './formato-valores';
 import {seccionDeAyuda} from '../ayuda/manual';
 import {TextoDeAyuda} from '../ayuda/texto-de-ayuda';
@@ -52,15 +52,12 @@ function EntradasDeNavegacion({entradas, nivel, salir}:{entradas:EntradaDeNavega
 }
 
 function PanelDeNavegacion({salir}:{salir:Salir}){
-    const entradas = React.useMemo(
-        () => entradasDeNavegacion((myOwn as unknown as {config:{menu?:ItemDeMenu[]}}).config.menu ?? []),
-        []
-    );
+    const entradas = React.useMemo(entradasDelMenu, []);
     return <Box sx={{width:{xs:'85vw', sm:320}}}>
         <List component="nav" aria-label="navegación">
             <ListItemButton component="a" {...vinculo('', salir)}>
                 <Home sx={{mr:1}}/>
-                <ListItemText primary="Volver al menú" primaryTypographyProps={{fontWeight:'bold'}}/>
+                <ListItemText primary="Inicio" primaryTypographyProps={{fontWeight:'bold'}}/>
             </ListItemButton>
             <Divider/>
             <EntradasDeNavegacion entradas={entradas} nivel={0} salir={salir}/>

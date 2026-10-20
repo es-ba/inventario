@@ -10,12 +10,17 @@ type Fila = Record<string, unknown>;
 
 export const ANCHO_VISTA_RAPIDA = 420;
 
-export function useDescripcionDeEstado(){
+export type EstadoDeBien = {etiqueta:string, descripcion?:string};
+
+export function useEstadoDeBien(){
     const estados = useDatosReferencial('estados_bien');
     return React.useCallback(
-        (estado:string) => {
+        (estado:string):EstadoDeBien => {
             const encontrado = estados.filas.find(e => e.estado_bien === estado);
-            return encontrado?.descripcion == null ? null : String(encontrado.descripcion);
+            return {
+                etiqueta:encontrado?.etiqueta == null ? estado : String(encontrado.etiqueta),
+                descripcion:encontrado?.descripcion == null ? undefined : String(encontrado.descripcion),
+            };
         },
         [estados.filas],
     );
@@ -52,10 +57,10 @@ export function VistaRapidaBien({
     onCerrar:() => void,
     onAbrirFicha:(ficha:string) => void,
 }){
-    const descripcionDeEstado = useDescripcionDeEstado();
+    const estadoDeBien = useEstadoDeBien();
     const ficha = fila == null ? null : String(fila.ficha);
     const {anterior, siguiente} = vecinos(filas, ficha);
-    const secciones = fila == null ? [] : seccionesDeVistaRapida(fila, descripcionDeEstado);
+    const secciones = fila == null ? [] : seccionesDeVistaRapida(fila, estadoDeBien);
     const estado = fila == null ? '' : String(fila.estado ?? '');
 
     return <Drawer
@@ -72,7 +77,7 @@ export function VistaRapidaBien({
                             Ficha {ficha}
                         </Typography>
                         {estado
-                            ? <Chip size="small" variant="outlined" label={descripcionDeEstado(estado) ?? estado}/>
+                            ? <Chip size="small" variant="outlined" label={estadoDeBien(estado).etiqueta} title={estadoDeBien(estado).descripcion}/>
                             : null}
                     </Stack>
                     <Typography variant="body2" color="text.secondary">

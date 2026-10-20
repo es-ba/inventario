@@ -1,8 +1,10 @@
 import * as React from 'react';
 import {createRoot, Root} from 'react-dom/client';
 import type {Connector, FixedFields} from 'frontend-plus';
+import {ThemeProvider} from '@mui/material/styles';
 
 import {BaseInventarioProvider} from './base/contexto-base';
+import {temaInventario} from './base/tema';
 
 type AddrParamsInventario = {
     table?: string;
@@ -100,12 +102,14 @@ export function renderConnectedAppInventario(
     });
     layoutObserver.observe(layout, {childList:true});
     connectedRoot.render(
-        <BaseInventarioProvider conn={conn}>
-            <ConnectedApp
-                table={addrParams.table ?? ''}
-                fixedFields={normalizeFixedFields(addrParams.ff)}
-                conn={conn}
-            />
-        </BaseInventarioProvider>
+        <ThemeProvider theme={temaInventario}>
+            <BaseInventarioProvider conn={conn}>
+                <ConnectedApp
+                    table={addrParams.table ?? ''}
+                    fixedFields={normalizeFixedFields(addrParams.ff)}
+                    conn={conn}
+                />
+            </BaseInventarioProvider>
+        </ThemeProvider>
     );
 }

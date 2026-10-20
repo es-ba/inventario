@@ -2,12 +2,23 @@
 
 El sistema de inventario registra los bienes del Instituto: qué son, dónde están, quién los tiene a cargo, cómo se mueven y cuándo se dan de baja.
 
+## Inicio
+
+Al ingresar se ve la pantalla de inicio:
+
+- Un **buscador**: escribí una ficha, una serie o parte de la descripción y pulsá **Buscar** para ver los bienes que coinciden.
+- **Tareas frecuentes**: buscar bienes, mis bienes, controlar bienes y este manual, según lo que tu rol permita.
+- **Reportes**: los reportes de bienes que podés consultar.
+
+El resto de las opciones está en el menú.
+
 ## El menú
 
-Al ingresar se ve el menú principal. Cada persona ve sólo las opciones que su rol le permite.
+Cada persona ve sólo las opciones que su rol le permite.
 
 | Opción | Para qué sirve |
 |---|---|
+| **inicio** | La pantalla de inicio. |
 | **principal** | Buscar bienes y abrir su ficha. Ver [Buscar bienes](#ayuda/busqueda). |
 | **calendario** | Ver por fecha los movimientos, las bajas y los controles por vencer. Ver [Calendario](#ayuda/calendario). |
 | **mis bienes** | Los bienes que tenés a tu cargo y los que están en uso tuyo. |
@@ -17,7 +28,7 @@ Al ingresar se ve el menú principal. Cada persona ve sólo las opciones que su 
 | **gestion de datos** | Sectores, responsables, espacios y demás catálogos (sólo con permiso para gestionar datos). |
 | **ayuda** | Este manual. |
 
-En cada pantalla, el botón **☰** de la barra superior abre un panel con las mismas opciones del menú, para ir directo a otra pantalla o volver al menú principal, y el botón **?** abre la ayuda de esa pantalla en un panel lateral sin perder lo que estabas haciendo.
+En cada pantalla, el botón **☰** de la barra superior abre un panel con las mismas opciones del menú, para ir directo a otra pantalla o volver al **Inicio**, y el botón **?** abre la ayuda de esa pantalla en un panel lateral sin perder lo que estabas haciendo.
 
 ![El panel de ayuda abierto sobre la ficha de un bien](img/panel-ayuda.jpg)
 
@@ -50,4 +61,4 @@ El estado lo calcula el sistema; no se edita a mano.
 
 ## Cambios sin guardar
 
-Si estás editando algo y querés salir (volver al menú, a la búsqueda o a otra pantalla), el sistema pide confirmación antes de descartar los cambios.
+Si estás editando algo y querés salir (volver al inicio, a la búsqueda o a otra pantalla), el sistema pide confirmación antes de descartar los cambios.

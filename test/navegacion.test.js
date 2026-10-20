@@ -42,7 +42,7 @@ test('arma el menú de navegación con el hash i= de backend-plus', () => {
 test('PantallaInventario abre la navegación con el ☰', () => {
     const source = fs.readFileSync(path.join(projectRoot, 'src/client/principal/base/pantalla-inventario.tsx'), 'utf8');
     assert.match(source, /aria-label="ir a otra pantalla"/);
-    assert.match(source, /vinculo\('', salir\)\}>[\s\S]*primary="Volver al menú"/);
+    assert.match(source, /vinculo\('', salir\)\}>[\s\S]*primary="Inicio"/);
     assert.doesNotMatch(source, /aria-label="volver al menú"/);
     assert.match(source, /component="a" sx=\{\{pl:2 \+ nivel \* 2\}\} \{\.\.\.vinculo\(entrada\.hash!, salir\)\}/);
     assert.match(source, /solicitarSalida\(destino\)/);

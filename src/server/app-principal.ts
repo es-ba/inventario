@@ -291,7 +291,8 @@ export class AppInventario extends AppBackend{
             || puedeElRol(context.user?.rol, 'puede_aprobar_baja')
             || puedeElRol(context.user?.rol, 'puede_restaurar_baja');
         var menuContent: MenuInfoBase[] = [
-            {menuType:'principal', name:'principal', label:'principal'     },
+            {menuType:'inicio', name:'inicio', label:'inicio', selectedByDefault:true},
+            {menuType:'principal', name:'principal', label:'principal'},
             ...(puedeGuardar ? [{menuType:'calendario', name:'calendario', label:'calendario'}] : []),
             {menuType: 'menu', name: 'mis_bienes', label: 'mis bienes', menuContent:
                 VINCULOS_CON_EL_BIEN.map((vinculo, i) => ({
