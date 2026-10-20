@@ -16,11 +16,12 @@ import {selectBienesGridFields} from '../common/bienes-busqueda';
 import {
     BienesBusquedaQueryOptions,
     buildBienesAgrupadoQuery,
+    filasPorConjunto,
     buildBienesBusquedaQueries,
     parseBienesBusquedaRequest,
     rowsToCsv,
 } from './bienes-busqueda-query';
-import type {BienesAgrupadoFila, BienesAgrupadoResponse, BienesDimensionesResponse} from '../common/bienes-agrupar';
+import type {BienesAgrupadoResponse, BienesDimensionesResponse} from '../common/bienes-agrupar';
 import {DefinicionDeTabla, armarCatalogoDeDimensiones} from './bienes-dimensiones';
 import {
     normalizeBienesPresentationRows,
@@ -474,15 +475,18 @@ export const ProceduresInventario:ProcedureDef[] = [
             const {options} = await opcionesBusquedaBienes(context, true);
             const consulta = buildBienesAgrupadoQuery(params.consulta, options);
             const result = await context.client.query(consulta.sql, consulta.values).fetchAll();
-            const rows:BienesAgrupadoFila[] = result.rows.map(row => ({
+            const conjuntos = filasPorConjunto(consulta, result.rows.map(row => ({
                 valores:row.valores as (string|null)[],
                 textos:row.textos as (string|null)[],
+                agrupados:row.agrupados as number[],
                 cantidad:Number(row.cantidad),
-            }));
+            })));
+            const rows = conjuntos[0];
             return {
-                dimensiones:consulta.dimensiones,
+                dimensiones:consulta.conjuntos[0],
                 rows,
                 total:rows.reduce((suma, row) => suma + row.cantidad, 0),
+                conjuntos,
             };
         }
     },

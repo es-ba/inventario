@@ -17,7 +17,7 @@ Al ingresar se ve el menú principal. Cada persona ve sólo las opciones que su 
 | **gestion de datos** | Sectores, responsables, espacios y demás catálogos (sólo con permiso para gestionar datos). |
 | **ayuda** | Este manual. |
 
-En cada pantalla, el botón **☰** de la barra superior abre un panel con las mismas opciones del menú, para ir directo a otra pantalla, el botón **⌂** vuelve al menú principal, y el botón **?** abre la ayuda de esa pantalla en un panel lateral sin perder lo que estabas haciendo.
+En cada pantalla, el botón **☰** de la barra superior abre un panel con las mismas opciones del menú, para ir directo a otra pantalla o volver al menú principal, y el botón **?** abre la ayuda de esa pantalla en un panel lateral sin perder lo que estabas haciendo.
 
 ![El panel de ayuda abierto sobre la ficha de un bien](img/panel-ayuda.jpg)
 

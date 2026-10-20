@@ -21,7 +21,7 @@ require.extensions['.ts'] = function transpileTypeScript(module, filename) {
 
 const {
     armarArbolDeModelos, aplanarModelos, camposDelReporte, campoDeAtributo, csvDeModelos, dimensionesDeTiposDelCampo, dimensionesDelCampo,
-    filtrarArbol, filtroDeCeldaDeModelos, MARCA, MODELO, SIN_CATEGORIA, SIN_DATO,
+    filtrarArbol, filtroDeCeldaDeModelos, MARCA, SIN_CATEGORIA, SIN_DATO, conjuntosDelReporte, respuestasDelReporte, armarCruce, filtroDeCeldaDeCruce, csvDeCruce,
 } = require(path.join(projectRoot, 'src/client/principal/modelos/modelos-datos.ts'));
 const {hashDeBusqueda, OTROS} = require(path.join(projectRoot, 'src/client/principal/categorias/categorias-datos.ts'));
 const {grupoFiltroDesdeTexto, MAXIMO_DIMENSIONES} = require(path.join(projectRoot, 'src/common/bienes-agrupar.ts'));
@@ -42,6 +42,7 @@ const SUBCATEGORIAS = [
 ];
 const MEMORIA = campoDeAtributo({atributo: 'MEM', nombre: 'Memoria RAM'});
 const FUNDA = campoDeAtributo({atributo: 'FUN', nombre: 'Funda'});
+const PANTALLA = campoDeAtributo({atributo: 'PAN', nombre: 'Tamaño de pantalla'});
 const fila = (valores, cantidad, textos = []) => ({valores, textos, cantidad});
 const POR_MARCA = [
     fila(['NB', 'LEN', 'ASIGNADO', 'SI'], 30, [null, 'LEN — Lenovo']),
@@ -52,12 +53,12 @@ const POR_MARCA = [
     fila(['SIL', null, 'SIN_ASIGNAR', 'NO'], 12),
     fila([null, null, 'ASIGNADO', 'NO'], 3),
 ];
-const POR_MODELO = [
-    fila(['NB', 'ThinkPad E14', 'ASIGNADO', 'SI'], 30),
-    fila(['NB', 'ThinkPad E14', 'SIN_ASIGNAR', 'NO'], 15),
+const POR_PANTALLA = [
+    fila(['NB', '14"', 'ASIGNADO', 'SI'], 30),
+    fila(['NB', '14"', 'SIN_ASIGNAR', 'NO'], 15),
     fila(['NB', null, 'ASIGNADO', 'NO'], 4),
-    fila(['TAB', 'Galaxy Tab', 'ASIGNADO', 'SI'], 80),
-    fila(['TAB', 'Galaxy Tab', 'EN_MOVIMIENTO', 'NO'], 2),
+    fila(['TAB', '10"', 'ASIGNADO', 'SI'], 80),
+    fila(['TAB', '10"', 'EN_MOVIMIENTO', 'NO'], 2),
     fila(['SIL', null, 'SIN_ASIGNAR', 'NO'], 12),
     fila([null, null, 'ASIGNADO', 'NO'], 3),
 ];
@@ -79,7 +80,7 @@ const POR_FUNDA = [
     fila([null, null, 'ASIGNADO', 'NO'], 3),
 ];
 const respuesta = (campo, filas, deTipos = []) => ({campo, filas, deTipos});
-const RESPUESTAS = [respuesta(MARCA, POR_MARCA), respuesta(MODELO, POR_MODELO), respuesta(FUNDA, POR_FUNDA), respuesta(MEMORIA, POR_MEMORIA)];
+const RESPUESTAS = [respuesta(MARCA, POR_MARCA), respuesta(PANTALLA, POR_PANTALLA), respuesta(FUNDA, POR_FUNDA), respuesta(MEMORIA, POR_MEMORIA)];
 
 const armar = (respuestas = RESPUESTAS, tipos = []) => armarArbolDeModelos(respuestas, SUBCATEGORIAS, CATEGORIAS, ESTADOS, tipos);
 const buscar = (arbol, ...nombres) => nombres.reduce((nodos, nombre) => {
@@ -88,21 +89,26 @@ const buscar = (arbol, ...nombres) => nombres.reduce((nodos, nombre) => {
     return encontrado;
 }, arbol.raices);
 
-test('cada campo se pide aparte, dentro de las dimensiones permitidas', () => {
+test('cada campo pide dos agrupamientos en una sola consulta, dentro de las dimensiones permitidas', () => {
     const campos = camposDelReporte([{atributo: 'MEM', nombre: 'Memoria RAM'}]);
-    assert.deepEqual(campos, [MARCA, MODELO, MEMORIA]);
+    assert.deepEqual(campos, [MARCA, MEMORIA]);
     for(const campo of campos){
         assert.deepEqual(dimensionesDelCampo(campo), ['subcategoria', campo.dimension, 'estado', 'en_uso']);
         assert.ok(dimensionesDelCampo(campo).length <= MAXIMO_DIMENSIONES);
         assert.deepEqual(dimensionesDeTiposDelCampo(campo), ['subcategoria', campo.dimension, 'tipo_asignacion']);
     }
+    const conjuntos = conjuntosDelReporte(campos);
+    assert.equal(conjuntos.length, campos.length * 2);
+    const respuestas = respuestasDelReporte(campos, conjuntos.map((_conjunto, indice) => [fila([String(indice)], 1)]));
+    assert.deepEqual(respuestas.map(({campo, filas, deTipos}) => [campo, filas[0].valores[0], deTipos[0].valores[0]]),
+        [[MARCA, '0', '1'], [MEMORIA, '2', '3']]);
 });
 
-test('cada subcategoría muestra marca, modelo y los atributos con algún dato, en ese orden', () => {
+test('cada subcategoría muestra marca y los atributos con algún dato, en ese orden', () => {
     const arbol = armar();
     assert.deepEqual(buscar(arbol, 'Computadoras', 'Tablet').hijos.map((n) => [n.nivel, n.nombre]),
-        [['campo', 'Modelo'], ['campo', 'Memoria RAM']]);
-    assert.deepEqual(buscar(arbol, 'Computadoras', 'Notebook').hijos.map((n) => n.nombre), ['Marca', 'Modelo', 'Memoria RAM']);
+        [['campo', 'Tamaño de pantalla'], ['campo', 'Memoria RAM']]);
+    assert.deepEqual(buscar(arbol, 'Computadoras', 'Notebook').hijos.map((n) => n.nombre), ['Marca', 'Tamaño de pantalla', 'Memoria RAM']);
     assert.deepEqual(buscar(arbol, 'Mobiliario', 'Silla').hijos, []);
 });
 
@@ -147,16 +153,16 @@ const FILTRO_MEMORIA = {dimension: 'atributo:MEM', etiqueta: 'Memoria RAM', valo
 
 test('con área, subcategoría y atributo, la celda «valor + estado» arma 5 partes sin repetir', () => {
     const arbol = armar();
-    const galaxy = buscar(arbol, 'Computadoras', 'Tablet', 'Modelo', 'Galaxy Tab');
-    const filtro = filtroDeCeldaDeModelos({previos: [AREA, SUBCATEGORIA, FILTRO_MEMORIA], nodo: galaxy, estado: arbol.columnas[0]});
+    const diez = buscar(arbol, 'Computadoras', 'Tablet', 'Tamaño de pantalla', '10"');
+    const filtro = filtroDeCeldaDeModelos({previos: [AREA, SUBCATEGORIA, FILTRO_MEMORIA], nodo: diez, estado: arbol.columnas[0]});
     assert.deepEqual(filtro.partes, [
         {dimension: 'sector_rama', valor: 'DGE'},
         {dimension: 'subcategoria', valor: 'TAB'},
         {dimension: 'atributo:MEM', valor: '8 GB'},
-        {dimension: 'modelo', valor: 'Galaxy Tab'},
+        {dimension: 'atributo:PAN', valor: '10"'},
         {dimension: 'estado', valor: 'ASIGNADO'},
     ]);
-    assert.deepEqual(filtro.etiquetas, ['sector y subsectores', 'subcategoría', 'Memoria RAM', 'Modelo', 'estado']);
+    assert.deepEqual(filtro.etiquetas, ['sector y subsectores', 'subcategoría', 'Memoria RAM', 'Tamaño de pantalla', 'estado']);
     assert.ok(filtro.partes.length <= MAXIMO_DIMENSIONES);
     assert.deepEqual(grupoFiltroDesdeTexto(decodeURIComponent(hashDeBusqueda(filtro).replace('w=principal&filtro=', ''))), filtro);
 });
@@ -209,4 +215,72 @@ test('comodatos y actas se suman por valor y una sola vez en la subcategoría', 
     const lenovo = buscar(arbol, 'Computadoras', 'Notebook', 'Marca', 'Lenovo');
     assert.deepEqual(filtroDeCeldaDeModelos({previos: [AREA], nodo: lenovo, tipo: arbol.tipos[1]}).partes.at(-1), {dimension: 'tipo_asignacion', valor: 'ACTA'});
     assert.ok(csvDeModelos(arbol).includes(';En uso;Comodato;Acta'));
+});
+
+test('las categorías van por su orden del catálogo, no por cantidad, y «Sin categoría» al final', () => {
+    const invertidas = [{...CATEGORIAS[0], orden: 2}, {...CATEGORIAS[1], orden: 1}];
+    const arbol = armarArbolDeModelos(RESPUESTAS, SUBCATEGORIAS, invertidas, ESTADOS);
+    assert.deepEqual(arbol.raices.map((n) => n.nombre), ['Mobiliario', 'Computadoras', SIN_CATEGORIA]);
+    const sinOrden = armarArbolDeModelos(RESPUESTAS, SUBCATEGORIAS, [{...CATEGORIAS[0], orden: null}, CATEGORIAS[1]], ESTADOS);
+    assert.deepEqual(sinOrden.raices.map((n) => n.nombre), ['Mobiliario', 'Computadoras', SIN_CATEGORIA]);
+});
+
+const POR_MEMORIA_SOLA = [
+    fila(['NB', '8 GB'], 50, [null, '8 GB']),
+    fila(['NB', '16 GB'], 20),
+    fila(['NB', '4 GB'], 5),
+    fila(['NB', null], 25),
+    fila(['TAB', '8 GB'], 10),
+    fila(['TAB', '2 GB'], 1),
+    fila(['TAB', null], 4),
+    fila(['SIL', null], 12),
+];
+
+test('el cruce muestra los valores más cargados, junta el resto en «Otros» y deja afuera las subcategorías sin dato', () => {
+    const cruce = armarCruce(POR_MEMORIA_SOLA, MEMORIA, SUBCATEGORIAS, CATEGORIAS, 2);
+    assert.deepEqual(cruce.columnas.map((c) => c.nombre), ['8 GB', '16 GB']);
+    assert.equal(cruce.hayOtros, true);
+    assert.deepEqual(cruce.filas.map((f) => [f.nivel, f.nombre, f.cuenta.total]),
+        [['categoria', 'Computadoras', 115], ['subcategoria', 'Notebook', 100], ['subcategoria', 'Tablet', 15]]);
+    const notebook = cruce.filas[1].cuenta;
+    assert.deepEqual([notebook.porValor.get('8 GB'), notebook.porValor.get('16 GB'), notebook.otros, notebook.sinDato], [50, 20, 5, 25]);
+    for(const f of cruce.filas){
+        const {total, porValor, otros, sinDato} = f.cuenta;
+        assert.equal([...porValor.values()].reduce((a, b) => a + b, 0) + otros + sinDato, total, f.nombre);
+    }
+    assert.equal(cruce.total.total, 115);
+    assert.equal(armarCruce(POR_MEMORIA_SOLA, MEMORIA, SUBCATEGORIAS, CATEGORIAS).hayOtros, false);
+});
+
+test('las categorías del cruce van por su orden del catálogo', () => {
+    const filas = [fila(['SIL', 'Roja'], 3), fila(['NB', '8 GB'], 50)];
+    const invertidas = [{...CATEGORIAS[0], orden: 2}, {...CATEGORIAS[1], orden: 1}];
+    assert.deepEqual(armarCruce(filas, MEMORIA, SUBCATEGORIAS, invertidas).filas.filter((f) => f.nivel === 'categoria').map((f) => f.nombre),
+        ['Mobiliario', 'Computadoras']);
+});
+
+test('cada celda del cruce lleva a la búsqueda con la subcategoría o la categoría y el valor, y los filtros de arriba', () => {
+    const cruce = armarCruce(POR_MEMORIA_SOLA, MEMORIA, SUBCATEGORIAS, CATEGORIAS);
+    const [computadoras, notebook] = cruce.filas;
+    const ocho = cruce.columnas[0];
+    assert.deepEqual(filtroDeCeldaDeCruce(cruce, [AREA, CATEGORIA], notebook, ocho).partes, [
+        {dimension: 'sector_rama', valor: 'DGE'}, {dimension: 'subcategoria', valor: 'NB'}, {dimension: 'atributo:MEM', valor: '8 GB'},
+    ]);
+    assert.deepEqual(filtroDeCeldaDeCruce(cruce, [], notebook, null).partes, [{dimension: 'subcategoria', valor: 'NB'}]);
+    assert.deepEqual(filtroDeCeldaDeCruce(cruce, [], computadoras, ocho).partes,
+        [{dimension: 'categoria', valor: 'COMP'}, {dimension: 'atributo:MEM', valor: '8 GB'}]);
+    assert.deepEqual(filtroDeCeldaDeCruce(cruce, [CATEGORIA], null, ocho).partes,
+        [{dimension: 'categoria', valor: 'COMP'}, {dimension: 'atributo:MEM', valor: '8 GB'}]);
+    assert.equal(filtroDeCeldaDeCruce(cruce, [], computadoras, null), null);
+    assert.equal(filtroDeCeldaDeCruce(cruce, [], null, null), null);
+});
+
+test('el CSV del cruce tiene una fila por subcategoría y el total general', () => {
+    const lineas = csvDeCruce(armarCruce(POR_MEMORIA_SOLA, MEMORIA, SUBCATEGORIAS, CATEGORIAS, 2)).slice(1).trim().split('\r\n');
+    assert.deepEqual(lineas, [
+        'Categoría;Subcategoría;Total;8 GB;16 GB;Otros;(sin dato)',
+        'Computadoras;Notebook;100;50;20;5;25',
+        'Computadoras;Tablet;15;10;0;1;4',
+        'Total general;;115;60;20;6;29',
+    ]);
 });

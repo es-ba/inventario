@@ -45,7 +45,7 @@ La fila de chips arriba del listado muestra cuántos bienes hay por cada valor d
 
 El botón **Resumen** (arriba a la derecha) muestra los bienes agrupados.
 
-- Elegí el campo en **Agrupar por** y, si querés, sumá más con **Agregar campo** (hasta cinco). Entre los campos está el **modelo**, que agrupa por el texto cargado, sin tener en cuenta los espacios de más (ver [Bienes por atributos](#ayuda/modelos)); también se puede elegir en **Desglosar por**.
+- Elegí el campo en **Agrupar por** y, si querés, sumá más con **Agregar campo** (hasta cinco). Entre los campos está el **modelo**, que agrupa por el texto cargado, sin tener en cuenta los espacios de más (*BES PRO  T5* y *BES PRO T5* son el mismo); también se puede elegir en **Desglosar por**.
 - Cada fila muestra la **Cantidad** de bienes del grupo.
 - Tocá una fila para ver el listado de esos bienes. Desde el listado, **Volver al resumen** regresa al cuadro.
 

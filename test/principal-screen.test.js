@@ -22,7 +22,7 @@ test('defines the embedded React principal wScreen', () => {
     assert.match(renderer, /MutationObserver/);
     assert.match(renderer, /data\.reactScreen|dataset\.reactScreen/);
     assert.match(source, /Inventario - Principal/);
-    assert.match(source, /aria-label="volver al menú"/);
+    assert.match(source, /Volver al menú/);
     assert.match(source, /@mui\/material/);
     assert.match(source, /MenuIcon/);
     assert.match(source, /frontend-plus/);
@@ -94,10 +94,10 @@ test('bundles the principal screen with MUI during every build', () => {
     assert.match(buildScript, /webpack\(config/);
 });
 
-test('redirects successful logins to principal', () => {
+test('redirects successful logins to the backend-plus menu', () => {
     const source = read('src/server/def-config.ts');
 
-    assert.match(source, /successRedirect: \/menu#i=principal/);
+    assert.match(source, /successRedirect: \/menu\r?\n/);
 });
 
 test('removes the obsolete prueba wScreen', () => {

@@ -61,6 +61,7 @@ export type BienesBusquedaRequest = {
     pageSize: 10 | 25 | 50 | 100;
     sortModel: BienesBusquedaSort[];
     agruparPor?: DimensionAgrupar[];
+    conjuntos?: DimensionAgrupar[][];
     grupoFiltro?: GrupoFiltro[];
 };
 

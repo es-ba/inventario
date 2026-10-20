@@ -5,8 +5,10 @@ import {
     BienesBusquedaRequest,
 } from '../common/contracts';
 import {
+    BienesAgrupadoFila,
     DimensionAgrupar,
     GrupoFiltro,
+    MAXIMO_CONJUNTOS,
     MAXIMO_DIMENSIONES,
     claveDeAtributo,
 } from '../common/bienes-agrupar';
@@ -84,6 +86,23 @@ function parseAgruparPor(value: unknown): DimensionAgrupar[] | undefined {
         throw new Error('No se puede agrupar dos veces por la misma dimensión');
     }
     return dimensiones;
+}
+
+function parseConjuntos(value: unknown): DimensionAgrupar[][] | undefined {
+    if (value == null) {
+        return undefined;
+    }
+    if (!Array.isArray(value) || value.length === 0 || value.length > MAXIMO_CONJUNTOS) {
+        throw new Error(`conjuntos debe ser una lista de 1 a ${MAXIMO_CONJUNTOS} agrupamientos`);
+    }
+    const conjuntos = value.map((conjunto) => parseAgruparPor(conjunto) ?? []);
+    if (conjuntos.some((conjunto) => conjunto.length === 0)) {
+        throw new Error('Hay que indicar por qué agrupar');
+    }
+    if (new Set(conjuntos.map((conjunto) => [...conjunto].sort().join('\n'))).size !== conjuntos.length) {
+        throw new Error('No se puede pedir dos veces el mismo agrupamiento');
+    }
+    return conjuntos;
 }
 
 function parseGrupoFiltro(value: unknown): GrupoFiltro[] | undefined {
@@ -220,6 +239,7 @@ export function parseBienesBusquedaRequest(value: unknown): BienesBusquedaReques
         pageSize: pageSize as BienesBusquedaRequest['pageSize'],
         sortModel,
         ...opcional('agruparPor', parseAgruparPor(request.agruparPor)),
+        ...opcional('conjuntos', parseConjuntos(request.conjuntos)),
         ...opcional('grupoFiltro', parseGrupoFiltro(request.grupoFiltro)),
     };
 }
@@ -638,19 +658,23 @@ export function buildBienesBusquedaQueries(
 
 export type BienesAgrupadoQuery = {
     dimensiones: DimensionAgrupar[];
+    conjuntos: DimensionAgrupar[][];
     sql: string;
     values: unknown[];
 };
+
+export type BienesAgrupadoFilaSql = BienesAgrupadoFila & {agrupados: number[]};
 
 export function buildBienesAgrupadoQuery(
     requestValue: BienesBusquedaRequest | unknown,
     options: BienesBusquedaQueryOptions,
 ): BienesAgrupadoQuery {
     const request = parseBienesBusquedaRequest(requestValue);
-    const dimensiones = request.agruparPor ?? [];
-    if (dimensiones.length === 0) {
+    const conjuntos = request.conjuntos ?? (request.agruparPor?.length ? [request.agruparPor] : []);
+    if (conjuntos.length === 0) {
         throw new Error('Hay que indicar por qué agrupar');
     }
+    const dimensiones = [...new Set(conjuntos.flat())];
     const {cte, filterValues, addValue} = buildFiltradoCte(request, options);
     const columnas = dimensiones.map((dimension, i) => {
         const {valor, texto} = sqlDeDimension(dimension, options, addValue);
@@ -658,17 +682,38 @@ export function buildBienesAgrupadoQuery(
     }).join(',\n               ');
     const valores = dimensiones.map((_dimension, i) => `d.valor_${i}`);
     const textos = dimensiones.map((_dimension, i) => `min(d.texto_${i})`);
+    const agrupamientos = conjuntos.map((conjunto) =>
+        `(${conjunto.map((dimension) => valores[dimensiones.indexOf(dimension)]).join(', ')})`);
     const sql = `${cte}
         SELECT jsonb_build_array(${valores.join(', ')}) AS valores,
                jsonb_build_array(${textos.join(', ')}) AS textos,
+               jsonb_build_array(${valores.map((valor) => `GROUPING(${valor})`).join(', ')}) AS agrupados,
                count(*)::integer AS cantidad
           FROM bienes_filtrados b
           CROSS JOIN LATERAL (
             SELECT ${columnas}
           ) d
-         GROUP BY ${valores.join(', ')}
+         GROUP BY GROUPING SETS (${agrupamientos.join(', ')})
          ORDER BY cantidad DESC, ${textos.map(texto => `${texto} NULLS LAST`).join(', ')}`;
-    return {dimensiones, sql, values: filterValues};
+    return {dimensiones, conjuntos, sql, values: filterValues};
+}
+
+export function filasPorConjunto(
+    consulta: Pick<BienesAgrupadoQuery, 'dimensiones' | 'conjuntos'>,
+    filas: BienesAgrupadoFilaSql[],
+): BienesAgrupadoFila[][] {
+    const posiciones = consulta.conjuntos.map((conjunto) => conjunto.map((dimension) => consulta.dimensiones.indexOf(dimension)));
+    const claves = posiciones.map((indices) => consulta.dimensiones.map((_dimension, i) => indices.includes(i) ? 0 : 1).join(''));
+    const porConjunto = consulta.conjuntos.map((): BienesAgrupadoFila[] => []);
+    filas.forEach((fila) => {
+        const indice = claves.indexOf(fila.agrupados.join(''));
+        porConjunto[indice].push({
+            valores: posiciones[indice].map((i) => fila.valores[i]),
+            textos: posiciones[indice].map((i) => fila.textos[i]),
+            cantidad: fila.cantidad,
+        });
+    });
+    return porConjunto;
 }
 
 function csvCell(value: unknown): string {

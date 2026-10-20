@@ -88,17 +88,9 @@ export function PantallaInventario({titulo, ayuda, children}:{titulo:React.React
                     aria-label="ir a otra pantalla"
                     title="Ir a otra pantalla"
                     onClick={() => setNavegacionAbierta(true)}
-                >
-                    <MenuIcon/>
-                </IconButton>
-                <IconButton
-                    color="inherit"
-                    aria-label="volver al menú"
-                    title="Volver al menú"
-                    {...vinculo('', solicitarSalida)}
                     sx={{mr:2}}
                 >
-                    <Home/>
+                    <MenuIcon/>
                 </IconButton>
                 <Typography variant="h6" component="h1" sx={{flex:1}}>{titulo}</Typography>
                 {ayuda

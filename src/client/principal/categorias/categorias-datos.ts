@@ -89,7 +89,7 @@ export function columnasDeTipos(tipos:TipoDeCatalogo[]):ColumnaDeTipo[]{
         .map(tipo => ({clave:tipo.tipo, etiqueta:tipo.descripcion || tipo.tipo}));
 }
 
-function porOrdenYCodigo<T>(orden:(x:T) => number|null, codigo:(x:T) => string){
+export function porOrdenYCodigo<T>(orden:(x:T) => number|null, codigo:(x:T) => string){
     return (a:T, b:T) => (orden(a) ?? Infinity) - (orden(b) ?? Infinity) || codigo(a).localeCompare(codigo(b));
 }
 

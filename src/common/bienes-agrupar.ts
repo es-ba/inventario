@@ -24,6 +24,7 @@ export type BienesAgrupadoResponse = {
     dimensiones:DimensionAgrupar[];
     rows:BienesAgrupadoFila[];
     total:number;
+    conjuntos:BienesAgrupadoFila[][];
 };
 
 export type BienesDimensionesResponse = {
@@ -31,6 +32,8 @@ export type BienesDimensionesResponse = {
 };
 
 export const MAXIMO_DIMENSIONES = 5;
+
+export const MAXIMO_CONJUNTOS = 100;
 
 export const PREFIJO_ATRIBUTO = 'atributo:';
 

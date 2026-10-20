@@ -30,7 +30,7 @@ login:
   activeClausule: usuarios.activo
   unloggedLandPage: false
   plus:
-    successRedirect: /menu#i=principal
+    successRedirect: /menu
     allowHttpLogin: true
     fileStore: true
     loginForm:

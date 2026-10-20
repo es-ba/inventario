@@ -313,3 +313,29 @@ test('una parte de rama filtra con su comparación propia y las demás por igual
     const nulo = buildBienesBusquedaQueries(request({grupoFiltro: [{dimension: 'sector_rama', valor: null}]}), options({dimensiones}));
     assert.match(nulo.dataSql, /\(b\.sector\) IS NULL/);
 });
+
+test('agrupa varios conjuntos en una sola consulta y separa las filas por conjunto', () => {
+    const {buildBienesAgrupadoQuery, filasPorConjunto} = loadQueryModule();
+    const dimensiones = {
+        sub: () => ({valor: 'b.sub', texto: 'b.sub_texto'}),
+        marca: () => ({valor: 'b.marca', texto: 'b.marca_texto'}),
+        estado: () => ({valor: 'b.estado', texto: 'b.estado'}),
+    };
+    const consulta = buildBienesAgrupadoQuery(request({conjuntos: [['sub', 'estado'], ['marca', 'sub']]}), options({dimensiones}));
+    assert.deepEqual(consulta.dimensiones, ['sub', 'estado', 'marca']);
+    assert.match(consulta.sql, /GROUPING SETS \(\(d\.valor_0, d\.valor_1\), \(d\.valor_2, d\.valor_0\)\)/);
+    const fila = (valores, agrupados, cantidad) => ({valores, textos: valores, agrupados, cantidad});
+    assert.deepEqual(filasPorConjunto(consulta, [
+        fila(['NB', 'ASIGNADO', null], [0, 0, 1], 3),
+        fila(['NB', null, 'HP'], [0, 1, 0], 2),
+        fila(['TAB', null, null], [0, 1, 0], 1),
+    ]), [
+        [{valores: ['NB', 'ASIGNADO'], textos: ['NB', 'ASIGNADO'], cantidad: 3}],
+        [{valores: ['HP', 'NB'], textos: ['HP', 'NB'], cantidad: 2}, {valores: [null, 'TAB'], textos: [null, 'TAB'], cantidad: 1}],
+    ]);
+    const simple = buildBienesAgrupadoQuery(request({agruparPor: ['marca']}), options({dimensiones}));
+    assert.deepEqual(simple.conjuntos, [['marca']]);
+    assert.throws(() => buildBienesAgrupadoQuery(request({conjuntos: [['sub', 'estado'], ['estado', 'sub']]}), options({dimensiones})), /dos veces/);
+    assert.throws(() => buildBienesAgrupadoQuery(request({conjuntos: [[]]}), options({dimensiones})), /por qué agrupar/);
+    assert.throws(() => buildBienesAgrupadoQuery(request({conjuntos: Array.from({length: 101}, (_x, i) => [`d${i}`])}), options({dimensiones})), /conjuntos/);
+});

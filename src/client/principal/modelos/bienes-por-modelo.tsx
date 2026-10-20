@@ -1,11 +1,11 @@
 import * as React from 'react';
 import {
     Alert, Autocomplete, Box, Button, IconButton, Stack, Table, TableBody, TableCell,
-    TableContainer, TableHead, TableRow, TextField, Typography, useMediaQuery, useTheme,
+    Tab, TableContainer, TableHead, TableRow, Tabs, TextField, Typography, useMediaQuery, useTheme,
 } from '@mui/material';
 import {Download, KeyboardArrowDown, KeyboardArrowRight} from '@mui/icons-material';
 
-import {claveDeAtributo} from '../../../common/bienes-agrupar';
+import {claveDeAtributo, type BienesAgrupadoFila} from '../../../common/bienes-agrupar';
 import {useAvisos, useConexion} from '../base/contexto-base';
 import {Cargando} from '../base/cargando';
 import {leerTabla} from '../base/referencias';
@@ -17,8 +17,9 @@ import {
     type TipoDeCatalogo,
 } from '../categorias/categorias-datos';
 import {
-    armarArbolDeModelos, camposDelReporte, csvDeModelos, dimensionesDeTiposDelCampo, dimensionesDelCampo, filtrarArbol, filtroDeCeldaDeModelos,
-    type ArbolDeModelos, type AtributoDeCatalogo, type CeldaDeModelos, type NodoDeModelos, type RespuestaDeCampo, type SubcategoriaDeCatalogo,
+    SIN_DATO, armarArbolDeModelos, armarCruce, camposDelReporte, conjuntosDelReporte, csvDeCruce, csvDeModelos, filtrarArbol, filtroDeCeldaDeCruce,
+    filtroDeCeldaDeModelos, respuestasDelReporte,
+    type ArbolDeModelos, type CampoDelBien, type Cruce, type CuentaDeCruce, type FilaDeCruce, type Paso, type AtributoDeCatalogo, type CeldaDeModelos, type NodoDeModelos, type RespuestaDeCampo, type SubcategoriaDeCatalogo,
 } from './modelos-datos';
 
 type Catalogos = {
@@ -36,6 +37,27 @@ const texto = (valor:unknown) => valor == null ? '' : String(valor).trim();
 const numeroONulo = (valor:unknown) => valor == null || valor === '' ? null : Number(valor);
 
 const destinoDe = (celda:CeldaDeModelos) => hashDeBusqueda(filtroDeCeldaDeModelos(celda));
+
+type Vista = 'arbol' | 'cruce';
+
+const CLAVE_VER_POR = 'inventario.bienes-por-atributos.ver-por';
+
+function leerVerPor():string|null{
+    try{
+        return globalThis.localStorage?.getItem(CLAVE_VER_POR) ?? null;
+    }catch{
+        return null;
+    }
+}
+
+function guardarVerPor(dimension:string):void{
+    try{
+        globalThis.localStorage?.setItem(CLAVE_VER_POR, dimension);
+    }catch{
+    }
+}
+
+const SIN_DATO_EN_COLUMNA:Paso = {valor:null, nombre:SIN_DATO};
 
 const pedirAgrupado = (conn:ReturnType<typeof useConexion>, previos:FiltroPrevio[], dimensiones:readonly string[]) =>
     conn.ajax.bienes_buscar_agrupado({consulta:JSON.stringify(consultaDelReporte(previos, dimensiones))}).then(respuesta => respuesta.rows);
@@ -140,6 +162,51 @@ function ArbolDeBienes({arbol, raices, previos, abiertos, onAlternar}:{
     </TableContainer>;
 }
 
+function TablaDeCruce({cruce, previos}:{cruce:Cruce, previos:FiltroPrevio[]}){
+    const destino = (fila:FilaDeCruce|null, columna:Paso|null) => {
+        const filtro = filtroDeCeldaDeCruce(cruce, previos, fila, columna);
+        return filtro ? hashDeBusqueda(filtro) : null;
+    };
+    const celdas = (fila:FilaDeCruce|null, cuenta:CuentaDeCruce) => <>
+        <TableCell align="right"><Cantidad valor={cuenta.total} destino={destino(fila, null)} fuerte/></TableCell>
+        {cruce.columnas.map((columna, indice) => <TableCell key={columna.valor} align="right" sx={indice ? undefined : SEPARADOR}>
+            <Cantidad valor={cuenta.porValor.get(columna.valor!) ?? 0} destino={destino(fila, columna)}/>
+        </TableCell>)}
+        {cruce.hayOtros ? <TableCell align="right"><Cantidad valor={cuenta.otros} destino={null}/></TableCell> : null}
+        <TableCell align="right" sx={SEPARADOR}>
+            <Cantidad valor={cuenta.sinDato} destino={fila?.nivel === 'subcategoria' ? destino(fila, SIN_DATO_EN_COLUMNA) : null}/>
+        </TableCell>
+    </>;
+    return <TableContainer>
+        <Table size="small" aria-label={`bienes por subcategoría y ${cruce.campo.etiqueta}`}>
+            <TableHead>
+                <TableRow>
+                    <TableCell>Categoría / subcategoría</TableCell>
+                    <TableCell align="right">Total</TableCell>
+                    {cruce.columnas.map((columna, indice) =>
+                        <TableCell key={columna.valor} align="right" sx={indice ? undefined : SEPARADOR}>{columna.nombre}</TableCell>)}
+                    {cruce.hayOtros ? <TableCell align="right" title="Los demás valores, con menos bienes">Otros</TableCell> : null}
+                    <TableCell align="right" sx={{...SEPARADOR, whiteSpace:'nowrap'}}>{SIN_DATO}</TableCell>
+                </TableRow>
+            </TableHead>
+            <TableBody>
+                {cruce.filas.map(fila => {
+                    const deCategoria = fila.nivel === 'categoria';
+                    return <TableRow key={JSON.stringify([fila.camino.categoria?.valor, fila.camino.subcategoria?.valor])} hover
+                        sx={deCategoria ? {bgcolor:'action.hover'} : undefined}>
+                        <TableCell sx={{pl:deCategoria ? 2 : 4, fontWeight:deCategoria ? 600 : undefined}}>{fila.nombre}</TableCell>
+                        {celdas(fila, fila.cuenta)}
+                    </TableRow>;
+                })}
+                <TableRow sx={{'& > *':{fontWeight:700}}}>
+                    <TableCell sx={{fontWeight:700}}>Total</TableCell>
+                    {celdas(null, cruce.total)}
+                </TableRow>
+            </TableBody>
+        </Table>
+    </TableContainer>;
+}
+
 function catalogosDesde(categorias:Fila[], subcategorias:Fila[], estados:Fila[], atributos:Fila[], sectores:Fila[], tipos:Fila[]):Catalogos{
     return {
         categorias:categorias.map(fila => ({
@@ -180,6 +247,10 @@ export function BienesPorModelo(){
     const [error, setError] = React.useState<string|null>(null);
     const [abiertos, setAbiertos] = React.useState<Set<string>>(new Set());
     const secuencia = React.useRef(0);
+    const [vista, setVista] = React.useState<Vista>('arbol');
+    const [verPor, setVerPor] = React.useState<string|null>(leerVerPor);
+    const [delCruce, setDelCruce] = React.useState<{campo:CampoDelBien, filas:BienesAgrupadoFila[]}|null>(null);
+    const secuenciaDelCruce = React.useRef(0);
 
     const deClasificacion = React.useMemo<FiltroPrevio[]>(() => [
         ...(area ? [{dimension:'sector_rama', etiqueta:'sector y subsectores', valor:area.valor, texto:area.texto}] : []),
@@ -226,19 +297,43 @@ export function BienesPorModelo(){
     }, [conn, mostrarError, deClasificacion, atributoDelFiltro]);
 
     React.useEffect(() => {
-        if(!catalogos){ return; }
+        if(!catalogos || vista !== 'arbol'){ return; }
         const numero = ++secuencia.current;
         setRespuestas(null);
         setError(null);
-        Promise.all(camposDelReporte(catalogos.atributos).map(campo => Promise.all([
-            pedirAgrupado(conn, previos, dimensionesDelCampo(campo)),
-            pedirAgrupado(conn, previos, dimensionesDeTiposDelCampo(campo)),
-        ]).then(([filas, deTipos]) => ({campo, filas, deTipos})))).then(delReporte => {
-            if(numero === secuencia.current){ setRespuestas(delReporte); }
+        const campos = camposDelReporte(catalogos.atributos);
+        conn.ajax.bienes_buscar_agrupado({
+            consulta:JSON.stringify({...consultaDelReporte(previos, []), conjuntos:conjuntosDelReporte(campos)}),
+        }).then(respuesta => {
+            if(numero === secuencia.current){ setRespuestas(respuestasDelReporte(campos, respuesta.conjuntos)); }
         }).catch(err => {
             if(numero === secuencia.current){ setError(err instanceof Error ? err.message : String(err)); }
         });
-    }, [conn, catalogos, previos]);
+    }, [conn, catalogos, previos, vista]);
+
+    const campos = React.useMemo(() => catalogos ? camposDelReporte(catalogos.atributos) : [], [catalogos]);
+    const dimensionFiltrada = filtroDeAtributo.atributo ? claveDeAtributo(filtroDeAtributo.atributo.atributo) : null;
+    const camposDelCruce = React.useMemo(() => campos.filter(campo => campo.dimension !== dimensionFiltrada), [campos, dimensionFiltrada]);
+    const campoDelCruce = camposDelCruce.find(campo => campo.dimension === verPor) ?? camposDelCruce[0] ?? null;
+    const atributosDelFiltro = React.useMemo(() => (catalogos?.atributos ?? [])
+        .filter(atributo => vista !== 'cruce' || claveDeAtributo(atributo.atributo) !== campoDelCruce?.dimension),
+    [catalogos, vista, campoDelCruce]);
+
+    React.useEffect(() => {
+        if(vista !== 'cruce' || !campoDelCruce){ return; }
+        const numero = ++secuenciaDelCruce.current;
+        setDelCruce(null);
+        setError(null);
+        pedirAgrupado(conn, previos, ['subcategoria', campoDelCruce.dimension]).then(filas => {
+            if(numero === secuenciaDelCruce.current){ setDelCruce({campo:campoDelCruce, filas}); }
+        }).catch(err => {
+            if(numero === secuenciaDelCruce.current){ setError(err instanceof Error ? err.message : String(err)); }
+        });
+    }, [conn, previos, vista, campoDelCruce]);
+
+    const cruce = React.useMemo(() => catalogos && delCruce
+        ? armarCruce(delCruce.filas, delCruce.campo, catalogos.subcategorias, catalogos.categorias)
+        : null, [catalogos, delCruce]);
 
     const arbol = React.useMemo(() => catalogos && respuestas
         ? armarArbolDeModelos(respuestas, catalogos.subcategorias, catalogos.categorias, catalogos.estados, catalogos.tipos)
@@ -265,12 +360,28 @@ export function BienesPorModelo(){
         if(opcion){ setCategoria(catalogos?.categorias.find(cat => cat.categoria === opcion.categoria) ?? null); }
     };
 
-    const descargar = () => arbol && descargarCsv(csvDeModelos({...arbol, raices:filtrado?.raices ?? arbol.raices}),
-        nombreDelCsv(previos, new Date(), 'bienes-por-atributos'));
+    const descargar = () => {
+        const nombre = nombreDelCsv(previos, new Date(), 'bienes-por-atributos');
+        if(vista === 'cruce'){
+            if(cruce){ descargarCsv(csvDeCruce(cruce), nombre); }
+        }else if(arbol){
+            descargarCsv(csvDeModelos({...arbol, raices:filtrado?.raices ?? arbol.raices}), nombre);
+        }
+    };
+
+    const elegirVerPor = (campo:CampoDelBien|null) => {
+        if(!campo){ return; }
+        setVerPor(campo.dimension);
+        guardarVerPor(campo.dimension);
+    };
 
     const ancho = {width:{xs:'100%', sm:240}};
 
     return <Box sx={{p:{xs:2, sm:3}, maxWidth:1400, mx:'auto'}}>
+        <Tabs value={vista} onChange={(_evento, valor:Vista) => setVista(valor)} sx={{mb:2, borderBottom:1, borderColor:'divider'}}>
+            <Tab value="arbol" label="Árbol"/>
+            <Tab value="cruce" label="Por atributo"/>
+        </Tabs>
         <Stack direction={{xs:'column', sm:'row'}} spacing={2} alignItems={{xs:'stretch', sm:'center'}} sx={{mb:2}} flexWrap="wrap" useFlexGap>
             <Autocomplete
                 options={catalogos?.areas ?? []}
@@ -303,14 +414,14 @@ export function BienesPorModelo(){
                 renderInput={params => <TextField {...params} label="Subcategoría" placeholder="Todas" size="small"/>}
             />
             <Autocomplete
-                options={catalogos?.atributos ?? []}
+                options={atributosDelFiltro}
                 value={filtroDeAtributo.atributo}
                 onChange={(_evento, opcion) => setFiltroDeAtributo({atributo:opcion, valor:null})}
                 getOptionLabel={opcion => opcion.nombre}
                 isOptionEqualToValue={(a, b) => a.atributo === b.atributo}
                 loading={!catalogos}
                 sx={ancho}
-                renderInput={params => <TextField {...params} label="Filtrar por atributo" placeholder="Ninguno" size="small"/>}
+                renderInput={params => <TextField {...params} label="Sólo bienes con" placeholder="Cualquier atributo" size="small"/>}
             />
             <Autocomplete
                 options={valoresDelAtributo ?? []}
@@ -321,21 +432,48 @@ export function BienesPorModelo(){
                 disabled={!filtroDeAtributo.atributo}
                 loading={!!filtroDeAtributo.atributo && !valoresDelAtributo}
                 sx={ancho}
-                renderInput={params => <TextField {...params} label="Valor del atributo" placeholder="Todos" size="small"/>}
+                renderInput={params => <TextField {...params} label="Valor" placeholder="Todos" size="small"/>}
             />
-            <TextField label="Buscar atributo o valor" size="small" value={buscado} onChange={evento => setBuscado(evento.target.value)} sx={ancho}/>
+            {vista === 'arbol'
+                ? <TextField label="Buscar atributo o valor" size="small" value={buscado} onChange={evento => setBuscado(evento.target.value)} sx={ancho}/>
+                : null}
             <Box sx={{flex:1, display:{xs:'none', sm:'block'}}}/>
-            <Button variant="outlined" startIcon={<Download/>} onClick={descargar} disabled={!arbol}>Descargar</Button>
+            <Button variant="outlined" startIcon={<Download/>} onClick={descargar} disabled={vista === 'cruce' ? !cruce : !arbol}>Descargar</Button>
         </Stack>
         <Typography variant="body2" color="text.secondary" sx={{mb:1}}>
-            Bienes activos que podés ver{previos.map(previo => `, ${previo.etiqueta} ${previo.texto}`).join('')}. Abrí una subcategoría para ver su marca, modelo y atributos; tocá un número para ver esos bienes.
+            Bienes activos que podés ver{previos.map(previo => `, ${previo.etiqueta} ${previo.texto}`).join('')}{vista === 'cruce'
+                ? `. Cuántos hay de cada valor de ${campoDelCruce?.etiqueta.toLowerCase() ?? 'atributo'} en las subcategorías que lo tienen cargado; tocá un número para ver esos bienes.`
+                : '. Abrí una subcategoría para ver su marca y atributos; tocá un número para ver esos bienes.'}
         </Typography>
         {error ? <Alert severity="error">{error}</Alert> : null}
-        {!arbol && !error ? <Cargando/> : null}
-        {arbol && filtrado && !filtrado.raices.length
+        {vista === 'cruce'
+            ? <Stack direction={{xs:'column', sm:'row'}} spacing={1.5} alignItems={{xs:'stretch', sm:'center'}}
+                sx={{bgcolor:'action.hover', borderRadius:1, px:1.5, py:1, mb:1}}>
+                <Typography variant="body2" color="text.secondary">Columnas</Typography>
+                <Autocomplete
+                    options={camposDelCruce}
+                    value={campoDelCruce}
+                    onChange={(_evento, opcion) => elegirVerPor(opcion)}
+                    getOptionLabel={opcion => opcion.etiqueta}
+                    isOptionEqualToValue={(a, b) => a.dimension === b.dimension}
+                    disableClearable
+                    loading={!catalogos}
+                    sx={{...ancho, bgcolor:'background.paper'}}
+                    renderInput={params => <TextField {...params} aria-label="columnas" placeholder="Atributo" size="small"/>}
+                />
+                <Typography variant="caption" color="text.secondary">Elegí qué atributo se reparte en las columnas</Typography>
+            </Stack>
+            : null}
+        {vista === 'cruce' && !cruce && !error ? <Cargando/> : null}
+        {vista === 'cruce' && cruce && !cruce.filas.length
+            ? <Alert severity="info">Ningún bien de estos filtros tiene cargado {cruce.campo.etiqueta.toLowerCase()}.</Alert>
+            : null}
+        {vista === 'cruce' && cruce && cruce.filas.length ? <TablaDeCruce cruce={cruce} previos={previos}/> : null}
+        {vista === 'arbol' && !arbol && !error ? <Cargando/> : null}
+        {vista === 'arbol' && arbol && filtrado && !filtrado.raices.length
             ? <Alert severity="info">{buscado.trim() ? `Nada coincide con «${buscado.trim()}».` : 'No hay bienes con estos filtros.'}</Alert>
             : null}
-        {arbol && filtrado && filtrado.raices.length
+        {vista === 'arbol' && arbol && filtrado && filtrado.raices.length
             ? <ArbolDeBienes arbol={arbol} raices={filtrado.raices} previos={previos} abiertos={abiertos} onAlternar={alternar}/>
             : null}
     </Box>;
