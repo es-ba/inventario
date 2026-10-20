@@ -9,10 +9,7 @@ $BODY$
       FROM roles WHERE rol = get_app_user('rol')
   ),
   mis_sectores AS (
-    SELECT s.sector
-      FROM sectores s
-      WHERE nullif(get_app_user('sector'), '') IS NOT NULL
-        AND sector_pertenece(s.sector, nullif(get_app_user('sector'), ''))
+    SELECT sector FROM sectores_de_la_rama(nullif(get_app_user('sector'), ''))
   ),
   sectores_a_cargo AS (
     SELECT s.sector
@@ -26,10 +23,7 @@ $BODY$
   ),
   ultimo AS (
     SELECT DISTINCT ON (mb.ficha COLLATE "C")
-           mb.ficha,
-           nullif(btrim(mb.sector), '')              AS sector,
-           nullif(btrim(mb.responsable), '')         AS responsable,
-           nullif(btrim(mb.enusode_responsable), '') AS enusode_responsable
+           mb.ficha, mb.sector, mb.responsable, mb.enusode_responsable
       FROM movimientos_bien mb
       ORDER BY mb.ficha COLLATE "C", mb.orden DESC
   )

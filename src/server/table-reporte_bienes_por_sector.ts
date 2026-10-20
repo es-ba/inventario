@@ -2,11 +2,11 @@
 
 import {TableDefinition, TableContext} from "./types-principal";
 import {sqlBienesPorSector} from "./reportes-bienes";
-import {visibilidadDe, MI_RESPONSABLE, MI_SECTOR} from "./politicas";
+import {visibilidadDe, enLaRama, MI_RESPONSABLE, MI_SECTOR} from "./politicas";
 
 const SECTOR_VISIBLE = visibilidadDe({
     propio:`r.responsable = ${MI_RESPONSABLE}`,
-    dependiente:`sector_pertenece(r.sector, ${MI_SECTOR})`,
+    dependiente:enLaRama('r.sector', MI_SECTOR),
 });
 
 export function reporte_bienes_por_sector(_context:TableContext):TableDefinition{

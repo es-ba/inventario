@@ -241,7 +241,7 @@ export const ProceduresInventario:ProcedureDef[] = [
                 return [];
             }
             const result = await context.client.query(
-                `select espacio from espacios where sector_pertenece(sector, $1)`,
+                `select espacio from espacios where sector in (select sector from sectores_de_la_rama($1))`,
                 [sector]
             ).fetchAll();
             return result.rows.map(fila => fila.espacio as string);

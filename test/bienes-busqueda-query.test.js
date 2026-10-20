@@ -299,14 +299,14 @@ test('filtrar por categoría no usa el conteo de la tabla física', () => {
 test('una parte de rama filtra con su comparación propia y las demás por igualdad', () => {
     const {buildBienesBusquedaQueries} = loadQueryModule();
     const dimensiones = {
-        sector_rama: () => ({valor: 'b.sector', texto: 'b.sector', filtro: (p) => `sector_pertenece(b.sector, ${p})`}),
+        sector_rama: () => ({valor: 'b.sector', texto: 'b.sector', filtro: (p) => `b.sector IN (SELECT sector FROM sectores_de_la_rama(${p}))`}),
         sector: () => ({valor: 'b.sector', texto: 'b.sector'}),
     };
     const result = buildBienesBusquedaQueries(request({
         grupoFiltro: [{dimension: 'sector_rama', valor: 'DGE'}, {dimension: 'sector', valor: '24'}],
     }), options({dimensiones}));
 
-    assert.match(result.dataSql, /sector_pertenece\(b\.sector, \$\d+::text\)/);
+    assert.match(result.dataSql, /b\.sector IN \(SELECT sector FROM sectores_de_la_rama\(\$\d+::text\)\)/);
     assert.match(result.dataSql, /\(b\.sector\) = \$\d+::text/);
     assert.ok(result.filterValues.includes('DGE'));
     assert.ok(result.filterValues.includes('24'));

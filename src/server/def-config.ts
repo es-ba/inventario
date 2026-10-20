@@ -49,7 +49,7 @@ install:
       owner: inventario_owner
     scripts:
       pre-adapt:
-      - ../install/sector_pertenece.sql
+      - ../install/sectores_de_la_rama.sql
       - ../install/sector_responsable.sql
       - ../install/bienes_alcance.sql
       - ../install/movimientos_bien_pk_trg.sql

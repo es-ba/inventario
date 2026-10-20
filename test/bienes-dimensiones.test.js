@@ -51,7 +51,7 @@ test('«sector y subsectores» filtra por la rama del organigrama y no se ofrece
     const catalogo = armarCatalogoDeDimensiones(BIENES, (n) => n === 'grupos' ? GRUPOS : undefined, []);
     assert.equal(catalogo.disponibles.some((d) => d.clave === 'sector_rama'), false);
     const sql = catalogo.sql.sector_rama(() => '$1');
-    assert.equal(sql.filtro('$7::text'), "sector_pertenece(nullif(btrim(b.sector), ''), $7::text)");
+    assert.equal(sql.filtro('$7::text'), "nullif(btrim(b.sector), '') IN (SELECT sector FROM sectores_de_la_rama($7::text))");
     assert.equal(catalogo.sql.sector(() => '$1').filtro, undefined);
 });
 

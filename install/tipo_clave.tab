@@ -3,3 +3,5 @@ CLAVE_PRODUCTO|Clave de producto
 ID_ACTIVACION|Identificador de activación
 NUMERO_LICENCIA|Número de licencia administrativo
 CUENTA|Cuenta o usuario asociado a la licencia
+IMEI|IMEI del equipo
+IMEI_SIM|IMEI de la línea (SIM)

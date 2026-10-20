@@ -16,8 +16,12 @@ export const MI_RESPONSABLE = `nullif(get_app_user('responsable'), '')`;
 
 export const MI_SECTOR = `nullif(get_app_user('sector'), '')`;
 
+export function enLaRama(columnaSector:string, sector:string):string{
+    return `${columnaSector} IN (SELECT sector FROM sectores_de_la_rama(${sector}))`;
+}
+
 export function deMisDependientes(columnaResponsable:string):string{
-    return `sector_pertenece(sector_responsable(${columnaResponsable}), ${MI_SECTOR})`;
+    return enLaRama(`sector_responsable(${columnaResponsable})`, MI_SECTOR);
 }
 
 export function visibilidadDeBienes(columnaFicha:string = 'ficha'):string{
@@ -68,7 +72,7 @@ export function politicasPorElBien(columnaFicha:string = 'ficha'):PoliticasDeTab
 export function politicasResponsables():PoliticasDeTabla{
     const visibilidad = visibilidadDe({
         propio:`responsable = ${MI_RESPONSABLE}`,
-        dependiente:`sector IN (SELECT s.sector FROM sectores s WHERE sector_pertenece(s.sector, ${MI_SECTOR}))`,
+        dependiente:enLaRama('sector', MI_SECTOR),
     });
     return conVisibilidad(`(get_app_user('mode') = 'login' OR ${visibilidad})`);
 }

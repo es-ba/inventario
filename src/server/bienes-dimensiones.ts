@@ -1,6 +1,7 @@
 import type {DimensionDisponible, FamiliaDimension} from '../common/bienes-agrupar';
 import {claveDeAtributo} from '../common/bienes-agrupar';
 import type {DimensionSql} from './bienes-busqueda-query';
+import {enLaRama} from './politicas';
 
 export type CampoDeTabla = {name:string, title?:string, label?:string, isName?:boolean};
 
@@ -58,7 +59,7 @@ const ESPECIALES:Dimension[] = [
         sql:() => ({
             valor:textoONulo('b.sector'),
             texto:'b.sector_texto',
-            filtro:parametro => `sector_pertenece(${textoONulo('b.sector')}, ${parametro})`,
+            filtro:parametro => enLaRama(textoONulo('b.sector'), parametro),
         })},
     {clave:'responsable_sector', etiqueta:'responsable del sector', familia:'asignación',
         sql:fija(textoONulo(RESPONSABLE_DEL_SECTOR), codigoYTexto(RESPONSABLE_DEL_SECTOR, NOMBRE_DEL_RESPONSABLE_DEL_SECTOR)),
