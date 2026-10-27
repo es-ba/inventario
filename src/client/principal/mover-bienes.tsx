@@ -155,7 +155,7 @@ export function MoverBienes({
     onCerrar:() => void,
     onCreada:(resultado:ResultadoMovimiento) => void,
 }){
-    const [modo, setModo] = React.useState<'acta'|'directo'>('acta');
+    const [modo, setModo] = React.useState<'acta'|'directo'>('directo');
     const [accion, setAccion] = React.useState('');
     const [detalle, setDetalle] = React.useState('');
     const [destino, setDestino] = React.useState<Destino>({});
@@ -176,7 +176,7 @@ export function MoverBienes({
 
     React.useEffect(() => {
         if(abierto){
-            setModo('acta');
+            setModo('directo');
             setAccion('');
             setDetalle('');
             setDestino({});
