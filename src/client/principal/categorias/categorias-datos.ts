@@ -1,4 +1,4 @@
-import type {BienesAgrupadoFila, GrupoFiltro, GrupoFiltroElegido} from '../../../common/bienes-agrupar';
+import type {BienesAgrupadoFila, FiltroDeLista, GrupoFiltro, GrupoFiltroElegido} from '../../../common/bienes-agrupar';
 import type {BienesBusquedaRequest} from '../../../common/contracts';
 import {textoSinCodigo} from '../columnas-busqueda';
 
@@ -206,11 +206,15 @@ export function armarReporte(
     };
 }
 
-export function consultaDelReporte(previos:FiltroPrevio[], agruparPor:readonly string[] = DIMENSIONES_DEL_REPORTE):BienesBusquedaRequest{
+export function consultaDelReporte(
+    previos:FiltroPrevio[],
+    agruparPor:readonly string[] = DIMENSIONES_DEL_REPORTE,
+    filtros:FiltroDeLista[] = [],
+):BienesBusquedaRequest{
     return {
         estado:'activo',
         logicOperator:'and',
-        filters:[],
+        filters:filtros.map(({source, target, operator, value}) => ({source, target, operator, value})),
         quickSearch:'',
         gridFilters:[],
         page:0,
@@ -285,8 +289,10 @@ export function opcionesDeSectores(filas:Record<string, unknown>[]):OpcionDeFilt
         .sort((a, b) => a.etiqueta.localeCompare(b.etiqueta));
 }
 
-export function hashDeBusqueda(filtro:GrupoFiltroElegido|null):string{
-    return filtro ? `w=principal&filtro=${encodeURIComponent(JSON.stringify(filtro))}` : 'w=principal';
+export function hashDeBusqueda(filtro:GrupoFiltroElegido|null, filtros:FiltroDeLista[] = []):string{
+    return 'w=principal'
+        + (filtro ? `&filtro=${encodeURIComponent(JSON.stringify(filtro))}` : '')
+        + (filtros.length ? `&filtros=${encodeURIComponent(JSON.stringify(filtros))}` : '');
 }
 
 export function campoCsv(valor:string|number):string{

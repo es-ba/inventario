@@ -70,7 +70,7 @@ import type {
     BienesBusquedaRow,
 } from '../../common/contracts';
 import {camposDeCondicion, selectBienesGridFields} from '../../common/bienes-busqueda';
-import type {DimensionDisponible, GrupoFiltroElegido} from '../../common/bienes-agrupar';
+import type {DimensionDisponible, FiltroDeLista, GrupoFiltroElegido} from '../../common/bienes-agrupar';
 import {ResumenBienes} from './resumen-bienes';
 import {DesgloseBusqueda} from './desglose-busqueda';
 import {claveDeAtributo} from '../../common/bienes-agrupar';
@@ -85,6 +85,7 @@ import {
     FiltrosAplicados,
     FiltrosCompuestos,
     SIN_DATO,
+    createEmptyFilter,
     isCompleteFilter,
 } from './filtros-compuestos';
 import {bienesGridLocaleText} from './localizacion-grid';
@@ -143,6 +144,7 @@ type BusquedaBienesProps = {
     accionSeleccion?:AccionSeleccionBienes;
     fichasExcluidas?:ReadonlySet<string>;
     grupoFiltroInicial?:GrupoFiltroElegido|null;
+    filtrosIniciales?:FiltroDeLista[];
     textoInicial?:string;
 };
 
@@ -314,6 +316,7 @@ export function BusquedaBienes({
     accionSeleccion,
     fichasExcluidas,
     grupoFiltroInicial = null,
+    filtrosIniciales = [],
     textoInicial = '',
 }:BusquedaBienesProps){
     const permisos = usePermisos();
@@ -330,8 +333,9 @@ export function BusquedaBienes({
     const [tableDefinition, setTableDefinition] = React.useState<TableDefinition|null>(null);
     const [metadataLoading, setMetadataLoading] = React.useState(true);
     const [metadataError, setMetadataError] = React.useState<string|null>(null);
-    const [filters, setFilters] = React.useState<BienesBusquedaFilterDraft[]>([]);
-    const [appliedFilters, setAppliedFilters] = React.useState<BienesBusquedaFilterDraft[]>([]);
+    const [filters, setFilters] = React.useState<BienesBusquedaFilterDraft[]>(() =>
+        filtrosIniciales.map(filtro => ({...filtro, id:createEmptyFilter().id})));
+    const [appliedFilters, setAppliedFilters] = React.useState<BienesBusquedaFilterDraft[]>(filters);
     const [logicOperator, setLogicOperator] =
         React.useState<BienesBusquedaRequest['logicOperator']>('and');
     const [appliedLogicOperator, setAppliedLogicOperator] =

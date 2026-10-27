@@ -918,6 +918,8 @@ export const ProceduresInventario:ProcedureDef[] = [
             const asignado = await datosPersona(solicitud.enusode_responsable)
                 ?? await datosPersona(solicitud.responsable);
             const firmante = await datosPersona(params.representante);
+            const entrega = await datosPersona(params.entrega_representa);
+            const recibe = await datosPersona(params.recibe_representa);
 
             const items = await client.query(`
                 SELECT
@@ -974,8 +976,8 @@ export const ProceduresInventario:ProcedureDef[] = [
                     fecha:solicitud.fecha_creacion,
                     representante:firmante?.nombre ?? texto(params.representante),
                     caracterRepresentante:caracterDelFirmante,
-                    entregaRepresenta:texto(params.entrega_representa) ?? firmante?.sector_a_cargo ?? null,
-                    recibeRepresenta:texto(params.recibe_representa),
+                    entregaRepresenta:entrega?.nombre ?? texto(params.entrega_representa),
+                    recibeRepresenta:recibe?.nombre ?? texto(params.recibe_representa),
                     operacion:operacionDeActa(params.operacion),
                     persona:{
                         nombre:asignado?.nombre ?? null,

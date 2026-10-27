@@ -42,7 +42,7 @@ Agregar o quitar bienes se guarda en el momento.
 
 ### Documentos
 
-- **Emitir comodato** o **Emitir acta de entrega y devolución** generan el PDF con los bienes de la solicitud. En el acta se indica si documenta una *Entrega* o una *Devolución* y, si corresponde, en representación de qué sector se entrega o recibe.
+- **Emitir comodato** o **Emitir acta de entrega y devolución** generan el PDF con los bienes de la solicitud. En el acta se indica si documenta una *Entrega* o una *Devolución* y, si corresponde, en representación de quién se entrega o recibe (se elige de los responsables; vacío queda la línea de puntos).
 - Cada emisión queda como una versión, con su código. **Descargar emitido** baja el PDF.
 - Una vez firmado, **Subir documento recibido** carga el documento firmado; después se puede descargar o reemplazar.
 

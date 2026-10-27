@@ -71,6 +71,18 @@ const CAMPO_CARACTER = {
     referencesFields:[{source:'caracter_representante', target:'jerarquia'}],
 } as unknown as FieldDefinition;
 
+const campoDeResponsable = (name:string, title:string) => ({
+    name,
+    typeName:'text',
+    title,
+    references:'responsables',
+    referencesFields:[{source:name, target:'responsable'}],
+} as unknown as FieldDefinition);
+
+const CAMPO_ENTREGA = campoDeResponsable('entrega_representa', 'Entrega en representación de');
+
+const CAMPO_RECIBE = campoDeResponsable('recibe_representa', 'Recibe en representación de');
+
 const OPERACIONES = [
     {valor:'entrega', etiqueta:'Entrega'},
     {valor:'devolucion', etiqueta:'Devolución'},
@@ -329,18 +341,17 @@ export function SolicitudDocumentos({acta, disabled = false}:{acta:string, disab
                                 <MenuItem key={o.valor} value={o.valor}>{o.etiqueta}</MenuItem>
                             )}
                         </TextField>
-                        <TextField
+                        <FormFieldRenderer
+                            field={CAMPO_ENTREGA}
+                            row={datos as unknown as Fila}
+                            setField={ponerDato}
                             size="small"
-                            label="Entrega en representación de"
-                            value={datos.entrega_representa}
-                            onChange={e => setDatos(d => ({...d, entrega_representa:e.target.value}))}
-                            helperText="Si se deja vacío se usa el sector del representante"
                         />
-                        <TextField
+                        <FormFieldRenderer
+                            field={CAMPO_RECIBE}
+                            row={datos as unknown as Fila}
+                            setField={ponerDato}
                             size="small"
-                            label="Recibe en representación de"
-                            value={datos.recibe_representa}
-                            onChange={e => setDatos(d => ({...d, recibe_representa:e.target.value}))}
                         />
                     </> : null}
                 </Stack>

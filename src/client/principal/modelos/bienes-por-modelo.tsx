@@ -1,25 +1,26 @@
 import * as React from 'react';
 import {
-    Alert, Autocomplete, Box, Button, IconButton, Stack, Table, TableBody, TableCell,
-    Tab, TableContainer, TableHead, TableRow, Tabs, TextField, Typography, useMediaQuery, useTheme,
+    Alert, Autocomplete, Box, Button, Checkbox, Collapse, FormControlLabel, Stack, Table, TableBody, TableCell,
+    TableContainer, TableHead, TableRow, TextField, Typography, useMediaQuery, useTheme,
 } from '@mui/material';
-import {Download, KeyboardArrowDown, KeyboardArrowRight} from '@mui/icons-material';
+import {Download, FilterList} from '@mui/icons-material';
 
-import {claveDeAtributo, type BienesAgrupadoFila} from '../../../common/bienes-agrupar';
+import type {BienesAgrupadoFila, FiltroDeLista} from '../../../common/bienes-agrupar';
 import {useAvisos, useConexion} from '../base/contexto-base';
 import {Cargando} from '../base/cargando';
 import {leerTabla} from '../base/referencias';
 import type {Fila} from '../base/tipos-tabla';
 import {Barra, Cantidad, SEPARADOR, descargarCsv, encabezadosDeTipos, estadosDesde, tiposDesde} from '../categorias/bienes-por-categoria';
 import {
-    EN_USO, consultaDelReporte, hashDeBusqueda, nombreDelCsv, opcionesDeAgrupado, opcionesDeSectores, porcentaje,
+    EN_USO, consultaDelReporte, nombreDelCsv, opcionesDeSectores, porcentaje,
     type CategoriaDeCatalogo, type ColumnaDeEstado, type ColumnaDeTipo, type Cuenta, type EstadoDeCatalogo, type FiltroPrevio, type OpcionDeFiltro,
     type TipoDeCatalogo,
 } from '../categorias/categorias-datos';
 import {
-    SIN_DATO, armarArbolDeModelos, armarCruce, camposDelReporte, conjuntosDelReporte, csvDeCruce, csvDeModelos, filtrarArbol, filtroDeCeldaDeCruce,
-    filtroDeCeldaDeModelos, respuestasDelReporte,
-    type ArbolDeModelos, type CampoDelBien, type Cruce, type CuentaDeCruce, type FilaDeCruce, type Paso, type AtributoDeCatalogo, type CeldaDeModelos, type NodoDeModelos, type RespuestaDeCampo, type SubcategoriaDeCatalogo,
+    DIMENSIONES_DE_LA_TABLA, DIMENSIONES_DE_TIPOS_DE_LA_TABLA, alternarElegido, armarArbolDeModelos, armarFacetas, camposDelReporte, csvDeModelos,
+    destinoDeCelda, filtrosDeFacetas, pedidosDeFacetas,
+    type ArbolDeModelos, type AtributoDeCatalogo, type CampoDelBien, type CeldaDeModelos, type Elegidos, type Faceta, type NodoDeModelos, type Paso,
+    type SubcategoriaDeCatalogo,
 } from './modelos-datos';
 
 type Catalogos = {
@@ -31,110 +32,94 @@ type Catalogos = {
     tipos:TipoDeCatalogo[],
 };
 
-type FiltroDeAtributo = {atributo:AtributoDeCatalogo|null, valor:OpcionDeFiltro|null};
-
 const texto = (valor:unknown) => valor == null ? '' : String(valor).trim();
 const numeroONulo = (valor:unknown) => valor == null || valor === '' ? null : Number(valor);
 
-const destinoDe = (celda:CeldaDeModelos) => hashDeBusqueda(filtroDeCeldaDeModelos(celda));
+const VALORES_A_LA_VISTA = 8;
 
-type Vista = 'arbol' | 'cruce';
+type Filtros = Pick<CeldaDeModelos, 'previos' | 'filtros'>;
 
-const CLAVE_VER_POR = 'inventario.bienes-por-atributos.ver-por';
-
-function leerVerPor():string|null{
-    try{
-        return globalThis.localStorage?.getItem(CLAVE_VER_POR) ?? null;
-    }catch{
-        return null;
-    }
-}
-
-function guardarVerPor(dimension:string):void{
-    try{
-        globalThis.localStorage?.setItem(CLAVE_VER_POR, dimension);
-    }catch{
-    }
-}
-
-const SIN_DATO_EN_COLUMNA:Paso = {valor:null, nombre:SIN_DATO};
-
-const pedirAgrupado = (conn:ReturnType<typeof useConexion>, previos:FiltroPrevio[], dimensiones:readonly string[]) =>
-    conn.ajax.bienes_buscar_agrupado({consulta:JSON.stringify(consultaDelReporte(previos, dimensiones))}).then(respuesta => respuesta.rows);
+type Filas = {filas:BienesAgrupadoFila[], deTipos:BienesAgrupadoFila[]};
 
 function CeldasDeEstadoDeModelos({cuenta, columnas, tipos, celda}:{cuenta:Cuenta, columnas:ColumnaDeEstado[], tipos:ColumnaDeTipo[], celda:CeldaDeModelos}){
     return <>
-        {columnas.map(columna => {
-            const filtro = filtroDeCeldaDeModelos({...celda, estado:columna});
-            return <TableCell key={columna.clave} align="right">
-                <Cantidad valor={cuenta.porEstado[columna.clave] ?? 0} destino={filtro ? hashDeBusqueda(filtro) : null}/>
-            </TableCell>;
-        })}
+        {columnas.map(columna => <TableCell key={columna.clave} align="right">
+            <Cantidad valor={cuenta.porEstado[columna.clave] ?? 0} destino={destinoDeCelda({...celda, estado:columna})}/>
+        </TableCell>)}
         <TableCell align="right" sx={SEPARADOR}>
-            <Cantidad valor={cuenta.enUso} destino={destinoDe({...celda, enUso:true})}/>
+            <Cantidad valor={cuenta.enUso} destino={destinoDeCelda({...celda, enUso:true})}/>
         </TableCell>
         {tipos.map((tipo, indice) => <TableCell key={tipo.clave} align="right" sx={indice ? undefined : SEPARADOR}>
-            <Cantidad valor={cuenta.porTipo[tipo.clave] ?? 0} destino={destinoDe({...celda, tipo})}/>
+            <Cantidad valor={cuenta.porTipo[tipo.clave] ?? 0} destino={destinoDeCelda({...celda, tipo})}/>
         </TableCell>)}
     </>;
 }
 
-function FilaDeNodo({nodo, columnas, tipos, previos, abiertos, angosta, onAlternar}:{
-    nodo:NodoDeModelos, columnas:ColumnaDeEstado[], tipos:ColumnaDeTipo[], previos:FiltroPrevio[], abiertos:Set<string>,
-    angosta:boolean, onAlternar:(id:string) => void,
-}){
-    const abierto = abiertos.has(nodo.id);
-    const celda:CeldaDeModelos = {previos, nodo};
-    const esCampo = nodo.nivel === 'campo';
-    const fondo = nodo.profundidad ? undefined : 'action.hover';
-    return <>
-        <TableRow hover sx={{bgcolor:fondo}}>
-            <TableCell sx={{pl:1 + nodo.profundidad * 2.5}} colSpan={esCampo ? columnas.length + tipos.length + 3 : undefined}>
-                <Stack direction="row" alignItems="center" spacing={0.5}>
-                    {nodo.hijos.length
-                        ? <IconButton size="small" aria-label={abierto ? `cerrar ${nodo.nombre}` : `abrir ${nodo.nombre}`}
-                            aria-expanded={abierto} onClick={() => onAlternar(nodo.id)}>
-                            {abierto ? <KeyboardArrowDown/> : <KeyboardArrowRight/>}
-                        </IconButton>
-                        : <Box sx={{width:34, flexShrink:0}}/>}
-                    <Box component="span" sx={{
-                        fontWeight:nodo.nivel === 'valor' ? undefined : 600,
-                        fontStyle:esCampo ? 'italic' : undefined,
-                        color:esCampo || nodo.valor == null ? 'text.secondary' : undefined,
-                    }}>
-                        {nodo.nombre}
-                    </Box>
-                </Stack>
-            </TableCell>
-            {esCampo ? null : <TableCell>
-                <Stack direction="row" spacing={1} alignItems="center">
-                    <Box sx={{minWidth:48, textAlign:'right'}}><Cantidad valor={nodo.cuenta.total} destino={destinoDe(celda)} fuerte/></Box>
-                    <Barra proporcion={nodo.proporcion}/>
-                    {angosta ? null : <Typography variant="body2" color="text.secondary" sx={{minWidth:44, textAlign:'right'}} title="Parte del total">
-                        {porcentaje(nodo.proporcion)}
-                    </Typography>}
-                </Stack>
-            </TableCell>}
-            {esCampo || angosta ? null : <CeldasDeEstadoDeModelos cuenta={nodo.cuenta} columnas={columnas} tipos={tipos} celda={celda}/>}
-        </TableRow>
-        {abierto
-            ? nodo.hijos.map(hijo => <FilaDeNodo key={hijo.id} nodo={hijo} columnas={columnas} tipos={tipos} previos={previos}
-                abiertos={abiertos} angosta={angosta} onAlternar={onAlternar}/>)
+function FacetaDeCampo({faceta, onAlternar}:{faceta:Faceta, onAlternar:(campo:CampoDelBien, paso:Paso) => void}){
+    const [todos, setTodos] = React.useState(false);
+    const visibles = todos ? faceta.valores : faceta.valores.filter((valor, indice) => indice < VALORES_A_LA_VISTA || valor.elegido);
+    return <Box component="fieldset" sx={{border:0, p:0, m:0, mb:2}}>
+        <Typography component="legend" variant="subtitle2" sx={{mb:0.5}}>{faceta.campo.etiqueta}</Typography>
+        <Box sx={todos ? {maxHeight:320, overflowY:'auto'} : undefined}>
+            {visibles.map(valor => <FormControlLabel key={valor.valor ?? ''} sx={{display:'flex', mr:0, alignItems:'flex-start'}}
+                control={<Checkbox size="small" checked={valor.elegido} onChange={() => onAlternar(faceta.campo, valor)} sx={{py:0.25}}/>}
+                label={<Typography variant="body2" sx={{pt:0.5, color:valor.valor == null ? 'text.secondary' : undefined}}>
+                    {valor.nombre} <Box component="span" sx={{color:'text.secondary'}}>({valor.cantidad})</Box>
+                </Typography>}
+            />)}
+        </Box>
+        {faceta.valores.length > VALORES_A_LA_VISTA
+            ? <Button size="small" onClick={() => setTodos(!todos)}>{todos ? 'Ver menos' : `Ver todos (${faceta.valores.length})`}</Button>
             : null}
-    </>;
+    </Box>;
 }
 
-function ArbolDeBienes({arbol, raices, previos, abiertos, onAlternar}:{
-    arbol:ArbolDeModelos, raices:NodoDeModelos[], previos:FiltroPrevio[], abiertos:Set<string>, onAlternar:(id:string) => void,
+function ColumnaDeFacetas({facetas, cargando, elegidos, onAlternar, onLimpiar}:{
+    facetas:Faceta[]|null, cargando:boolean, elegidos:number, onAlternar:(campo:CampoDelBien, paso:Paso) => void, onLimpiar:() => void,
 }){
+    return <Box component="aside" aria-label="filtros por marca y atributos" sx={{opacity:cargando ? 0.6 : 1}}>
+        <Stack direction="row" alignItems="center" sx={{mb:1}}>
+            <Typography variant="subtitle1" sx={{flex:1, fontWeight:600}}>Filtrar</Typography>
+            {elegidos ? <Button size="small" onClick={onLimpiar}>Limpiar</Button> : null}
+        </Stack>
+        {facetas == null ? <Cargando/> : null}
+        {facetas && !facetas.length ? <Typography variant="body2" color="text.secondary">Ningún bien tiene marca ni atributos cargados.</Typography> : null}
+        {facetas?.map(faceta => <FacetaDeCampo key={faceta.campo.dimension} faceta={faceta} onAlternar={onAlternar}/>)}
+    </Box>;
+}
+
+
+function FilaDeNodo({nodo, columnas, tipos, filtros, angosta}:{
+    nodo:NodoDeModelos, columnas:ColumnaDeEstado[], tipos:ColumnaDeTipo[], filtros:Filtros, angosta:boolean,
+}){
+    const celda:CeldaDeModelos = {...filtros, nodo};
+    const deCategoria = nodo.nivel === 'categoria';
+    return <TableRow hover sx={{bgcolor:deCategoria ? 'action.hover' : undefined}}>
+        <TableCell sx={{pl:deCategoria ? 2 : 4, fontWeight:deCategoria ? 600 : undefined, color:nodo.valor == null ? 'text.secondary' : undefined}}>
+            {nodo.nombre}
+        </TableCell>
+        <TableCell>
+            <Stack direction="row" spacing={1} alignItems="center">
+                <Box sx={{minWidth:48, textAlign:'right'}}><Cantidad valor={nodo.cuenta.total} destino={destinoDeCelda(celda)} fuerte/></Box>
+                <Barra proporcion={nodo.proporcion}/>
+                {angosta ? null : <Typography variant="body2" color="text.secondary" sx={{minWidth:44, textAlign:'right'}} title="Parte del total">
+                    {porcentaje(nodo.proporcion)}
+                </Typography>}
+            </Stack>
+        </TableCell>
+        {angosta ? null : <CeldasDeEstadoDeModelos cuenta={nodo.cuenta} columnas={columnas} tipos={tipos} celda={celda}/>}
+    </TableRow>;
+}
+
+function TablaDeModelos({arbol, filtros}:{arbol:ArbolDeModelos, filtros:Filtros}){
     const theme = useTheme();
     const angosta = useMediaQuery(theme.breakpoints.down('sm'));
-    const columnas = arbol.columnas;
+    const {columnas, tipos} = arbol;
     return <TableContainer>
-        <Table size="small" aria-label="bienes por categoría, subcategoría y atributos">
+        <Table size="small" aria-label="bienes por categoría y subcategoría">
             <TableHead>
                 <TableRow>
-                    <TableCell>Categoría / subcategoría / atributo / valor</TableCell>
+                    <TableCell>Categoría / subcategoría</TableCell>
                     <TableCell sx={{width:angosta ? '45%' : '20%'}}>Cantidad</TableCell>
                     {angosta ? null : columnas.map(columna =>
                         <TableCell key={columna.clave} align="right" title={columna.descripcion ?? undefined}>{columna.etiqueta}</TableCell>)}
@@ -142,65 +127,23 @@ function ArbolDeBienes({arbol, raices, previos, abiertos, onAlternar}:{
                         title="Bienes cuyo último movimiento tiene cargado un responsable de uso; se cuenta aparte del estado">
                         {EN_USO.titulo}
                     </TableCell>}
-                    {angosta ? null : encabezadosDeTipos(arbol.tipos)}
+                    {angosta ? null : encabezadosDeTipos(tipos)}
                 </TableRow>
             </TableHead>
             <TableBody>
-                {raices.map(raiz => <FilaDeNodo key={raiz.id} nodo={raiz} columnas={columnas} tipos={arbol.tipos} previos={previos}
-                    abiertos={abiertos} angosta={angosta} onAlternar={onAlternar}/>)}
+                {arbol.raices.map(categoria => <React.Fragment key={categoria.id}>
+                    <FilaDeNodo nodo={categoria} columnas={columnas} tipos={tipos} filtros={filtros} angosta={angosta}/>
+                    {categoria.hijos.map(subcategoria =>
+                        <FilaDeNodo key={subcategoria.id} nodo={subcategoria} columnas={columnas} tipos={tipos} filtros={filtros} angosta={angosta}/>)}
+                </React.Fragment>)}
                 <TableRow sx={{'& > *':{fontWeight:700}}}>
                     <TableCell sx={{fontWeight:700}}>Total</TableCell>
                     <TableCell>
                         <Box sx={{minWidth:48, textAlign:'right', display:'inline-block'}}>
-                            <Cantidad valor={arbol.total.total} destino={destinoDe({previos})} fuerte/>
+                            <Cantidad valor={arbol.total.total} destino={destinoDeCelda(filtros)} fuerte/>
                         </Box>
                     </TableCell>
-                    {angosta ? null : <CeldasDeEstadoDeModelos cuenta={arbol.total} columnas={columnas} tipos={arbol.tipos} celda={{previos}}/>}
-                </TableRow>
-            </TableBody>
-        </Table>
-    </TableContainer>;
-}
-
-function TablaDeCruce({cruce, previos}:{cruce:Cruce, previos:FiltroPrevio[]}){
-    const destino = (fila:FilaDeCruce|null, columna:Paso|null) => {
-        const filtro = filtroDeCeldaDeCruce(cruce, previos, fila, columna);
-        return filtro ? hashDeBusqueda(filtro) : null;
-    };
-    const celdas = (fila:FilaDeCruce|null, cuenta:CuentaDeCruce) => <>
-        <TableCell align="right"><Cantidad valor={cuenta.total} destino={destino(fila, null)} fuerte/></TableCell>
-        {cruce.columnas.map((columna, indice) => <TableCell key={columna.valor} align="right" sx={indice ? undefined : SEPARADOR}>
-            <Cantidad valor={cuenta.porValor.get(columna.valor!) ?? 0} destino={destino(fila, columna)}/>
-        </TableCell>)}
-        {cruce.hayOtros ? <TableCell align="right"><Cantidad valor={cuenta.otros} destino={null}/></TableCell> : null}
-        <TableCell align="right" sx={SEPARADOR}>
-            <Cantidad valor={cuenta.sinDato} destino={fila?.nivel === 'subcategoria' ? destino(fila, SIN_DATO_EN_COLUMNA) : null}/>
-        </TableCell>
-    </>;
-    return <TableContainer>
-        <Table size="small" aria-label={`bienes por subcategoría y ${cruce.campo.etiqueta}`}>
-            <TableHead>
-                <TableRow>
-                    <TableCell>Categoría / subcategoría</TableCell>
-                    <TableCell align="right">Total</TableCell>
-                    {cruce.columnas.map((columna, indice) =>
-                        <TableCell key={columna.valor} align="right" sx={indice ? undefined : SEPARADOR}>{columna.nombre}</TableCell>)}
-                    {cruce.hayOtros ? <TableCell align="right" title="Los demás valores, con menos bienes">Otros</TableCell> : null}
-                    <TableCell align="right" sx={{...SEPARADOR, whiteSpace:'nowrap'}}>{SIN_DATO}</TableCell>
-                </TableRow>
-            </TableHead>
-            <TableBody>
-                {cruce.filas.map(fila => {
-                    const deCategoria = fila.nivel === 'categoria';
-                    return <TableRow key={JSON.stringify([fila.camino.categoria?.valor, fila.camino.subcategoria?.valor])} hover
-                        sx={deCategoria ? {bgcolor:'action.hover'} : undefined}>
-                        <TableCell sx={{pl:deCategoria ? 2 : 4, fontWeight:deCategoria ? 600 : undefined}}>{fila.nombre}</TableCell>
-                        {celdas(fila, fila.cuenta)}
-                    </TableRow>;
-                })}
-                <TableRow sx={{'& > *':{fontWeight:700}}}>
-                    <TableCell sx={{fontWeight:700}}>Total</TableCell>
-                    {celdas(null, cruce.total)}
+                    {angosta ? null : <CeldasDeEstadoDeModelos cuenta={arbol.total} columnas={columnas} tipos={tipos} celda={filtros}/>}
                 </TableRow>
             </TableBody>
         </Table>
@@ -221,18 +164,6 @@ function catalogosDesde(categorias:Fila[], subcategorias:Fila[], estados:Fila[],
     };
 }
 
-function abiertosAlEntrar(raices:NodoDeModelos[], delBuscador:Set<string>):Set<string>{
-    const abiertos = new Set(delBuscador);
-    const [categoria, ...otrasCategorias] = raices;
-    if(!categoria || otrasCategorias.length){ return abiertos; }
-    abiertos.add(categoria.id);
-    const [subcategoria, ...otrasSubcategorias] = categoria.hijos;
-    if(!subcategoria || otrasSubcategorias.length){ return abiertos; }
-    abiertos.add(subcategoria.id);
-    subcategoria.hijos.forEach(campo => abiertos.add(campo.id));
-    return abiertos;
-}
-
 export function BienesPorModelo(){
     const conn = useConexion();
     const {mostrarError} = useAvisos();
@@ -240,31 +171,27 @@ export function BienesPorModelo(){
     const [area, setArea] = React.useState<OpcionDeFiltro|null>(null);
     const [categoria, setCategoria] = React.useState<CategoriaDeCatalogo|null>(null);
     const [subcategoria, setSubcategoria] = React.useState<SubcategoriaDeCatalogo|null>(null);
-    const [filtroDeAtributo, setFiltroDeAtributo] = React.useState<FiltroDeAtributo>({atributo:null, valor:null});
-    const [valoresDelAtributo, setValoresDelAtributo] = React.useState<OpcionDeFiltro[]|null>(null);
-    const [buscado, setBuscado] = React.useState('');
-    const [respuestas, setRespuestas] = React.useState<RespuestaDeCampo[]|null>(null);
+    const [elegidos, setElegidos] = React.useState<Elegidos>({});
+    const [facetas, setFacetas] = React.useState<Faceta[]|null>(null);
+    const [cargandoFacetas, setCargandoFacetas] = React.useState(false);
+    const secuenciaDeFacetas = React.useRef(0);
+    const [filas, setFilas] = React.useState<Filas|null>(null);
     const [error, setError] = React.useState<string|null>(null);
-    const [abiertos, setAbiertos] = React.useState<Set<string>>(new Set());
     const secuencia = React.useRef(0);
-    const [vista, setVista] = React.useState<Vista>('arbol');
-    const [verPor, setVerPor] = React.useState<string|null>(leerVerPor);
-    const [delCruce, setDelCruce] = React.useState<{campo:CampoDelBien, filas:BienesAgrupadoFila[]}|null>(null);
-    const secuenciaDelCruce = React.useRef(0);
+    const theme = useTheme();
+    const angosta = useMediaQuery(theme.breakpoints.down('lg'));
+    const [verFacetas, setVerFacetas] = React.useState(false);
 
-    const deClasificacion = React.useMemo<FiltroPrevio[]>(() => [
+    const previos = React.useMemo<FiltroPrevio[]>(() => [
         ...(area ? [{dimension:'sector_rama', etiqueta:'sector y subsectores', valor:area.valor, texto:area.texto}] : []),
         ...(subcategoria
             ? [{dimension:'subcategoria', etiqueta:'subcategoría', valor:subcategoria.subcategoria, texto:subcategoria.nombre}]
             : categoria ? [{dimension:'categoria', etiqueta:'categoría', valor:categoria.categoria, texto:categoria.nombre}] : []),
     ], [area, categoria, subcategoria]);
 
-    const previos = React.useMemo<FiltroPrevio[]>(() => {
-        const {atributo, valor} = filtroDeAtributo;
-        return atributo && valor
-            ? [...deClasificacion, {dimension:claveDeAtributo(atributo.atributo), etiqueta:atributo.nombre, valor:valor.valor, texto:valor.texto}]
-            : deClasificacion;
-    }, [deClasificacion, filtroDeAtributo]);
+    const campos = React.useMemo(() => catalogos ? camposDelReporte(catalogos.atributos) : [], [catalogos]);
+    const filtrosDeLista = React.useMemo<FiltroDeLista[]>(() => filtrosDeFacetas(campos, elegidos), [campos, elegidos]);
+    const filtros = React.useMemo<Filtros>(() => ({previos, filtros:filtrosDeLista}), [previos, filtrosDeLista]);
 
     const subcategoriasOfrecidas = React.useMemo(() => (catalogos?.subcategorias ?? [])
         .filter(sub => !categoria || sub.categoria === categoria.categoria)
@@ -285,70 +212,45 @@ export function BienesPorModelo(){
         return () => { cancelado = true; };
     }, [conn, mostrarError]);
 
-    const atributoDelFiltro = filtroDeAtributo.atributo;
     React.useEffect(() => {
-        setValoresDelAtributo(null);
-        if(!atributoDelFiltro){ return; }
-        let cancelado = false;
-        pedirAgrupado(conn, deClasificacion, [claveDeAtributo(atributoDelFiltro.atributo)])
-            .then(filas => { if(!cancelado){ setValoresDelAtributo(opcionesDeAgrupado(filas)); } })
-            .catch(err => { if(!cancelado){ mostrarError(err, 'No se pudieron cargar los valores del atributo'); } });
-        return () => { cancelado = true; };
-    }, [conn, mostrarError, deClasificacion, atributoDelFiltro]);
+        if(!campos.length){ return; }
+        const numero = ++secuenciaDeFacetas.current;
+        setCargandoFacetas(true);
+        Promise.all(pedidosDeFacetas(campos, elegidos).map(pedido => conn.ajax.bienes_buscar_agrupado({
+            consulta:JSON.stringify({...consultaDelReporte(previos, [], pedido.filtros), conjuntos:pedido.campos.map(campo => [campo.dimension])}),
+        }).then(respuesta => pedido.campos.map((campo, indice) => [campo.dimension, respuesta.conjuntos[indice]] as const)))).then(porPedido => {
+            if(numero === secuenciaDeFacetas.current){
+                setFacetas(armarFacetas(campos, new Map(([] as (readonly [string, BienesAgrupadoFila[]])[]).concat(...porPedido)), elegidos));
+                setCargandoFacetas(false);
+            }
+        }).catch(err => {
+            if(numero === secuenciaDeFacetas.current){
+                setCargandoFacetas(false);
+                mostrarError(err, 'No se pudieron cargar los filtros');
+            }
+        });
+    }, [conn, mostrarError, campos, previos, elegidos]);
 
     React.useEffect(() => {
-        if(!catalogos || vista !== 'arbol'){ return; }
+        if(!campos.length){ return; }
         const numero = ++secuencia.current;
-        setRespuestas(null);
+        setFilas(null);
         setError(null);
-        const campos = camposDelReporte(catalogos.atributos);
         conn.ajax.bienes_buscar_agrupado({
-            consulta:JSON.stringify({...consultaDelReporte(previos, []), conjuntos:conjuntosDelReporte(campos)}),
-        }).then(respuesta => {
-            if(numero === secuencia.current){ setRespuestas(respuestasDelReporte(campos, respuesta.conjuntos)); }
+            consulta:JSON.stringify({
+                ...consultaDelReporte(filtros.previos, [], filtros.filtros),
+                conjuntos:[DIMENSIONES_DE_LA_TABLA, DIMENSIONES_DE_TIPOS_DE_LA_TABLA],
+            }),
+        }).then(({conjuntos:[deEstados, deTipos]}) => {
+            if(numero === secuencia.current){ setFilas({filas:deEstados, deTipos}); }
         }).catch(err => {
             if(numero === secuencia.current){ setError(err instanceof Error ? err.message : String(err)); }
         });
-    }, [conn, catalogos, previos, vista]);
+    }, [conn, campos, filtros]);
 
-    const campos = React.useMemo(() => catalogos ? camposDelReporte(catalogos.atributos) : [], [catalogos]);
-    const dimensionFiltrada = filtroDeAtributo.atributo ? claveDeAtributo(filtroDeAtributo.atributo.atributo) : null;
-    const camposDelCruce = React.useMemo(() => campos.filter(campo => campo.dimension !== dimensionFiltrada), [campos, dimensionFiltrada]);
-    const campoDelCruce = camposDelCruce.find(campo => campo.dimension === verPor) ?? camposDelCruce[0] ?? null;
-    const atributosDelFiltro = React.useMemo(() => (catalogos?.atributos ?? [])
-        .filter(atributo => vista !== 'cruce' || claveDeAtributo(atributo.atributo) !== campoDelCruce?.dimension),
-    [catalogos, vista, campoDelCruce]);
-
-    React.useEffect(() => {
-        if(vista !== 'cruce' || !campoDelCruce){ return; }
-        const numero = ++secuenciaDelCruce.current;
-        setDelCruce(null);
-        setError(null);
-        pedirAgrupado(conn, previos, ['subcategoria', campoDelCruce.dimension]).then(filas => {
-            if(numero === secuenciaDelCruce.current){ setDelCruce({campo:campoDelCruce, filas}); }
-        }).catch(err => {
-            if(numero === secuenciaDelCruce.current){ setError(err instanceof Error ? err.message : String(err)); }
-        });
-    }, [conn, previos, vista, campoDelCruce]);
-
-    const cruce = React.useMemo(() => catalogos && delCruce
-        ? armarCruce(delCruce.filas, delCruce.campo, catalogos.subcategorias, catalogos.categorias)
-        : null, [catalogos, delCruce]);
-
-    const arbol = React.useMemo(() => catalogos && respuestas
-        ? armarArbolDeModelos(respuestas, catalogos.subcategorias, catalogos.categorias, catalogos.estados, catalogos.tipos)
-        : null, [catalogos, respuestas]);
-    const filtrado = React.useMemo(() => arbol ? filtrarArbol(arbol.raices, buscado) : null, [arbol, buscado]);
-
-    React.useEffect(() => {
-        setAbiertos(filtrado ? abiertosAlEntrar(filtrado.raices, filtrado.abiertos) : new Set());
-    }, [filtrado]);
-
-    const alternar = React.useCallback((id:string) => setAbiertos(anteriores => {
-        const nuevos = new Set(anteriores);
-        if(nuevos.has(id)){ nuevos.delete(id); }else{ nuevos.add(id); }
-        return nuevos;
-    }), []);
+    const arbol = React.useMemo(() => catalogos && filas
+        ? armarArbolDeModelos(filas.filas, filas.deTipos, catalogos.subcategorias, catalogos.categorias, catalogos.estados, catalogos.tipos)
+        : null, [catalogos, filas]);
 
     const elegirCategoria = (opcion:CategoriaDeCatalogo|null) => {
         setCategoria(opcion);
@@ -361,27 +263,12 @@ export function BienesPorModelo(){
     };
 
     const descargar = () => {
-        const nombre = nombreDelCsv(previos, new Date(), 'bienes-por-atributos');
-        if(vista === 'cruce'){
-            if(cruce){ descargarCsv(csvDeCruce(cruce), nombre); }
-        }else if(arbol){
-            descargarCsv(csvDeModelos({...arbol, raices:filtrado?.raices ?? arbol.raices}), nombre);
-        }
-    };
-
-    const elegirVerPor = (campo:CampoDelBien|null) => {
-        if(!campo){ return; }
-        setVerPor(campo.dimension);
-        guardarVerPor(campo.dimension);
+        if(arbol){ descargarCsv(csvDeModelos(arbol), nombreDelCsv(previos, new Date(), 'bienes-por-atributos')); }
     };
 
     const ancho = {width:{xs:'100%', sm:240}};
 
     return <Box sx={{p:{xs:2, sm:3}, maxWidth:1400, mx:'auto'}}>
-        <Tabs value={vista} onChange={(_evento, valor:Vista) => setVista(valor)} sx={{mb:2, borderBottom:1, borderColor:'divider'}}>
-            <Tab value="arbol" label="Árbol"/>
-            <Tab value="cruce" label="Por atributo"/>
-        </Tabs>
         <Stack direction={{xs:'column', sm:'row'}} spacing={2} alignItems={{xs:'stretch', sm:'center'}} sx={{mb:2}} flexWrap="wrap" useFlexGap>
             <Autocomplete
                 options={catalogos?.areas ?? []}
@@ -413,68 +300,31 @@ export function BienesPorModelo(){
                 sx={ancho}
                 renderInput={params => <TextField {...params} label="Subcategoría" placeholder="Todas" size="small"/>}
             />
-            <Autocomplete
-                options={atributosDelFiltro}
-                value={filtroDeAtributo.atributo}
-                onChange={(_evento, opcion) => setFiltroDeAtributo({atributo:opcion, valor:null})}
-                getOptionLabel={opcion => opcion.nombre}
-                isOptionEqualToValue={(a, b) => a.atributo === b.atributo}
-                loading={!catalogos}
-                sx={ancho}
-                renderInput={params => <TextField {...params} label="Sólo bienes con" placeholder="Cualquier atributo" size="small"/>}
-            />
-            <Autocomplete
-                options={valoresDelAtributo ?? []}
-                value={filtroDeAtributo.valor}
-                onChange={(_evento, opcion) => setFiltroDeAtributo(anterior => ({...anterior, valor:opcion}))}
-                getOptionLabel={opcion => opcion.etiqueta}
-                isOptionEqualToValue={(a, b) => a.valor === b.valor}
-                disabled={!filtroDeAtributo.atributo}
-                loading={!!filtroDeAtributo.atributo && !valoresDelAtributo}
-                sx={ancho}
-                renderInput={params => <TextField {...params} label="Valor" placeholder="Todos" size="small"/>}
-            />
-            {vista === 'arbol'
-                ? <TextField label="Buscar atributo o valor" size="small" value={buscado} onChange={evento => setBuscado(evento.target.value)} sx={ancho}/>
-                : null}
             <Box sx={{flex:1, display:{xs:'none', sm:'block'}}}/>
-            <Button variant="outlined" startIcon={<Download/>} onClick={descargar} disabled={vista === 'cruce' ? !cruce : !arbol}>Descargar</Button>
+            {angosta
+                ? <Button variant="outlined" startIcon={<FilterList/>} onClick={() => setVerFacetas(!verFacetas)} aria-expanded={verFacetas}>
+                    Filtrar{filtrosDeLista.length ? ` (${filtrosDeLista.length})` : ''}
+                </Button>
+                : null}
+            <Button variant="outlined" startIcon={<Download/>} onClick={descargar} disabled={!arbol}>Descargar</Button>
         </Stack>
-        <Typography variant="body2" color="text.secondary" sx={{mb:1}}>
-            Bienes activos que podés ver{previos.map(previo => `, ${previo.etiqueta} ${previo.texto}`).join('')}{vista === 'cruce'
-                ? `. Cuántos hay de cada valor de ${campoDelCruce?.etiqueta.toLowerCase() ?? 'atributo'} en las subcategorías que lo tienen cargado; tocá un número para ver esos bienes.`
-                : '. Abrí una subcategoría para ver su marca y atributos; tocá un número para ver esos bienes.'}
-        </Typography>
-        {error ? <Alert severity="error">{error}</Alert> : null}
-        {vista === 'cruce'
-            ? <Stack direction={{xs:'column', sm:'row'}} spacing={1.5} alignItems={{xs:'stretch', sm:'center'}}
-                sx={{bgcolor:'action.hover', borderRadius:1, px:1.5, py:1, mb:1}}>
-                <Typography variant="body2" color="text.secondary">Columnas</Typography>
-                <Autocomplete
-                    options={camposDelCruce}
-                    value={campoDelCruce}
-                    onChange={(_evento, opcion) => elegirVerPor(opcion)}
-                    getOptionLabel={opcion => opcion.etiqueta}
-                    isOptionEqualToValue={(a, b) => a.dimension === b.dimension}
-                    disableClearable
-                    loading={!catalogos}
-                    sx={{...ancho, bgcolor:'background.paper'}}
-                    renderInput={params => <TextField {...params} aria-label="columnas" placeholder="Atributo" size="small"/>}
-                />
-                <Typography variant="caption" color="text.secondary">Elegí qué atributo se reparte en las columnas</Typography>
-            </Stack>
-            : null}
-        {vista === 'cruce' && !cruce && !error ? <Cargando/> : null}
-        {vista === 'cruce' && cruce && !cruce.filas.length
-            ? <Alert severity="info">Ningún bien de estos filtros tiene cargado {cruce.campo.etiqueta.toLowerCase()}.</Alert>
-            : null}
-        {vista === 'cruce' && cruce && cruce.filas.length ? <TablaDeCruce cruce={cruce} previos={previos}/> : null}
-        {vista === 'arbol' && !arbol && !error ? <Cargando/> : null}
-        {vista === 'arbol' && arbol && filtrado && !filtrado.raices.length
-            ? <Alert severity="info">{buscado.trim() ? `Nada coincide con «${buscado.trim()}».` : 'No hay bienes con estos filtros.'}</Alert>
-            : null}
-        {vista === 'arbol' && arbol && filtrado && filtrado.raices.length
-            ? <ArbolDeBienes arbol={arbol} raices={filtrado.raices} previos={previos} abiertos={abiertos} onAlternar={alternar}/>
-            : null}
+        <Box sx={{display:'grid', gridTemplateColumns:{xs:'minmax(0, 1fr)', lg:'240px minmax(0, 1fr)'}, gap:3, alignItems:'start'}}>
+            <Collapse in={!angosta || verFacetas}>
+                <ColumnaDeFacetas facetas={facetas} cargando={cargandoFacetas} elegidos={filtrosDeLista.length}
+                    onAlternar={(campo, paso) => setElegidos(anteriores => alternarElegido(anteriores, campo, paso))}
+                    onLimpiar={() => setElegidos({})}/>
+            </Collapse>
+            <Box>
+                <Typography variant="body2" color="text.secondary" sx={{mb:1}}>
+                    Bienes activos que podés ver{previos.map(previo => `, ${previo.etiqueta} ${previo.texto}`).join('')}{filtrosDeLista
+                        .map(filtro => `, ${filtro.targetLabel.toLowerCase()} ${filtro.valueLabels.join(' o ')}`).join('')}. Tildá
+                    en Filtrar la marca y los atributos que buscás; tocá un número para ver esos bienes.
+                </Typography>
+                {error ? <Alert severity="error">{error}</Alert> : null}
+                {!arbol && !error ? <Cargando/> : null}
+                {arbol && !arbol.raices.length ? <Alert severity="info">No hay bienes con estos filtros.</Alert> : null}
+                {arbol && arbol.raices.length ? <TablaDeModelos arbol={arbol} filtros={filtros}/> : null}
+            </Box>
+        </Box>
     </Box>;
 }

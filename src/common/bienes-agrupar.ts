@@ -74,3 +74,35 @@ export function grupoFiltroDesdeTexto(texto:unknown):GrupoFiltroElegido|null{
         ? {partes:partes.map(({dimension, valor}:GrupoFiltro) => ({dimension, valor})), textos, etiquetas}
         : null;
 }
+
+export type FiltroDeLista = {
+    source:'field'|'attribute';
+    target:string;
+    operator:'in';
+    value:(string|null)[];
+    targetLabel:string;
+    valueLabels:string[];
+};
+
+export function filtrosDeListaDesdeTexto(texto:unknown):FiltroDeLista[]{
+    if(typeof texto !== 'string' || !texto){
+        return [];
+    }
+    let dato:unknown;
+    try{
+        dato = JSON.parse(texto);
+    }catch{
+        return [];
+    }
+    if(!Array.isArray(dato)){
+        return [];
+    }
+    const esTexto = (valor:unknown):valor is string => typeof valor === 'string';
+    return dato.filter((filtro):filtro is FiltroDeLista => filtro != null && typeof filtro === 'object'
+        && (filtro.source === 'field' || filtro.source === 'attribute') && esTexto(filtro.target) && filtro.target !== ''
+        && filtro.operator === 'in' && Array.isArray(filtro.value) && filtro.value.length > 0
+        && filtro.value.every((valor:unknown) => valor === null || esTexto(valor))
+        && esTexto(filtro.targetLabel) && Array.isArray(filtro.valueLabels) && filtro.valueLabels.length === filtro.value.length
+        && filtro.valueLabels.every(esTexto))
+        .map(({source, target, value, targetLabel, valueLabels}) => ({source, target, operator:'in', value, targetLabel, valueLabels}));
+}

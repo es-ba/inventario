@@ -5,7 +5,7 @@ import {BusquedaBienes} from './principal/busqueda-bienes';
 import {BienFormulario} from './principal/bien/bien-formulario';
 import {PantallaInventario} from './principal/base/pantalla-inventario';
 import type {Fila} from './principal/base/tipos-tabla';
-import {grupoFiltroDesdeTexto, type GrupoFiltroElegido} from '../common/bienes-agrupar';
+import {filtrosDeListaDesdeTexto, grupoFiltroDesdeTexto, type FiltroDeLista, type GrupoFiltroElegido} from '../common/bienes-agrupar';
 import './ws-solicitudes';
 import './ws-bajas';
 import './ws-controles';
@@ -30,12 +30,14 @@ function PantallaPrincipal({
     fixedFields,
     ficha,
     grupoFiltroInicial,
+    filtrosIniciales,
     textoInicial,
 }:{
     conn:Connector;
     fixedFields:FixedFields;
     ficha?:string;
     grupoFiltroInicial:GrupoFiltroElegido|null;
+    filtrosIniciales:FiltroDeLista[];
     textoInicial?:string;
 }){
     const [vista, setVista] = React.useState<Vista>(ficha ? {nombre:'bien', ficha} : {nombre:'busqueda'});
@@ -63,6 +65,7 @@ function PantallaPrincipal({
                 onAbrirBien={ficha => setVista({nombre:'bien', ficha})}
                 onNuevoBien={() => setVista({nombre:'bien', ficha:undefined})}
                 grupoFiltroInicial={grupoFiltroInicial}
+                filtrosIniciales={filtrosIniciales}
                 textoInicial={textoInicial}
             />
         </Box>
@@ -83,6 +86,7 @@ myOwn.wScreens.principal = function principal(addrParams:any){
             <PantallaPrincipal conn={conn} fixedFields={fixedFields}
                 ficha={addrParams.ficha ? String(addrParams.ficha) : undefined}
                 grupoFiltroInicial={grupoFiltroDesdeTexto(addrParams.filtro)}
+                filtrosIniciales={filtrosDeListaDesdeTexto(addrParams.filtros)}
                 textoInicial={addrParams.texto ? String(addrParams.texto) : undefined}/>
     );
 };
