@@ -19,7 +19,7 @@ require.extensions['.ts'] = function transpileTypeScript(module, filename) {
     module._compile(result.outputText, filename);
 };
 
-const {entradasDeNavegacion} = require(path.join(projectRoot, 'src/client/principal/base/navegacion.ts'));
+const {MENU_DE_BACKEND_PLUS, entradasDeNavegacion} = require(path.join(projectRoot, 'src/client/principal/base/navegacion.ts'));
 
 test('arma el menú de navegación con el hash i= de backend-plus', () => {
     const entradas = entradasDeNavegacion([
@@ -46,4 +46,13 @@ test('PantallaInventario abre la navegación con el ☰', () => {
     assert.doesNotMatch(source, /aria-label="volver al menú"/);
     assert.match(source, /component="a" sx=\{\{pl:2 \+ nivel \* 2\}\} \{\.\.\.vinculo\(entrada\.hash!, salir\)\}/);
     assert.match(source, /solicitarSalida\(destino\)/);
+});
+
+test('la barra ofrece el menú de backend-plus con un i= que no elige ningún menú, así no cae en el Inicio', () => {
+    const source = fs.readFileSync(path.join(projectRoot, 'src/client/principal/base/pantalla-inventario.tsx'), 'utf8');
+    assert.match(source, /<Toolbar>[\s\S]*title="Menú clásico"\s*\{\.\.\.vinculo\(MENU_DE_BACKEND_PLUS, solicitarSalida\)\}>\s*<MoreVert\/>[\s\S]*<\/Toolbar>/);
+    assert.doesNotMatch(source.slice(source.indexOf('function PanelDeNavegacion'), source.indexOf('export function PantallaInventario')), /MENU_DE_BACKEND_PLUS/);
+    const nombre = MENU_DE_BACKEND_PLUS.replace(/^i=/, '');
+    const app = fs.readFileSync(path.join(projectRoot, 'src/server/app-principal.ts'), 'utf8');
+    assert.doesNotMatch(app, new RegExp(`name:\s*'${nombre}'`));
 });

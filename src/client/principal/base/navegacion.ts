@@ -15,6 +15,8 @@ export type EntradaDeNavegacion = {
 
 export const INICIO = 'inicio';
 
+export const MENU_DE_BACKEND_PLUS = 'i=menu';
+
 export function entradasDelMenu():EntradaDeNavegacion[]{
     const menu = (myOwn as unknown as {config:{menu?:ItemDeMenu[]}}).config.menu ?? [];
     return entradasDeNavegacion(menu.filter(item => item.name !== INICIO));

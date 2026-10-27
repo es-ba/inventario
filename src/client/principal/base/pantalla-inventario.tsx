@@ -1,10 +1,10 @@
 import * as React from 'react';
 import {AppBar, Box, Button, Collapse, Divider, Drawer, IconButton, List, ListItemButton, ListItemText, Paper, Stack, Toolbar, Typography} from '@mui/material';
-import {Close, ExpandLess, ExpandMore, HelpOutline, Home, Menu as MenuIcon, OpenInNew} from '@mui/icons-material';
+import {Close, ExpandLess, ExpandMore, HelpOutline, Home, Menu as MenuIcon, MoreVert, OpenInNew} from '@mui/icons-material';
 
 import {useSalida} from './contexto-base';
 import {vinculo} from '../render-connected-app-inventario';
-import {EntradaDeNavegacion, entradasDelMenu} from './navegacion';
+import {EntradaDeNavegacion, MENU_DE_BACKEND_PLUS, entradasDelMenu} from './navegacion';
 import {tituloDePagina} from './formato-valores';
 import {seccionDeAyuda} from '../ayuda/manual';
 import {TextoDeAyuda} from '../ayuda/texto-de-ayuda';
@@ -90,6 +90,10 @@ export function PantallaInventario({titulo, ayuda, children}:{titulo:React.React
                     <MenuIcon/>
                 </IconButton>
                 <Typography variant="h6" component="h1" sx={{flex:1}}>{titulo}</Typography>
+                <IconButton color="inherit" component="a" aria-label="menú clásico" title="Menú clásico"
+                    {...vinculo(MENU_DE_BACKEND_PLUS, solicitarSalida)}>
+                    <MoreVert/>
+                </IconButton>
                 {ayuda
                     ? <IconButton color="inherit" edge="end" aria-label="ayuda" title="Ayuda" onClick={() => setAyudaAbierta(true)}>
                         <HelpOutline/>
